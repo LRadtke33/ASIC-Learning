@@ -1,0 +1,360 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site Rows &amp; Standard Cell Placement</title>
+<style>
+.legend {display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #33414f; margin: 8px 0 0;}
+.legend span {display: inline-flex; align-items: center; gap: 6px;}
+.sw {display: inline-block; width: 22px; height: 10px; border-radius: 2px;}
+.dot {display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #c0392b; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #c0392b;}
+.dash {display: inline-block; width: 22px; height: 0; border-top: 3px dashed #1e9e50;}
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 13 / 84 · Part III, Standard-cell layout</p><h1>Site Rows &amp; Standard Cell Placement</h1>
+  <p class="subtitle">Why standard cells live in rows, why row height matters, and how cells snap together by abutment.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain sites, rows and abutment, and why ordinary cells share one height.</li><li>Convert a placement — site, row, orientation — into coordinates without confusing the LEF origin.</li><li>Check where a double-height cell may start, using the SKY130 <code>unithd</code> and <code>unithddbl</code> sites.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-4">step 4, floorplan and power grid</a> creates the rows; <a href="design_flow.html#step-5">step 5, placement</a> puts every cell on a site.</dd><dt>Tools</dt><dd>OpenROAD: <code>initialize_floorplan</code> makes the rows; <code>global_placement</code> and <code>detailed_placement</code> fill them. Commercial: Innovus, IC Compiler II.</dd><dt>Why it matters</dt><dd>Every standard cell must sit on a legal site, and the row structure decides how cells share power and wells.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. The placement grid: sites and rows</h2>
+  <p>The standard-cell placement area is divided into <strong>site rows</strong>. Each site defines a legal placement width and row height. The placer aligns a cell’s placement bounding rectangle to the row’s site grid and checks its orientation and row compatibility. This is a placement rule; it is distinct from the much finer manufacturing grid that constrains individual polygons.</p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 706 336" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — One common row architecture. This illustration alternates N and FS orientations so compatible boundary rails line up as VSS, VDD, VSS, VDD, VSS. The chosen site fixes the row dimensions. Other libraries, row patterns and multiheight cells require their own orientation and boundary checks."><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#33414f"></path></marker></defs><rect x="82" y="220" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="156" width="576" height="64" fill="#f2f5f9"></rect><rect x="82" y="92" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="28" width="576" height="64" fill="#f2f5f9"></rect><line x1="82" y1="284" x2="82" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="98" y1="284" x2="98" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="114" y1="284" x2="114" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="130" y1="284" x2="130" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="146" y1="284" x2="146" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="162" y1="284" x2="162" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="178" y1="284" x2="178" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="194" y1="284" x2="194" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="210" y1="284" x2="210" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="226" y1="284" x2="226" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="242" y1="284" x2="242" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="258" y1="284" x2="258" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="274" y1="284" x2="274" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="290" y1="284" x2="290" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="306" y1="284" x2="306" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="322" y1="284" x2="322" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="338" y1="284" x2="338" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="354" y1="284" x2="354" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="370" y1="284" x2="370" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="386" y1="284" x2="386" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="402" y1="284" x2="402" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="418" y1="284" x2="418" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="434" y1="284" x2="434" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="450" y1="284" x2="450" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="466" y1="284" x2="466" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="482" y1="284" x2="482" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="498" y1="284" x2="498" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="514" y1="284" x2="514" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="530" y1="284" x2="530" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="546" y1="284" x2="546" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="562" y1="284" x2="562" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="578" y1="284" x2="578" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="594" y1="284" x2="594" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="610" y1="284" x2="610" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="626" y1="284" x2="626" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="642" y1="284" x2="642" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="658" y1="284" x2="658" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><rect x="130" y="92" width="16" height="64" fill="#ffe08a" stroke="#c99700" stroke-width="1.5"></rect><line x1="149" y1="124" x2="171.6" y2="124" stroke="#33414f" stroke-width="1"></line><text x="174.8" y="128" font-size="11.5" fill="#33414f">one <tspan font-weight="700">site</tspan> — the smallest placement unit (1 site wide × 1 row tall)</text><line x1="130" y1="170" x2="146" y2="170" stroke="#33414f" stroke-width="1" marker-start="url(#ah)" marker-end="url(#ah)"></line><text x="152.4" y="174" font-size="10.5" fill="#33414f">site width</text><line x1="562" y1="215" x2="562" y2="161" stroke="#33414f" stroke-width="1" marker-start="url(#ah)" marker-end="url(#ah)"></line><text x="569" y="192" font-size="10.5" fill="#33414f">row height</text><rect x="82" y="280.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="288" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="216.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="224" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="152.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="160" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="88.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="96" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="24.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="32" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><text x="72" y="250" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 0</text><text x="72" y="265" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="186" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 1</text><text x="72" y="201" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="72" y="122" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 2</text><text x="72" y="137" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="58" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 3</text><text x="72" y="73" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="82" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">0</text><text x="178" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">6</text><text x="274" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">12</text><text x="370" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">18</text><text x="466" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">24</text><text x="562" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">30</text><text x="658" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">36</text><text x="658" y="320" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text></svg></div>
+    <figcaption><strong>Figure 1 — One common row architecture.</strong> This illustration alternates N and FS orientations so compatible boundary rails line up as VSS, VDD, VSS, VDD, VSS. The chosen site fixes the row dimensions. Other libraries, row patterns and multiheight cells require their own orientation and boundary checks.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. One height, many widths</h2>
+  <p>In a fixed-height row-based standard-cell library, ordinary cells have the row height and widths quantized to its site grid. Some libraries also contain special or multiheight cells with additional placement restrictions. A conceptual small inverter might occupy three sites and a flip-flop eleven; actual SKY130 HD values are listed later. Matching outlines make mixed cell types tile without vertical gaps when their rail, well and boundary requirements are compatible.</p>
+  <p>
+    The 3-site inverter and the 11-site flip-flop in that sentence are the
+    sizes used in these drawings. On the SKY130 high-density library the
+    smallest inverter is also 3 sites, and the plain flip-flop is 16 sites.
+    Section 6 has the outlines.
+  </p>
+
+
+  <h2 id="section-3">3. Placement by abutment</h2>
+  <p>Compatible cells can be placed <strong>by abutment</strong>, with their placement edges touching. In the illustrated upright template, VDD lies along the top and VSS along the bottom. Matching rail and well shapes meet at the boundary. This joins neighboring rail segments; the row still needs connections to the power grid and correctly spaced well/substrate taps. Abutment does not supply current or guarantee that arbitrary library families are compatible.</p>
+  <p>In flipped (FS) rows the cell is mirrored top-to-bottom so its VDD rail meets the neighboring VDD rail. In an alternating stack of N rows there are N+1 boundary stripes rather than 2N separate stripes. Rail compatibility, well rules and the library’s allowed symmetries determine legal orientations; alternation is a common template, not a universal law.</p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 706 336" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Conceptual placement by abutment. Red dots mark the shown lower-left placement reference corners on the site grid, not a universal rule for every native LEF origin. The illustrative double-height BUF_X16 has a VSS–VDD–VSS rail pattern and therefore starts on the matching row parity in this drawing. Actual multiheight cells must match their library’s power-rail and well rules."><rect x="82" y="220" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="156" width="576" height="64" fill="#f2f5f9"></rect><rect x="82" y="92" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="28" width="576" height="64" fill="#f2f5f9"></rect><line x1="82" y1="284" x2="82" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="98" y1="284" x2="98" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="114" y1="284" x2="114" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="130" y1="284" x2="130" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="146" y1="284" x2="146" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="162" y1="284" x2="162" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="178" y1="284" x2="178" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="194" y1="284" x2="194" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="210" y1="284" x2="210" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="226" y1="284" x2="226" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="242" y1="284" x2="242" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="258" y1="284" x2="258" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="274" y1="284" x2="274" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="290" y1="284" x2="290" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="306" y1="284" x2="306" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="322" y1="284" x2="322" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="338" y1="284" x2="338" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="354" y1="284" x2="354" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="370" y1="284" x2="370" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="386" y1="284" x2="386" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="402" y1="284" x2="402" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="418" y1="284" x2="418" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="434" y1="284" x2="434" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="450" y1="284" x2="450" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="466" y1="284" x2="466" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="482" y1="284" x2="482" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="498" y1="284" x2="498" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="514" y1="284" x2="514" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="530" y1="284" x2="530" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="546" y1="284" x2="546" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="562" y1="284" x2="562" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="578" y1="284" x2="578" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="594" y1="284" x2="594" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="610" y1="284" x2="610" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="626" y1="284" x2="626" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="642" y1="284" x2="642" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="658" y1="284" x2="658" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><rect x="114" y="220" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="138" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X1</text><rect x="162" y="220" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="194" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND2_X1</text><rect x="226" y="220" width="176" height="64" fill="#f7ddc9" stroke="#3d4f60" stroke-width="1.4"></rect><text x="314" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">DFF_X1</text><rect x="466" y="220" width="96" height="64" fill="#e7d9f2" stroke="#3d4f60" stroke-width="1.4"></rect><text x="514" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X4</text><rect x="402" y="156" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="442" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X1</text><rect x="482" y="156" width="96" height="64" fill="#f2cfd8" stroke="#3d4f60" stroke-width="1.4"></rect><text x="530" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">OAI22_X1</text><rect x="578" y="156" width="64" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="610" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X8</text><rect x="178" y="28" width="128" height="128" fill="#d9c9ea" stroke="#3d4f60" stroke-width="1.4"></rect><text x="242" y="57" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X16</text><text x="242" y="73" text-anchor="middle" font-size="10" fill="#5c6b7a">double-height</text><rect x="306" y="92" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="338" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND3_X2</text><rect x="370" y="92" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="394" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X2</text><rect x="306" y="28" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="346" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X2</text><line x1="162" y1="284" x2="162" y2="220" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><line x1="226" y1="284" x2="226" y2="220" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><line x1="482" y1="220" x2="482" y2="156" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><line x1="578" y1="220" x2="578" y2="156" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><line x1="306" y1="156" x2="306" y2="28" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><line x1="370" y1="156" x2="370" y2="92" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"></line><rect x="82" y="280.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="288" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="216.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="224" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="152.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="160" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="88.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="96" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="24.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="32" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><circle cx="114" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="162" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="226" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="466" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="402" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="482" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="578" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="178" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="306" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="370" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="306" cy="92" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><text x="72" y="250" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 0</text><text x="72" y="265" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="186" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 1</text><text x="72" y="201" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="72" y="122" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 2</text><text x="72" y="137" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="58" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 3</text><text x="72" y="73" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="82" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">0</text><text x="178" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">6</text><text x="274" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">12</text><text x="370" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">18</text><text x="466" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">24</text><text x="562" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">30</text><text x="658" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">36</text><text x="658" y="320" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text><line x1="226" y1="290" x2="258" y2="314" stroke="#c0392b" stroke-width="1"></line><text x="262" y="320" font-size="11" fill="#c0392b">cell origin = bottom-left corner, on a site boundary</text></svg></div>
+    <div class="legend">
+      <span><span class="dot"></span> cell origin (bottom-left corner)</span>
+      <span><span class="dash"></span> abutting edge (cells touch, no gap)</span>
+      <span><span class="sw" style="background:#d9534f"></span> VDD rail</span>
+      <span><span class="sw" style="background:#3b6fb0"></span> VSS rail</span>
+    </div>
+    <figcaption><strong>Figure 2 — Conceptual placement by abutment.</strong> Red dots mark the shown lower-left placement reference corners on the site grid, not a universal rule for every native LEF origin. The illustrative double-height BUF_X16 has a VSS–VDD–VSS rail pattern and therefore starts on the matching row parity in this drawing. Actual multiheight cells must match their library’s power-rail and well rules.</figcaption>
+  </figure>
+
+  <h2 id="section-4">4. Placement coordinates and the LEF origin</h2>
+  <p>The figures mark the <strong>lower-left corner of the placed bounding rectangle</strong>. That is the convenient placement reference used by DEF after rotation or mirroring. A cell’s native drawing origin is not universally that corner: LEF can specify an <code>ORIGIN</code> offset, and database APIs may expose a transform origin instead. Read the format/API before converting coordinates.</p>
+  <p style="text-align:center"><code>x = row_x_origin + site_index × site_width</code><br><code>y = row_y_origin + row_index × row_height</code><br>The placement orientation is a separate N/FS/etc. attribute, not an addition to y. These expressions describe the uniform row array shown here.</p>
+  <p>In Figure 2, NAND2_X1 occupies (site 5, row 0, N), while AOI21_X1 occupies (site 20, row 1, FS). The coordinate labels describe the placed bounding boxes in this drawing. When translating them into a DEF record or a database transform, apply the format’s placement-point and LEF ORIGIN conventions rather than assuming every API uses the same origin.</p>
+
+  <h2 id="section-5">5. Double-height and multi-height cells</h2>
+  <p>
+    Not every cell is one row tall. Libraries also contain cells that are an
+    <strong>integer multiple of the row height</strong> — double-height, triple-height, and so on.
+    They exist because some functions don't fit comfortably in one row: very high drive-strength
+    buffers and clock drivers need large transistors, and complex cells (multi-bit flip-flops,
+    level shifters) route better with the extra vertical space.
+  </p>
+  <p>For multiheight cells compatible with the illustrated row architecture, placement must check the following:</p>
+  <ul>
+    <li>The placed bounding rectangle uses the same site-grid reference; apply any library origin offset and orientation transform.</li>
+    <li>Their footprints occupy the supported site grid and row heights. A library can define a separate multiheight site or additional placement restrictions.</li>
+    <li>They must land where the <strong>rail pattern matches their design</strong>. The
+        double-height <code>BUF_X16</code> in Figure 2 is built with VSS at its bottom and top and
+        VDD through its middle, so it can only start on rows whose bottom boundary is VSS
+        (rows 0 and 2 here). Starting it on row 1 would short VDD to VSS.</li>
+    <li>Single-height neighbors may abut their sides only when the rail, well and edge rules permit that pairing.</li>
+  </ul>
+  <p>The placer checks the applicable site, row, orientation and boundary constraints for the chosen library. A rectangular outline that fits geometrically is only one part of legality.</p>
+
+<!-- sky130-cell -->
+  <h2 id="section-6">6. The SKY130 site, and the cells that sit on it</h2>
+  <p>The cited <code>sky130_fd_sc_hd</code> technology LEF defines <strong>two placement sites</strong>: <code>unithd</code>, <code>SIZE 0.46 BY 2.72</code> µm, and <code>unithddbl</code>, <code>SIZE 0.46 BY 5.44</code> µm. The latter is two ordinary row heights. A cell’s own LEF <code>SITE</code>, symmetry and boundary shapes determine how it is placed. The double-height BUF_X16 in Figure 2 is a teaching cell, not an HD cell name.</p>
+  <p>
+    Widths of the cells the later lessons keep using, taken from each cell's LEF
+    <code>SIZE</code> and divided by 0.46&nbsp;µm:
+  </p>
+  <figure>
+    <div class="figwrap" id="fig-sky"><svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Real cell widths on the 0.46&nbsp;µm site.
+      inv_1, inv_2, and nand2_1 are each three
+      sites, 1.38&nbsp;µm. inv_4 is five. inv_8 is nine.
+      dfxtp_1, the library flip-flop, is sixteen sites, 7.36&nbsp;µm.
+      The 11-site flop in the earlier figures is the teaching cell."><text x="142" y="34" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">inv_1</text><rect x="150" y="16" width="84" height="26" fill="#d6e4f5" stroke="#33414f"></rect><line x1="150" y1="16" x2="150" y2="42" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="16" x2="178" y2="42" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="16" x2="206" y2="42" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="16" x2="234" y2="42" stroke="#9aa5b1" stroke-width="1"></line><text x="242" y="34" text-anchor="start" font-size="12" fill="#33414f">3 sites · 1.38 µm</text><text x="142" y="74" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">inv_2</text><rect x="150" y="56" width="84" height="26" fill="#d6e4f5" stroke="#33414f"></rect><line x1="150" y1="56" x2="150" y2="82" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="56" x2="178" y2="82" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="56" x2="206" y2="82" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="56" x2="234" y2="82" stroke="#9aa5b1" stroke-width="1"></line><text x="242" y="74" text-anchor="start" font-size="12" fill="#33414f">3 sites · 1.38 µm</text><text x="142" y="114" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">nand2_1</text><rect x="150" y="96" width="84" height="26" fill="#d9f0d6" stroke="#33414f"></rect><line x1="150" y1="96" x2="150" y2="122" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="96" x2="178" y2="122" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="96" x2="206" y2="122" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="96" x2="234" y2="122" stroke="#9aa5b1" stroke-width="1"></line><text x="242" y="114" text-anchor="start" font-size="12" fill="#33414f">3 sites · 1.38 µm</text><text x="142" y="154" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">inv_4</text><rect x="150" y="136" width="140" height="26" fill="#d6e4f5" stroke="#33414f"></rect><line x1="150" y1="136" x2="150" y2="162" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="136" x2="178" y2="162" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="136" x2="206" y2="162" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="136" x2="234" y2="162" stroke="#9aa5b1" stroke-width="1"></line><line x1="262" y1="136" x2="262" y2="162" stroke="#9aa5b1" stroke-width="1"></line><line x1="290" y1="136" x2="290" y2="162" stroke="#9aa5b1" stroke-width="1"></line><text x="298" y="154" text-anchor="start" font-size="12" fill="#33414f">5 sites · 2.30 µm</text><text x="142" y="194" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">inv_8</text><rect x="150" y="176" width="252" height="26" fill="#d6e4f5" stroke="#33414f"></rect><line x1="150" y1="176" x2="150" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="176" x2="178" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="176" x2="206" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="176" x2="234" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="262" y1="176" x2="262" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="290" y1="176" x2="290" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="318" y1="176" x2="318" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="346" y1="176" x2="346" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="374" y1="176" x2="374" y2="202" stroke="#9aa5b1" stroke-width="1"></line><line x1="402" y1="176" x2="402" y2="202" stroke="#9aa5b1" stroke-width="1"></line><text x="410" y="194" text-anchor="start" font-size="12" fill="#33414f">9 sites · 4.14 µm</text><text x="142" y="234" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">dfxtp_1</text><rect x="150" y="216" width="448" height="26" fill="#f8e3c4" stroke="#33414f"></rect><line x1="150" y1="216" x2="150" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="178" y1="216" x2="178" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="206" y1="216" x2="206" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="234" y1="216" x2="234" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="262" y1="216" x2="262" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="290" y1="216" x2="290" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="318" y1="216" x2="318" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="346" y1="216" x2="346" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="374" y1="216" x2="374" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="402" y1="216" x2="402" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="430" y1="216" x2="430" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="458" y1="216" x2="458" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="486" y1="216" x2="486" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="514" y1="216" x2="514" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="542" y1="216" x2="542" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="570" y1="216" x2="570" y2="242" stroke="#9aa5b1" stroke-width="1"></line><line x1="598" y1="216" x2="598" y2="242" stroke="#9aa5b1" stroke-width="1"></line><text x="606" y="234" text-anchor="start" font-size="12" fill="#33414f">16 sites · 7.36 µm</text></svg></div>
+    <figcaption>
+      <strong>Figure 3 — Real cell widths on the 0.46&nbsp;µm site.</strong>
+      <code>inv_1</code>, <code>inv_2</code>, and <code>nand2_1</code> are each three
+      sites, 1.38&nbsp;µm. <code>inv_4</code> is five. <code>inv_8</code> is nine.
+      <code>dfxtp_1</code>, the library flip-flop, is sixteen sites, 7.36&nbsp;µm.
+      The 11-site flop in the earlier figures is the teaching cell.
+    </figcaption>
+  </figure>
+  <p>
+    Every one of those cells is <code>SITE unithd</code> and <code>CLASS CORE</code>,
+    except the fill cells (<a href="fill_cells.html">lesson 47</a>), which are <code>CORE SPACER</code>.
+    The power rails are met1, 0.48&nbsp;µm tall, centered on the top and bottom
+    edges. Neighboring rows draw the same rectangle on the shared edge, so the rail
+    in the finished row is one stripe. That is the abutment in section 3, with a
+    measured stripe instead of a colored bar.
+  </p>
+  <p>
+      Areas in the Liberty files match the LEF outline.
+      <code>inv_1</code> is 1.38 × 2.72 = 3.7536&nbsp;µm².
+      <code>inv_4</code> is 2.30 × 2.72 = 6.256&nbsp;µm².
+      <code>dfxtp_1</code> is 7.36 × 2.72 = 20.0192&nbsp;µm².
+      The placer does not need the transistors to know whether the cell fits.
+      It needs the site, the width in sites, and the orientation.
+    </p>
+    <p>
+      met1 pitch in the same tech LEF is 0.34&nbsp;µm, and 2.72 / 0.34 = 8 exactly.
+      Lesson 17 counts that height as tracks and shows where the rails cover the
+      outer ones. Vertical <code>li1</code> pitch is 0.46&nbsp;µm, the same number
+      as the site width, so one local-interconnect pitch lines up with each site.
+    </p>
+  
+
+    <h2 id="section-7">7. A two-row cell has to start on the matching rail</h2>
+  <p>In the alternating-row arrangement used in these figures, a row is followed by its top-to-bottom mirror, making matching supply-rail rectangles coincide at the shared boundary. This describes the chosen architecture; actual row orientations come from the implementation’s row definitions and library restrictions.</p>
+  <p>A two-row cell covers two adjacent row heights. The HD level shifter example is 5.44 µm tall (<a href="level_shifters.html">lesson 54</a>). For a fixed orientation and the rail pattern drawn here, compatible starting rows repeat every two rows. Other legal orientations or cell-specific rail arrangements must be checked from that cell’s abstract; height alone does not establish legal placement.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 236" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Rails on a double-height cell. The 5.44&nbsp;µm height is the HD shifter. The drawing shows which edge is shared.">
+<text x="370" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">A two-row cell covers one upright row and one flipped row</text>
+<rect x="80" y="48" width="520" height="16" rx="0" fill="#3b6fb0" stroke="#3b6fb0" stroke-width="0"></rect>
+<rect x="80" y="118" width="520" height="16" rx="0" fill="#d9534f" stroke="#d9534f" stroke-width="0"></rect>
+<rect x="80" y="188" width="520" height="16" rx="0" fill="#3b6fb0" stroke="#3b6fb0" stroke-width="0"></rect>
+<text x="70" y="60" text-anchor="end" font-size="12" font-weight="700" fill="#3b6fb0">VGND</text>
+<text x="70" y="130" text-anchor="end" font-size="12" font-weight="700" fill="#d9534f">VPWR</text>
+<text x="70" y="200" text-anchor="end" font-size="12" font-weight="700" fill="#3b6fb0">VGND</text>
+<rect x="120" y="64" width="200" height="54" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<rect x="120" y="134" width="200" height="54" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<text x="220" y="94" text-anchor="middle" font-size="13" fill="#33414f">row FS, flipped</text>
+<text x="220" y="166" text-anchor="middle" font-size="13" fill="#33414f">row N, upright</text>
+<rect x="360" y="64" width="200" height="54" rx="0" fill="#f2f7f2" stroke="#1e9e50" stroke-width="2"></rect>
+<rect x="360" y="134" width="200" height="54" rx="0" fill="#f2f7f2" stroke="#1e9e50" stroke-width="2"></rect>
+<rect x="360" y="118" width="200" height="16" rx="0" fill="#d9534f" stroke="#d9534f" stroke-width="0"></rect>
+<rect x="360" y="64" width="200" height="124" rx="0" fill="none" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="460" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">5.44 µm cell</text>
+<text x="460" y="166" text-anchor="middle" font-size="12" fill="#5c6b7a">two row heights</text>
+<text x="370" y="222" text-anchor="middle" font-size="12" fill="#5c6b7a">Bottom rail must already be the rail the cell was drawn against</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 4 — A double-height rail arrangement.</strong> The cited HD shifter height is 5.44 µm. The conceptual drawing illustrates a matching shared edge; legal orientations and starting rows must be checked against that cell’s actual supply and well geometry.</figcaption>
+  </figure>
+
+<div class="table-scroll"><table><caption>Verified SKY130 HD footprints · <a href="#sources">Sources</a></caption><thead><tr><th scope="col">Cell or site</th><th scope="col">Width</th><th scope="col">Height</th><th scope="col">Ordinary HD sites</th></tr></thead><tbody><tr><td>unithd site</td><td>0.46 µm</td><td>2.72 µm</td><td>1</td></tr><tr><td>unithddbl site</td><td>0.46 µm</td><td>5.44 µm</td><td>Two row heights</td></tr><tr><td>inv_1 / inv_2 / nand2_1</td><td>1.38 µm</td><td>2.72 µm</td><td>3</td></tr><tr><td>inv_4</td><td>2.30 µm</td><td>2.72 µm</td><td>5</td></tr><tr><td>inv_8</td><td>4.14 µm</td><td>2.72 µm</td><td>9</td></tr><tr><td>dfxtp_1</td><td>7.36 µm</td><td>2.72 µm</td><td>16</td></tr></tbody></table></div>
+
+<h2 id="worked-util">Worked example — rows, sites and utilization on the Lab 6 SPM</h2>
+<p>The HD placement site is <strong>0.46 × 2.72 µm</strong> (section 6). Lab 6’s 45% SPM, run <code>RUN_2026-11-11_16-09-06</code>, has a recorded core bounding box of (5.52, 10.88) to (91.08, 95.2) µm, so the core is <strong>85.56 × 84.32 µm</strong>:</p>
+<ul>
+<li>Rows: 84.32 / 2.72 = <strong>31 rows</strong>, exactly. The run’s metrics also report 31 rows.</li>
+<li>Sites per row: 85.56 / 0.46 = <strong>186 sites</strong>, exactly.</li>
+<li>Core area: 31 × 186 × 0.46 × 2.72 = <strong>7,214.4192 µm²</strong>, matching the recorded <code>core_area_um2</code> of 7,214.42 (rounded).</li>
+<li>Standard-cell area after the flow: <strong>4,546.86 µm²</strong> (423 cells). Utilization against the core is 4,546.86 / 7,214.42 = <strong>0.63025 (63.0%)</strong>.</li>
+</ul>
+<p>The flow was asked for <code>FP_CORE_UTIL = 45</code>. The 63% figure is what was actually sitting in the core after placement, buffering and hold repair — fill is additional (Lab 6: 803 fill cells, 2,667.56 µm², which together with the standard cells occupy essentially the whole core). The lesson from the arithmetic is that a utilization target is an input to the floorplan, not a measurement of the finished netlist. The numbers are from <a href="lab_rtl_to_gds.html">Lab 6</a> and <code>labs/analysis_examples/rtl_to_gds/utilization_sweep.json</code>.</p>
+
+<details class="checkpoint"><summary>Worked checkpoint — How much row width do three cells occupy?</summary><p>Place one <code>inv_1</code>, one <code>inv_4</code> and one <code>dfxtp_1</code> in a compatible single-height row. Their outlines occupy <strong>3 + 5 + 16 = 24 sites</strong>, or <strong>24 × 0.46 = 11.04 µm</strong>. This is the geometric width before any required placement padding. It does not prove that the surrounding pin access, taps or routing are legal.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — one <code>dfxtp_1</code> and four <code>inv_4</code> share a single row. How many sites and how many micrometers do they occupy?</summary><p><code>dfxtp_1</code> is 16 sites and each <code>inv_4</code> is 5, so 16 + 4 × 5 = 36 sites, or 36 × 0.46 = 16.56 µm, before any padding, taps or fill.</p></details><div class="takeaways">
+    <h2 id="section-8">Key takeaways</h2>
+    <ul>
+      <li>A placement site defines a width and height; ordinary cells in the chosen row architecture use compatible site-quantized footprints.</li>
+      <li>Abutment joins compatible boundary shapes. The power grid and well/substrate taps must still connect and bias the row.</li>
+      <li>N/FS alternation is a common way to share rails, not a requirement for every library or row pattern.</li>
+      <li>Keep placement coordinates, orientation transforms and native LEF ORIGIN offsets distinct.</li>
+      <li>Multiheight legality depends on the complete rail/well pattern and permitted neighbors, not height alone.</li>
+      <li>The cited HD sites are unithd = 0.46 × 2.72 µm and unithddbl = 0.46 × 5.44 µm. inv_1 occupies 3 ordinary sites; dfxtp_1 occupies 16.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-9">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html">SKY130 foundry library dimensions</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef">Inverter LEF</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef">Flip-flop LEF</a></li><li><a href="https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html">LEF/DEF placement and ORIGIN semantics</a></li></ul></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html" aria-current="page">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="gate_topologies.html"><small>← Previous</small>More Gate Topologies</a><a href="power_grid.html"><small>Next →</small>The Power Grid &amp; Routing Grids</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+// Geometry: chip coordinates have the origin at the bottom-left, y increasing
+// upward; SVG y increases downward, so sy() flips.
+const SITE = 16, ROW = 64, NSITES = 36, NROWS = 4;
+const ML = 82, MT = 28, MR = 48, MB = 52;
+const W = NSITES * SITE, H = NROWS * ROW;
+const SW = ML + W + MR, SH = MT + H + MB;
+const sx = s => ML + s * SITE;
+const sy = y => MT + H - y;
+
+function rowShading() {
+  let s = '';
+  for (let r = 0; r < NROWS; r++)
+    s += `<rect x="${sx(0)}" y="${sy((r + 1) * ROW)}" width="${W}" height="${ROW}" fill="${r % 2 ? '#f2f5f9' : '#fafbfd'}"/>`;
+  return s;
+}
+
+function siteLines() {
+  let s = '';
+  for (let i = 0; i <= NSITES; i++)
+    s += `<line x1="${sx(i)}" y1="${sy(0)}" x2="${sx(i)}" y2="${sy(H)}" stroke="#d7dfe8" stroke-width="${i % 6 === 0 ? 1.2 : 0.6}"/>`;
+  return s;
+}
+
+function rails() {
+  let s = '';
+  for (let b = 0; b <= NROWS; b++) {
+    const vss = b % 2 === 0, y = sy(b * ROW);
+    s += `<rect x="${sx(0)}" y="${y - 3.5}" width="${W}" height="7" fill="${vss ? '#3b6fb0' : '#d9534f'}" opacity="0.85"/>`;
+    s += `<text x="${sx(NSITES) + 8}" y="${y + 4}" font-size="11" font-weight="600" fill="${vss ? '#3b6fb0' : '#c0392b'}">${vss ? 'VSS' : 'VDD'}</text>`;
+  }
+  return s;
+}
+
+function rowLabels() {
+  let s = '';
+  for (let r = 0; r < NROWS; r++) {
+    const yc = sy(r * ROW + ROW / 2);
+    s += `<text x="${ML - 10}" y="${yc - 2}" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row ${r}</text>`;
+    s += `<text x="${ML - 10}" y="${yc + 13}" text-anchor="end" font-size="10.5" fill="#7a8794">${r % 2 ? 'FS (flipped)' : 'N (upright)'}</text>`;
+  }
+  return s;
+}
+
+function axis() {
+  let s = '';
+  for (let i = 0; i <= NSITES; i += 6)
+    s += `<text x="${sx(i)}" y="${sy(0) + 18}" text-anchor="middle" font-size="10.5" fill="#7a8794">${i}</text>`;
+  s += `<text x="${sx(NSITES)}" y="${sy(0) + 36}" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text>`;
+  return s;
+}
+
+function cellRect(c) {
+  const h = c.h || 1;
+  const x = sx(c.s), y = sy((c.r + h) * ROW), w = c.w * SITE, ht = h * ROW;
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="${c.fill}" stroke="#3d4f60" stroke-width="1.4"/>`;
+  const cy = c.sub ? y + ROW / 2 : y + ht / 2;   // multi-row cells: label in the top row, clear of the shared rail
+  if (c.sub) {
+    s += `<text x="${x + w / 2}" y="${cy - 3}" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">${c.name}</text>`;
+    s += `<text x="${x + w / 2}" y="${cy + 13}" text-anchor="middle" font-size="10" fill="#5c6b7a">${c.sub}</text>`;
+  } else {
+    s += `<text x="${x + w / 2}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">${c.name}</text>`;
+  }
+  return s;
+}
+
+function originDot(c) {
+  return `<circle cx="${sx(c.s)}" cy="${sy(c.r * ROW)}" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"/>`;
+}
+
+function abutLine(site, row, h) {
+  return `<line x1="${sx(site)}" y1="${sy(row * ROW)}" x2="${sx(site)}" y2="${sy((row + h) * ROW)}" stroke="#1e9e50" stroke-width="3" stroke-dasharray="5 4"/>`;
+}
+
+function svgOpen() {
+  return `<svg viewBox="0 0 ${SW} ${SH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+}
+
+// ---------- Figure 1: the empty site grid ----------
+(function () {
+  let s = svgOpen();
+  s += `<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#33414f"/></marker></defs>`;
+  s += rowShading() + siteLines();
+
+  // Highlight a single site (site 3, row 2) with a callout
+  s += `<rect x="${sx(3)}" y="${sy(3 * ROW)}" width="${SITE}" height="${ROW}" fill="#ffe08a" stroke="#c99700" stroke-width="1.5"/>`;
+  const cy = sy(2.5 * ROW);
+  s += `<line x1="${sx(4) + 3}" y1="${cy}" x2="${sx(5.6)}" y2="${cy}" stroke="#33414f" stroke-width="1"/>`;
+  s += `<text x="${sx(5.8)}" y="${cy + 4}" font-size="11.5" fill="#33414f">one <tspan font-weight="700">site</tspan> — the smallest placement unit (1 site wide × 1 row tall)</text>`;
+
+  // Site-width dimension just below the highlighted site (row 1 is empty)
+  const dy = sy(2 * ROW) + 14;
+  s += `<line x1="${sx(3)}" y1="${dy}" x2="${sx(4)}" y2="${dy}" stroke="#33414f" stroke-width="1" marker-start="url(#ah)" marker-end="url(#ah)"/>`;
+  s += `<text x="${sx(4.4)}" y="${dy + 4}" font-size="10.5" fill="#33414f">site width</text>`;
+
+  // Row-height dimension on the right side of row 1
+  s += `<line x1="${sx(30)}" y1="${sy(ROW) - 5}" x2="${sx(30)}" y2="${sy(2 * ROW) + 5}" stroke="#33414f" stroke-width="1" marker-start="url(#ah)" marker-end="url(#ah)"/>`;
+  s += `<text x="${sx(30) + 7}" y="${sy(1.5 * ROW) + 4}" font-size="10.5" fill="#33414f">row height</text>`;
+
+  s += rails() + rowLabels() + axis();
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: cells placed by abutment ----------
+(function () {
+  const cells = [
+    // s = starting site, r = row, w = width in sites, h = height in rows
+    { s: 2,  r: 0, w: 3,  name: 'INV_X1',   fill: '#cfe3f7' },
+    { s: 5,  r: 0, w: 4,  name: 'NAND2_X1', fill: '#d7ecd0' },
+    { s: 9,  r: 0, w: 11, name: 'DFF_X1',   fill: '#f7ddc9' },
+    { s: 24, r: 0, w: 6,  name: 'BUF_X4',   fill: '#e7d9f2' },
+    { s: 20, r: 1, w: 5,  name: 'AOI21_X1', fill: '#f5efc5' },
+    { s: 25, r: 1, w: 6,  name: 'OAI22_X1', fill: '#f2cfd8' },
+    { s: 31, r: 1, w: 4,  name: 'INV_X8',   fill: '#cfe3f7' },
+    { s: 6,  r: 2, w: 8, h: 2, name: 'BUF_X16', sub: 'double-height', fill: '#d9c9ea' },
+    { s: 14, r: 2, w: 4,  name: 'NAND3_X2', fill: '#d7ecd0' },
+    { s: 18, r: 2, w: 3,  name: 'INV_X2',   fill: '#cfe3f7' },
+    { s: 14, r: 3, w: 5,  name: 'AOI21_X2', fill: '#f5efc5' },
+  ];
+  // Shared edges where cells abut
+  const abuts = [
+    [5, 0, 1], [9, 0, 1],      // row 0 cluster
+    [25, 1, 1], [31, 1, 1],    // row 1 cluster
+    [14, 2, 2],                // double-height cell against its row-2/row-3 neighbors
+    [18, 2, 1],
+  ];
+
+  let s = svgOpen();
+  s += rowShading() + siteLines();
+  s += cells.map(cellRect).join('');
+  s += abuts.map(a => abutLine(...a)).join('');
+  s += rails();
+  s += cells.map(originDot).join('');
+  s += rowLabels() + axis();
+
+  // Callout pointing at the DFF_X1 origin
+  s += `<line x1="${sx(9)}" y1="${sy(0) + 6}" x2="${sx(11)}" y2="${sy(0) + 30}" stroke="#c0392b" stroke-width="1"/>`;
+  s += `<text x="${sx(11) + 4}" y="${sy(0) + 36}" font-size="11" fill="#c0392b">cell origin = bottom-left corner, on a site boundary</text>`;
+
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+<script>
+(function () {
+  const rows = [
+    ['inv_1', 3, '#d6e4f5'],
+    ['inv_2', 3, '#d6e4f5'],
+    ['nand2_1', 3, '#d9f0d6'],
+    ['inv_4', 5, '#d6e4f5'],
+    ['inv_8', 9, '#d6e4f5'],
+    ['dfxtp_1', 16, '#f8e3c4'],
+  ];
+  const S = 28, x0 = 150, h = 26, gap = 14;
+  let s = `<svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  rows.forEach((r, i) => {
+    const y = 16 + i * (h + gap);
+    s += `<text x="${x0 - 8}" y="${y + 18}" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">${r[0]}</text>`;
+    s += `<rect x="${x0}" y="${y}" width="${r[1] * S}" height="${h}" fill="${r[2]}" stroke="#33414f"/>`;
+    for (let k = 0; k <= r[1]; k++) {
+      s += `<line x1="${x0 + k * S}" y1="${y}" x2="${x0 + k * S}" y2="${y + h}" stroke="#9aa5b1" stroke-width="1"/>`;
+    }
+    const um = (r[1] * 0.46).toFixed(2);
+    s += `<text x="${x0 + r[1] * S + 8}" y="${y + 18}" text-anchor="start" font-size="12" fill="#33414f">${r[1]} sites · ${um} µm</text>`;
+  });
+  s += `</svg>`;
+  document.getElementById('fig-sky').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

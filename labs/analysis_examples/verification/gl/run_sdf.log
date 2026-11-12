@@ -1,0 +1,70 @@
+WARNING: tb_gray4_gl.v:23: $sdf_annotate currently only uses the first two argument.
+SDF annotated (TYPICAL) onto dut
+FAIL at 30000: reset value  gray=xxxx bin=x
+FAIL at 40000: bin sequence  gray=xxxx bin=x
+FAIL at 40000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 50000: bin sequence  gray=xxxx bin=x
+FAIL at 50000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 60000: bin sequence  gray=xxxx bin=x
+FAIL at 60000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 70000: bin sequence  gray=xxxx bin=x
+FAIL at 70000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 80000: bin sequence  gray=xxxx bin=x
+FAIL at 80000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 90000: bin sequence  gray=xxxx bin=x
+FAIL at 90000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 100000: bin sequence  gray=xxxx bin=x
+FAIL at 100000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 110000: bin sequence  gray=xxxx bin=x
+FAIL at 110000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 120000: bin sequence  gray=xxxx bin=x
+FAIL at 120000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 130000: bin sequence  gray=xxxx bin=x
+FAIL at 130000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 140000: bin sequence  gray=xxxx bin=x
+FAIL at 140000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 150000: bin sequence  gray=xxxx bin=x
+FAIL at 150000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 160000: bin sequence  gray=xxxx bin=x
+FAIL at 160000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 170000: bin sequence  gray=xxxx bin=x
+FAIL at 170000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 180000: bin sequence  gray=xxxx bin=x
+FAIL at 180000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 190000: bin sequence  gray=xxxx bin=x
+FAIL at 190000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 200000: bin sequence  gray=xxxx bin=x
+FAIL at 200000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 210000: bin sequence  gray=xxxx bin=x
+FAIL at 210000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 220000: bin sequence  gray=xxxx bin=x
+FAIL at 220000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 230000: bin sequence  gray=xxxx bin=x
+FAIL at 230000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 240000: bin sequence  gray=xxxx bin=x
+FAIL at 240000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 250000: bin sequence  gray=xxxx bin=x
+FAIL at 250000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 260000: bin sequence  gray=xxxx bin=x
+FAIL at 260000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 270000: bin sequence  gray=xxxx bin=x
+FAIL at 270000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 280000: bin sequence  gray=xxxx bin=x
+FAIL at 280000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 290000: bin sequence  gray=xxxx bin=x
+FAIL at 290000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 300000: bin sequence  gray=xxxx bin=x
+FAIL at 300000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 310000: bin sequence  gray=xxxx bin=x
+FAIL at 310000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 320000: bin sequence  gray=xxxx bin=x
+FAIL at 320000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 330000: bin sequence  gray=xxxx bin=x
+FAIL at 330000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 340000: bin sequence  gray=xxxx bin=x
+FAIL at 340000: Gray Hamming distance  gray=xxxx bin=x
+FAIL at 350000: bin sequence  gray=xxxx bin=x
+FAIL at 350000: Gray Hamming distance  gray=xxxx bin=x
+FAIL  tb_gray4_gl  USE_SDF=1  65 errors
+CLK->Q  no transitions captured
+tb_gray4_gl.v:84: $finish called at 350000 (1ps)

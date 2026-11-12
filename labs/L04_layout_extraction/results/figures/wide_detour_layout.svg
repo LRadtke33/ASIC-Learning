@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 370" role="img">
+<rect width="720" height="370" fill="white"/><g font-family="system-ui,sans-serif" fill="#33414f" font-size="13">
+<rect x="30" y="30" width="280" height="300" fill="#8b9dab" fill-opacity="0.2" stroke="#8b9dab"/>
+<rect x="40" y="40" width="260" height="170" fill="#a56830" fill-opacity="0.2" stroke="#a56830"/>
+<polyline points="70,270 70,70 270,70 270,270" fill="none" stroke="#2b6cb0" stroke-width="4" stroke-linejoin="miter"/>
+<circle cx="70" cy="270" r="4" fill="#26313c"/>
+<text x="70" y="290" text-anchor="middle">DRV</text>
+<circle cx="270" cy="270" r="4" fill="#26313c"/>
+<text x="270" y="290" text-anchor="middle">RX</text>
+<text x="380" y="45" font-weight="700" font-size="18">Wider detour</text>
+<text x="380" y="79" >Length: 600 µm; width: 1.2 µm</text>
+<text x="380" y="105" >Estimated route R: 23.500 Ω</text>
+<text x="380" y="131" >C to reference: 146.037 fF</text>
+<text x="380" y="157" >C to aggressor: 48.404 fF</text>
+<text x="380" y="203" fill="#2b6cb0">Blue: met3 signal</text>
+<text x="380" y="227" fill="#a56830">Orange: met4 aggressor</text>
+<text x="380" y="251" fill="#168166">Green: grounded met4 patch</text>
+<text x="380" y="275" fill="#5c6b7a">Gray: quiet met2 reference</text>
+<text x="360" y="347" text-anchor="middle" font-size="12">Positions use µm coordinates; signal stroke is widened for readability.</text>
+</g></svg>

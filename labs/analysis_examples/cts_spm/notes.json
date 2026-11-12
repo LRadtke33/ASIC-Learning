@@ -1,0 +1,59 @@
+{
+  "design": "LibreLane example spm (32-bit serial/parallel multiplier)",
+  "source": "librelane 3.0.17 examples/spm",
+  "librelane": "3.0.17",
+  "pdk": "sky130A",
+  "pdk_hash": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+  "scl": "sky130_fd_sc_hd",
+  "clock_period_ns": 10.0,
+  "clock_port": "clk",
+  "run_id": "RUN_2026-11-11_16-09-06",
+  "run_stopped_after": "OpenROAD.ResizerTimingPostCTS",
+  "note": "Mid-PnR, after CTS and post-CTS resizer. Not routed. STA uses placement-based estimated parasitics. Not a signoff result.",
+  "cts": {
+    "roots": 1,
+    "buffers_inserted": 9,
+    "buffer_type": "sky130_fd_sc_hd__clkbuf_16 (all 9)",
+    "buf_list_requested": [
+      "clkbuf_8",
+      "clkbuf_4",
+      "clkbuf_2"
+    ],
+    "root_buf": "clkbuf_16",
+    "sinks": 64,
+    "clock_subnets": 9,
+    "path_depth": "2-2",
+    "max_level": 3,
+    "fanout_distribution": "8:8",
+    "avg_sink_wire_um": 103.41,
+    "leaf_buffers": 0,
+    "dummy_loads": 0,
+    "clock_buffer_area_um2": 225.216
+  },
+  "sta_midpnr_nom_tt_025C_1v80": {
+    "latency_rise_min_ns": 0.33492,
+    "latency_rise_max_ns": 0.373694,
+    "skew_rise_ns": 0.038773,
+    "latency_fall_min_ns": 0.318771,
+    "latency_fall_max_ns": 0.355329,
+    "skew_fall_ns": 0.036558,
+    "setup_wns_ns": 0.0,
+    "setup_ws_ns": 5.8818,
+    "hold_wns_ns": 0.0,
+    "hold_ws_ns": 0.185384,
+    "setup_skew_with_uncertainty_and_CRPR_ns": 0.267682,
+    "clock_uncertainty_ns": 0.25,
+    "CRPR_setup_ns": -0.021052,
+    "period_min_ns": 1.2,
+    "fmax_MHz": 830.64,
+    "fmax_note": "report_clock_min_period at this mid-PnR view only; not post-route signoff"
+  },
+  "resizer_post_cts": {
+    "hold_margin_ns": 0.1,
+    "setup_margin_ns": 0.05,
+    "hold_violation_endpoints_reported": 64,
+    "hold_buffers_inserted": 33,
+    "setup_buffers_inserted": 0,
+    "clock_buffers_unchanged": 9
+  }
+}

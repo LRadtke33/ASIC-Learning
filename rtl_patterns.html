@@ -1,0 +1,235 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+<p class="lesson-meta">Lesson 33 / 84 · Part V, Digital implementation</p>
+<h1>RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</h1>
+<p class="subtitle">A 3-state traffic light mapped by Yosys 0.52 onto sky130_fd_sc_hd: binary encoding is 7 cells and 98.8448&nbsp;µm²; explicit one-hot is 13 cells and 177.6704&nbsp;µm². The one-hot reset bit that is 1 after reset maps to a <code>dfstp_2</code> (async set), not a reset flop.</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> Both machines were synthesised on 11 November 2026, America/Chicago, with Yosys 0.52 (<code>fee39a3284c90249e1d9684cf6944ffbbcbb8f90</code>) and ABC, against the same filtered Liberty used in <a href="datapath_arithmetic.html">lesson 44</a>: the SKY130 HD <code>tt_025C_1v80</code> table after LibreLane Classic 3.0.17’s default <code>SYNTH_EXCLUDED_CELL_FILE</code> (<code>no_synth.cells</code>) and <code>PNR_EXCLUDED_CELL_FILE</code> (<code>drc_exclude.cells</code>). The script is <code>proc; flatten; opt; memory; opt; techmap; opt; dfflibmap; abc; clean; stat -liberty</code> — the Yosys <code>fsm</code> pass was not run, so it did not recode the states. RTL, scripts, mapped netlists and <code>stat</code> excerpts are in <code>labs/analysis_examples/rtl_patterns/</code>. Areas are Yosys’s Liberty-based chip area, which matches this PDK’s LEF for the cells used. No STA was run: this lesson does not claim a delay for either encoding. Verilator lint on the same RTL used the box’s Verilator 5.032 (Debian); the Lab 6 SPM lint cited in section 8 used Verilator 5.044 inside LibreLane’s nix environment. Handshake and pipeline figures are teaching diagrams, not simulation waveforms.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Write a clocked FSM with a default next-state, a complete <code>case</code>, and an async-assert reset that maps onto SKY130 <code>dfrtp</code> / <code>dfstp</code> cells.</li>
+<li>Compare binary and one-hot encodings by area on a real Yosys mapping, and see why a one-hot state that is 1 after reset becomes a set flop.</li>
+<li>Use a valid/ready handshake and a stallable pipeline without inferring latches.</li>
+<li>Read a Verilator lint report, including <code>CASEINCOMPLETE</code>, and the LibreLane lint metrics recorded on the SPM.</li>
+</ul></div>
+<aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl>
+<dt>In the flow</dt><dd>First lesson of Part V. It is the RTL you write before <a href="rtl_synthesis_constraints.html">synthesis and constraints (lesson 34)</a>. Power of a finished netlist is <a href="power_analysis.html">lesson 38</a>; adders and multipliers are <a href="datapath_arithmetic.html">lesson 44</a>; simulation is <a href="functional_verification.html">lesson 46</a>; async reset release is <a href="cdc_reset.html">lesson 39</a>.</dd>
+<dt>Tools</dt><dd>Yosys 0.52 and ABC for mapping; Verilator for lint. The next lesson is how LibreLane invokes that path with a clock constraint.</dd>
+<dt>Why it matters</dt><dd>A synthesiser will map whatever you write, including latches, multi-driven nets and a reset polarity that picks a more expensive flop. The patterns here are the ones that map cleanly onto sky130_fd_sc_hd.</dd>
+</dl></aside>
+<h2 id="section-1">1. What this lesson is for</h2>
+<p>Part V is the digital implementation path: RTL, a clock tree, gating, power, CDC, scan, memories and datapath. Every later lesson assumes the source is a synchronous, fully assigned, reset-safe description. This lesson is those habits, anchored on a machine small enough to read in one sitting and actually mapped onto this PDK.</p>
+<p>Two Verilog files describe the same 3-state traffic light (red → green → yellow → red), advanced by a one-cycle <code>tick</code> pulse. One uses a 2-bit binary state, the other an explicit 3-bit one-hot. Both use an asynchronous active-low reset to red. The question is not which style is “better” in the abstract — it is what Yosys puts down when the encoding is left as written, and how much area that costs on sky130_fd_sc_hd.</p>
+<h2 id="section-2">2. The machine, as written</h2>
+<p>Three states, one input pulse, a 2-bit light output (0 = red, 1 = green, 2 = yellow). A <code>default</code> arm returns an illegal state to red. The sequential process is the only place that assigns <code>state</code>; next-state and output logic are combinational and complete.</p>
+<pre><code>// Binary encoding. One-hot is the same machine with
+// S_RED = 3'b001, S_GREEN = 3'b010, S_YELLOW = 3'b100
+// and a 3-bit state register.
+localparam [1:0] S_RED = 2'd0, S_GREEN = 2'd1, S_YELLOW = 2'd2;
+reg [1:0] state, next_state;
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) state &lt;= S_RED;
+    else        state &lt;= next_state;
+end
+
+always @* begin
+    next_state = state;                 // default: hold
+    case (state)
+        S_RED:    if (tick) next_state = S_GREEN;
+        S_GREEN:  if (tick) next_state = S_YELLOW;
+        S_YELLOW: if (tick) next_state = S_RED;
+        default:            next_state = S_RED;
+    endcase
+end</code></pre>
+<p>The default assignment before the <code>case</code> is what stops a latch: every path assigns <code>next_state</code>. The <code>default</code> arm inside the <code>case</code> is a safety net for a corrupted state, not a substitute for that assignment. A 3-state machine cannot form a perfect Gray-code cycle — one of the three edges would flip two bits — so Gray is not compared here.</p>
+
+<figure class="diagram" role="img" aria-label="Three-state traffic-light bubble diagram, with a reset arrow into red and tick-labelled transitions.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 260" width="760" height="260" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="260" fill="#fbfcfd"/>
+  <circle cx="140" cy="130" r="54" fill="#fde8e8" stroke="#b42318" stroke-width="2"/>
+  <text x="140" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#7a1f16">RED</text>
+  <text x="140" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">bin 00 · oh 001</text>
+  <circle cx="380" cy="130" r="54" fill="#e7f6ea" stroke="#217a3a" stroke-width="2"/>
+  <text x="380" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#165b28">GREEN</text>
+  <text x="380" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">bin 01 · oh 010</text>
+  <circle cx="620" cy="130" r="54" fill="#fff4d6" stroke="#b54708" stroke-width="2"/>
+  <text x="620" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#8a3b08">YELLOW</text>
+  <text x="620" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">bin 10 · oh 100</text>
+  <path d="M194 130 H326" fill="none" stroke="#33414f" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="260" y="118" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">tick</text>
+  <path d="M434 130 H566" fill="none" stroke="#33414f" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="500" y="118" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">tick</text>
+  <path d="M620 184 C620 230 140 230 140 184" fill="none" stroke="#33414f" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="380" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">tick</text>
+  <path d="M140 40 V76" fill="none" stroke="#b42318" stroke-width="1.6" marker-end="url(#b)"/>
+  <text x="140" y="32" text-anchor="middle" font-size="12" font-weight="600" fill="#b42318">rst_n = 0</text>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#33414f"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#b42318"/></marker>
+  </defs>
+</svg>
+<figcaption><strong>Figure 1 — The 3-state machine.</strong> Encoding is shown under each bubble; the arrows and the reset target are the same for both RTL files. Hold-when-<code>tick</code>-is-0 is omitted for clarity.</figcaption>
+</figure>
+<h2 id="section-3">3. What Yosys actually mapped</h2>
+<p>On the filtered Liberty, <code>dfrtp_1</code> and <code>dfstp_1</code> are on <code>no_synth.cells</code>, so the mapper used the next legal drive: <code>dfrtp_2</code> and <code>dfstp_2</code>. Each of those cells is 26.2752&nbsp;µm² in this PDK’s LEF (9.66 × 2.72&nbsp;µm). Yosys’s sequential-area line is exact integer multiples of that number.</p>
+<table>
+<thead><tr><th>Encoding, as written</th><th>Cells</th><th>Flip-flops</th><th>Sequential area (µm²)</th><th>Total area (µm²)</th></tr></thead>
+<tbody>
+<tr><td>Binary (<code>traffic_bin</code>)</td><td>7</td><td>2 × <code>dfrtp_2</code></td><td>52.5504 (53.16%)</td><td><strong>98.8448</strong></td></tr>
+<tr><td>One-hot (<code>traffic_oh</code>)</td><td>13</td><td>2 × <code>dfrtp_2</code> + 1 × <code>dfstp_2</code></td><td>78.8256 (44.37%)</td><td><strong>177.6704</strong></td></tr>
+</tbody>
+</table>
+<p>One-hot is 1.80× the area of binary on this machine (177.6704 / 98.8448). It uses one more flop — three one-hot bits versus two binary bits — and more combinational logic to decode a 3-bit unique-hot vector. The interesting cell is the third flop: <code>S_RED = 3'b001</code>, so after reset <code>state[0]</code> must be 1. Yosys mapped that bit to <code>sky130_fd_sc_hd__dfstp_2</code>, an async-<em>set</em> flop whose <code>SET_B</code> pin is tied to <code>rst_n</code>. The other two bits reset to 0 and are ordinary <code>dfrtp_2</code>. That is the library doing what the RTL asked, not a bug.</p>
+<p>Binary mapped to 2 × <code>dfrtp_2</code> plus <code>a21oi_2</code>, two <code>and2b_2</code>, <code>o21a_2</code> and <code>mux2_1</code>. The mapped Verilog is in the analysis folder and is short enough to read: <code>state[0]</code> and <code>state[1]</code> are the two flop outputs; the light bits are combinational functions of those Q pins.</p>
+<figure class="diagram" role="img" aria-label="Bar chart of Yosys chip area for binary versus one-hot, with sequential area shaded.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 230" width="720" height="230" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="720" height="230" fill="#fbfcfd"/>
+  <text x="24" y="28" font-size="15" font-weight="700" fill="#33414f">Yosys chip area, filtered tt_025C_1v80 Liberty</text>
+  <text x="24" y="48" font-size="12" fill="#5c6b7a">shaded portion is sequential (dfrtp_2 / dfstp_2 at 26.2752 µm² each)</text>
+  <text x="170" y="108" text-anchor="end" font-size="14" font-weight="600" fill="#33414f">binary</text>
+  <rect x="180" y="82" width="148" height="36" fill="#9ec5e8" stroke="#2b6cb0"/>
+  <rect x="180" y="82" width="278" height="36" fill="none" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="468" y="106" font-size="13" font-weight="700" fill="#33414f">98.8448 µm²</text>
+  <text x="170" y="168" text-anchor="end" font-size="14" font-weight="600" fill="#33414f">one-hot</text>
+  <rect x="180" y="142" width="222" height="36" fill="#f0c987" stroke="#b54708"/>
+  <rect x="180" y="142" width="500" height="36" fill="none" stroke="#b54708" stroke-width="1.5"/>
+  <text x="690" y="166" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">177.6704 µm²</text>
+  <text x="186" y="104" font-size="11" fill="#1a365d">52.55</text>
+  <text x="186" y="164" font-size="11" fill="#7a3b08">78.83</text>
+</svg>
+<figcaption><strong>Figure 2 — Recorded areas.</strong> The filled region is sequential area; the outline is the module total. No delay is shown, because none was measured.</figcaption>
+</figure>
+<p>One-hot is often recommended for “faster” next-state logic, because a state test is a single bit. On a 3-state machine that advantage, if it exists, is a timing claim, and this run did not measure timing. Use the area numbers; do not infer a frequency from them. For a machine with many states, flop area grows linearly with one-hot and only with the log of the state count for binary — that scaling is the usual reason to pick binary for a large FSM, and it is a reasoning argument, not a second measurement.</p>
+<h2 id="section-4">4. Reset, and which flop you get</h2>
+<p>The sensitivity list <code>always @(posedge clk or negedge rst_n)</code> is an asynchronous assert: when <code>rst_n</code> falls, the flop is forced without waiting for a clock edge. SKY130 HD has dedicated cells for that:</p>
+<table>
+<thead><tr><th>Cell (legal after exclusion: drive <code>_2</code>)</th><th>LEF size (µm)</th><th>LEF area (µm²)</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td><code>dfxtp_2</code> (no async set/reset)</td><td>7.82 × 2.72</td><td>21.2704</td><td>Plain D-flop; a sync reset is extra mux logic in front of D</td></tr>
+<tr><td><code>dfrtp_2</code> (async reset, Q → 0)</td><td>9.66 × 2.72</td><td>26.2752</td><td>What the binary machine used for both bits</td></tr>
+<tr><td><code>dfstp_2</code> (async set, Q → 1)</td><td>9.66 × 2.72</td><td>26.2752</td><td>What one-hot used for the bit that is 1 in <code>S_RED</code></td></tr>
+</tbody>
+</table>
+<p>The <code>_1</code> drives exist in the LEF (<code>dfrtp_1</code> is 9.2 × 2.72 = 25.0240&nbsp;µm²) but are on LibreLane’s <code>no_synth.cells</code>, so a default flow will not pick them — the same exclusion that <a href="datapath_arithmetic.html#dont-use">lesson 44</a> applied to the adder and multiplier. Areas in the table are LEF <code>SIZE</code>, not a second synthesis of a synchronous-reset FSM.</p>
+<p>Asynchronous assert is convenient; asynchronous <em>release</em> is not. If <code>rst_n</code> rises near a clock edge, two flops can leave reset on different cycles. The usual pattern is async assert, synchronous release: two flops in series, clocked, with async reset on both, the first’s D tied high, the second’s Q used as the local released reset. That synchroniser is a CDC topic — <a href="cdc_reset.html">lesson 39</a> — and is not re-derived here.</p>
+
+<h2 id="section-5">5. Valid / ready</h2>
+<p>A datapath block that cannot be back-pressured will drop or overwrite a beat. The usual two-wire contract is: the sender raises <code>valid</code> and holds <code>data</code> stable; the receiver raises <code>ready</code> when it can accept; a transfer occurs in the cycle where both are 1. Either side may stall by deasserting its wire. This is a teaching diagram, not a simulated waveform.</p>
+<figure class="diagram" role="img" aria-label="Valid/ready handshake: a transfer only in the cycle where both valid and ready are high, with data held in the stall cycles.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 250" width="820" height="250" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="820" height="250" fill="#fbfcfd"/>
+  <text x="20" y="28" font-size="15" font-weight="700" fill="#33414f">valid / ready — transfer when both are 1</text>
+  <g font-size="11" fill="#5c6b7a">
+    <text x="140" y="50" text-anchor="middle">cycle 0</text>
+    <text x="280" y="50" text-anchor="middle">cycle 1</text>
+    <text x="420" y="50" text-anchor="middle">cycle 2</text>
+    <text x="560" y="50" text-anchor="middle">cycle 3</text>
+    <text x="700" y="50" text-anchor="middle">cycle 4</text>
+  </g>
+  <g stroke="#d7dfe8" stroke-dasharray="3 3" stroke-width="1">
+    <line x1="70" y1="58" x2="70" y2="220"/>
+    <line x1="210" y1="58" x2="210" y2="220"/>
+    <line x1="350" y1="58" x2="350" y2="220"/>
+    <line x1="490" y1="58" x2="490" y2="220"/>
+    <line x1="630" y1="58" x2="630" y2="220"/>
+    <line x1="770" y1="58" x2="770" y2="220"/>
+  </g>
+  <text x="16" y="92" font-size="13" font-weight="600" fill="#33414f">valid</text>
+  <path d="M70 108 H210 V76 H490 V108 H770" fill="none" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="16" y="140" font-size="13" font-weight="600" fill="#33414f">ready</text>
+  <path d="M70 156 H350 V124 H490 V156 H630 V124 H770" fill="none" stroke="#217a3a" stroke-width="2"/>
+  <text x="16" y="196" font-size="13" font-weight="600" fill="#33414f">data</text>
+  <rect x="214" y="176" width="272" height="32" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="350" y="197" text-anchor="middle" font-size="13" font-weight="600" fill="#1a365d">held word A</text>
+  <rect x="354" y="58" width="132" height="162" fill="#e7f6ea" fill-opacity="0.35" stroke="none"/>
+  <text x="420" y="238" text-anchor="middle" font-size="12" font-weight="700" fill="#165b28">transfer</text>
+  <text x="280" y="238" text-anchor="middle" font-size="12" fill="#5c6b7a">stall (ready=0)</text>
+  <text x="700" y="238" text-anchor="middle" font-size="12" fill="#5c6b7a">idle (valid=0)</text>
+</svg>
+<figcaption><strong>Figure 3 — A valid/ready beat.</strong> Illustrative. Data is held through the stall (cycle 1). The only transfer is cycle 2, where both wires are high. Changing data while <code>valid</code> is high and <code>ready</code> is low breaks the contract.</figcaption>
+</figure>
+<p>A common bug is to compute <code>ready</code> from a registered full-flag that itself depends on a transfer in the same cycle, or to drop <code>valid</code> the instant the sender wants to move on, before the receiver has accepted. The safe sender rule: once <code>valid</code> is raised, hold <code>valid</code> and <code>data</code> until a cycle with <code>ready</code>.</p>
+<h2 id="section-6">6. Pipelines and stalls</h2>
+<p>A pipeline is a chain of valid/ready stages. Each stage registers data and a valid bit; its ready goes backward and is typically combinational from the next stage’s ready or from a local “not full.” A stall freezes the stage that cannot move and, if the handshake is correct, back-pressures the stages behind it so that no beat is lost and no stage overwrites a word it has not handed on.</p>
+<figure class="diagram" role="img" aria-label="Three pipeline stages with valid going forward, ready going backward, and a stall at stage 2.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="800" height="200" fill="#fbfcfd"/>
+  <text x="20" y="28" font-size="15" font-weight="700" fill="#33414f">A three-stage pipeline, stall at stage 2</text>
+  <rect x="80" y="60" width="140" height="64" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="150" y="98" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">stage 0</text>
+  <rect x="310" y="60" width="140" height="64" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="380" y="98" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">stage 1</text>
+  <rect x="540" y="60" width="140" height="64" rx="6" fill="#fde8e8" stroke="#b42318"/>
+  <text x="610" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">stage 2</text>
+  <text x="610" y="110" text-anchor="middle" font-size="12" fill="#7a1f16">stalled</text>
+  <path d="M220 80 H310" fill="none" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#c)"/>
+  <path d="M450 80 H540" fill="none" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#c)"/>
+  <path d="M680 80 H750" fill="none" stroke="#2b6cb0" stroke-width="1.8" marker-end="url(#c)"/>
+  <text x="265" y="72" text-anchor="middle" font-size="11" fill="#1a365d">valid</text>
+  <text x="495" y="72" text-anchor="middle" font-size="11" fill="#1a365d">valid</text>
+  <text x="715" y="72" text-anchor="middle" font-size="11" fill="#1a365d">valid</text>
+  <path d="M310 108 H220" fill="none" stroke="#217a3a" stroke-width="1.8" marker-end="url(#d)"/>
+  <path d="M540 108 H450" fill="none" stroke="#217a3a" stroke-width="1.8" marker-end="url(#d)"/>
+  <path d="M750 108 H680" fill="none" stroke="#217a3a" stroke-width="1.8" marker-end="url(#d)"/>
+  <text x="265" y="142" text-anchor="middle" font-size="11" fill="#165b28">ready = 0</text>
+  <text x="495" y="142" text-anchor="middle" font-size="11" fill="#165b28">ready = 0</text>
+  <text x="715" y="142" text-anchor="middle" font-size="11" fill="#165b28">ready = 0</text>
+  <text x="400" y="180" text-anchor="middle" font-size="12" fill="#5c6b7a">illustrative: back-pressure travels toward the sender; frozen stages must not load a new word</text>
+  <defs>
+    <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2b6cb0"/></marker>
+    <marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#217a3a"/></marker>
+  </defs>
+</svg>
+<figcaption><strong>Figure 4 — Stall back-pressure.</strong> Illustrative. If stage 2 is not ready, stage 1 must not be ready unless it has a bubble (its valid is 0) that it can fill. A combinational ready chain can become a long timing path; that is a synthesis concern for <a href="rtl_synthesis_constraints.html">lesson 34</a>.</figcaption>
+</figure>
+<h2 id="section-7">7. Counters, parameters, and style that maps</h2>
+<p>A counter is an FSM with a regular next-state. Prefer a <code>localparam</code> width and a comparison against a named limit over a magic number, and reset it with the same async-assert convention as the traffic light. For a one-hot ring, the same <code>dfstp</code> observation applies: the bit that is 1 after reset is a set flop.</p>
+<p>Parameterise widths with <code>parameter</code> or <code>localparam</code> (<code>parameter WIDTH = 8</code>) so a parent can instantiate <code>#(.WIDTH(32))</code>. Generate blocks are appropriate for repeated structure; they are not a way to hide incomplete assignments. Do not use <code>initial</code> to reset synthesizable state — simulators will, silicon will not (unless a tool happens to treat it as a hint, which you must not rely on). Do not use <code>#delay</code> in RTL that is going to a library: Yosys will ignore or reject it, and LibreLane’s lint has a dedicated metric for timing constructs.</p>
+
+<h2 id="section-8">8. Lint, and the pitfalls it is for</h2>
+<p>Two Verilator runs sit behind this section, and they are not the same binary.</p>
+<p><strong>The traffic-light RTL, Verilator 5.032 (Debian, this box).</strong> <code>verilator --lint-only -Wall</code> on <code>traffic_bin.v</code> completed with a clean report — no warnings. The same command on a deliberately broken companion, <code>latch_pitfall.v</code>, which assigns <code>next_state</code> only for states 0 and 1 and only when <code>tick</code> is 1, reported:</p>
+<pre><code>%Warning-CASEINCOMPLETE: latch_pitfall.v:4:9: Case values
+    incompletely covered (example pattern 0x2)
+%Error: Exiting due to 1 warning(s)</code></pre>
+<p>With <code>-Wall</code>, Verilator 5.032 treats that warning as fatal. The uncovered pattern is state 2 — exactly the arm the good FSM fills. An incomplete <code>case</code> in a combinational block is how a latch is inferred: the signal keeps its old value when no arm assigns it. Verilator named the coverage hole rather than the word “latch”; Yosys would then implement that hole as a latch if you mapped the bad file.</p>
+<p><strong>The Lab 6 SPM, Verilator 5.044, inside LibreLane 3.0.17.</strong> Step <code>01-verilator-lint</code> of run <code>RUN_2026-11-11_16-09-06</code> reported a clean log. The four LibreLane lint metrics, on steps 01–04, were all zero: <code>design__lint_error__count</code>, <code>design__lint_timing_construct__count</code>, <code>design__lint_warning__count</code>, and <code>design__lint_inferred_latch__count</code>. That is a recorded result on the bundled multiplier, not a claim about every design.</p>
+<table>
+<thead><tr><th>Pitfall</th><th>What goes wrong</th><th>What to write instead</th></tr></thead>
+<tbody>
+<tr><td>Incomplete combinational <code>case</code> or missing default assignment</td><td>A latch; <code>CASEINCOMPLETE</code>; LibreLane <code>inferred_latch</code></td><td>Assign a default, then the <code>case</code>; cover every encoding, including <code>default</code></td></tr>
+<tr><td>Multi-driven net (two <code>always</code> or <code>assign</code> on one wire)</td><td>X in simulation; a fight in silicon</td><td>One driver per signal; mux or a single process</td></tr>
+<tr><td>Combinational loop</td><td>Oscillation, or a tool that refuses to map</td><td>Break the loop with a register; check the path in the schematic</td></tr>
+<tr><td><code>initial</code> for state</td><td>Works in a testbench, does not become a reset on the die</td><td>An explicit reset, as in section 4</td></tr>
+<tr><td><code>#delay</code>, <code>posedge</code> waits in RTL</td><td>LibreLane timing-construct lint; ignored or illegal in synthesis</td><td>Keep delays in the testbench only</td></tr>
+<tr><td>Mixed blocking/non-blocking in one sequential process</td><td>Simulation/synthesis mismatch</td><td>Non-blocking (<code>&lt;=</code>) for state; blocking (<code>=</code>) in combinational <code>always @*</code></td></tr>
+</tbody>
+</table>
+<details class="checkpoint"><summary>Why did the one-hot machine get a <code>dfstp_2</code> as well as two <code>dfrtp_2</code>?</summary><p>The reset state is <code>3'b001</code>. The bit that must be 1 after reset is an async-set flop (<code>dfstp_2</code>, <code>SET_B</code> tied to <code>rst_n</code>). The bits that must be 0 are async-reset flops (<code>dfrtp_2</code>). Yosys mapped what the encoding asked for. The sequential area is 3 × 26.2752 = 78.8256&nbsp;µm².</p></details>
+<details class="checkpoint"><summary>Is one-hot faster than binary on this traffic light?</summary><p>This lesson does not say. The recorded facts are area (98.8448 vs 177.6704&nbsp;µm²) and cell counts (7 vs 13). No STA was run. A timing claim would need a clock constraint and a report, as in <a href="rtl_synthesis_constraints.html">lesson 34</a> or <a href="multicorner_sta.html">lesson 45</a>.</p></details>
+<details class="checkpoint"><summary>Verilator reported <code>CASEINCOMPLETE</code> on the pitfall file, not the word “latch.” Is that file still going to infer a latch?</summary><p>Yes, if you synthesise it. The uncovered encoding is state 2, and the arms that do exist only assign when <code>tick</code> is 1, so <code>next_state</code> is not assigned on every path. Verilator 5.032 named the coverage hole. Yosys would implement the unassigned path as a latch. The good FSM avoids this with a default assignment and a complete <code>case</code>.</p></details>
+<h2 id="section-9">Sources &amp; scope</h2>
+<p>Technical writing: 11 November 2026, America/Chicago. Areas and cell names are from Yosys 0.52 <code>stat -liberty</code> on the filtered HD <code>tt_025C_1v80</code> Liberty, same exclusion lists as <a href="datapath_arithmetic.html">lesson 44</a>. Flop dimensions are this PDK’s HD LEF. Lint: Verilator 5.032 on the teaching RTL; Verilator 5.044 / LibreLane metrics on the SPM run already recorded in Lab 6. Handshake and pipeline figures are not simulated.</p>
+<ol>
+<li>RTL, Yosys scripts, mapped netlists and <code>stat</code> excerpts: <code>labs/analysis_examples/rtl_patterns/</code>.</li>
+<li>Filtered Liberty construction: <a href="datapath_arithmetic.html#dont-use">lesson 44</a>, lists at <code>libs.tech/openlane/sky130_fd_sc_hd/no_synth.cells</code> and <code>drc_exclude.cells</code>.</li>
+<li>SPM lint: <code>01-verilator-lint/verilator-lint.log</code> and the lint keys of <code>RUN_2026-11-11_16-09-06</code>.</li>
+</ol>
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul>
+<li><a href="rtl_synthesis_constraints.html">Lesson 34</a>, for how this RTL is constrained and mapped in a full flow.</li>
+<li><a href="datapath_arithmetic.html">Lesson 44</a>, for adders and multipliers on the same filtered Liberty.</li>
+<li><a href="functional_verification.html">Lesson 46</a>, for simulating the design you have just linted.</li>
+<li>The files in <code>labs/analysis_examples/rtl_patterns/</code>.</li>
+</ul></section>
+<div class="lesson-footer"><a href="dfm_yield.html"><small>← Previous</small>DFM, Variation &amp; Yield: A Digital View</a><a href="rtl_synthesis_constraints.html"><small>Next →</small>RTL, Synthesis &amp; Timing Constraints</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+
+
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html" aria-current="page">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</main></body></html>

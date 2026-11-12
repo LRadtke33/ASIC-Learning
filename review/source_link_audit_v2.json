@@ -1,0 +1,1654 @@
+{
+  "audit_started_utc": "2026-11-06T22:56:14.211188+00:00",
+  "audit_completed_utc": "2026-11-06T22:58:39.151624+00:00",
+  "pages": [
+    "differential_pairs.html",
+    "references_startup.html",
+    "rtl_synthesis_constraints.html",
+    "clock_gating_power_states.html",
+    "matching_layout_extraction.html",
+    "power_package_thermal.html",
+    "calibration_trim.html",
+    "spectral_measurements.html",
+    "lab_inverter_characterization.html",
+    "lab_bias_amplifier.html",
+    "lab_sampling_interface.html",
+    "lab_layout_extraction.html",
+    "lab_mixed_signal_integration.html"
+  ],
+  "method": "Deduplicated external HTML-anchor URLs after fragment removal. Up to 8 concurrent requests, 10-second request timeout. HEAD first; on failure GET with Range 0-8191 and at most 8192 body bytes read. Redirects followed. No page bodies edited. Access failures are separated from confirmed404/410.",
+  "summary": {
+    "confirmed_http_not_found": 1,
+    "accessible": 48,
+    "misdirected_redirect": 1
+  },
+  "links": [
+    {
+      "url": "https://citeseerx.ist.psu.edu/document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+      "host": "citeseerx.ist.psu.edu",
+      "uses": [
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://citeseerx.ist.psu.edu/document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+          "label": "Cummings' CDC paper",
+          "in_sources_section": false
+        },
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://citeseerx.ist.psu.edu/document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+          "label": "Cummings, CDC Design & Verification Techniques, SNUG Boston 2008",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "confirmed_http_not_found",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 404,
+          "final_url": "https://web.archive.org/web/20251230112235/https://citeseerx.ist.psu.edu//document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+          "error": "Not Found",
+          "elapsed_s": 7.525
+        },
+        {
+          "method": "GET",
+          "status": 404,
+          "final_url": "https://web.archive.org/web/20251230112235/https://citeseerx.ist.psu.edu//document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+          "error": "Not Found",
+          "elapsed_s": 5.482
+        }
+      ],
+      "source_type": "mirrored_primary_research_paper",
+      "primary_source_note": "Primary Cummings SNUG 2008 paper mirrored by an academic index; not author-controlled hosting. Current access fails.",
+      "issue": "HEAD and GET redirect to an Internet Archive capture returning 404.",
+      "suggested_replacements": [
+        {
+          "url": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG 2008Boston_CDC.pdf",
+          "title": "Clock Domain Crossing (CDC) Design & Verification Techniques Using SystemVerilog",
+          "author": "Clifford E. Cummings",
+          "event": "SNUG Boston 2008",
+          "hosting": "Third-party hosted copy of the primary paper; already used in cdc_reset.html; retain hosted-copy label.",
+          "access": "HEAD 200; PDF viewer source also indexed by web search. Root requested the previously verified hosted copy be reused."
+        },
+        {
+          "url": "https://www.paradigm-works.com/technical-library?term=clock+domain+crossing+%28cdc%29+design+%26+verification+techniques+using+systemverilog",
+          "title": "Paradigm Works Technical Library listing of the same paper",
+          "hosting": "Current destination of the original Sunburst Design PDF link",
+          "access": "GET 200; listing is public, but the website states document access requires login/registration. Do not describe as an open PDF or substitute it alone for the accessible hosted copy."
+        }
+      ]
+    },
+    {
+      "url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+      "host": "community.cadence.com",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+          "label": "Cadence differential-pair layout discussion",
+          "in_sources_section": false
+        },
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+          "label": "Cadence: Balancing analog layout parasitics in MOSFET differential pairs",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.288
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+      "host": "community.cadence.com",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+          "label": "Cadence's DSPF documentation",
+          "in_sources_section": false
+        },
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+          "label": "Cadence: Using DSPF post-layout netlists",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.326
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://docs.scipy.org/doc/scipy-1.17.0/reference/generated/scipy.signal.periodogram.html",
+      "host": "docs.scipy.org",
+      "uses": [
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://docs.scipy.org/doc/scipy-1.17.0/reference/generated/scipy.signal.periodogram.html",
+          "label": "SciPy 1.17 periodogram documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://docs.scipy.org/doc/scipy-1.17.0/reference/generated/scipy.signal.periodogram.html",
+          "content_type": "text/html",
+          "elapsed_s": 3.288
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+          "label": "Pinned ORFS distribution of SKY130 HD TT Liberty",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 0.645
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl",
+          "label": "upstream SDC command definitions",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.763
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "lab_inverter_characterization.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+          "label": "SKY130 primitive models",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_bias_amplifier.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+          "label": "SkyWater primitive-library source, pinned revision f62031a1be9aefe902d6d54cddd6f59b57627436",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_sampling_interface.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+          "label": "Pinned SKY130 primitive models",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.873
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+          "label": "SKY130 dfxtp_1 TT characterization",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.448
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+          "label": "functional model",
+          "in_sources_section": false
+        },
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+          "label": "functional model",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.298
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+          "label": "SKY130 dlclkp_1 Liberty",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 1.581
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+          "label": "published next-state function",
+          "in_sources_section": false
+        },
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+          "label": "Pinned SKY130 enabled-flop characterization",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 3.353
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+          "label": "functional model",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 0.722
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+          "label": "SKY130 sdlclkp_1 Liberty",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 1.659
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv",
+      "host": "github.com",
+      "uses": [
+        {
+          "page": "lab_inverter_characterization.html",
+          "href": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv",
+          "label": "SKY130 HD inverter source",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.673
+        }
+      ],
+      "source_type": "primary_project_repository",
+      "primary_source_note": "Source repository of Google SKY130 or The OpenROAD Project, with pinned revisions where specified."
+    },
+    {
+      "url": "https://ngspice.sourceforge.io/docs.html",
+      "host": "ngspice.sourceforge.io",
+      "uses": [
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://ngspice.sourceforge.io/docs.html",
+          "label": "ngspice documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://ngspice.sourceforge.io/docs.html",
+          "content_type": "text/html",
+          "elapsed_s": 3.003
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+      "host": "ngspice.sourceforge.io",
+      "uses": [
+        {
+          "page": "calibration_trim.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+          "label": "ngspice version 44 manual",
+          "in_sources_section": true
+        },
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+          "label": "ngspice version 44 manual",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_inverter_characterization.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+          "label": "ngspice version 44 manual",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_sampling_interface.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+          "label": "ngspice version 44 manual",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 2.276
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf",
+      "host": "ngspice.sourceforge.io",
+      "uses": [
+        {
+          "page": "references_startup.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf",
+          "label": "ngspice User’s Manual",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_bias_amplifier.html",
+          "href": "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf",
+          "label": "ngspice User’s Manual",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 2.775
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://numpy.org/doc/2.3/reference/routines.fft.html",
+      "host": "numpy.org",
+      "uses": [
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://numpy.org/doc/2.3/reference/routines.fft.html",
+          "label": "NumPy 2.3 FFT documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://numpy.org/doc/2.3/reference/routines.fft.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.734
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+      "host": "openroad.readthedocs.io",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+          "label": "OpenRCX",
+          "in_sources_section": false
+        },
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+          "label": "OpenROAD/OpenRCX documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.021
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://opensta.readthedocs.io/en/latest/Commands/",
+      "host": "opensta.readthedocs.io",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://opensta.readthedocs.io/en/latest/Commands/",
+          "label": "OpenSTA command reference",
+          "in_sources_section": false
+        },
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://opensta.readthedocs.io/en/latest/Commands/",
+          "label": "OpenSTA command reference",
+          "in_sources_section": true
+        },
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://opensta.readthedocs.io/en/latest/Commands/",
+          "label": "OpenSTA reference",
+          "in_sources_section": false
+        },
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://opensta.readthedocs.io/en/latest/Commands/",
+          "label": "OpenSTA commands",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://opensta.readthedocs.io/en/latest/Commands/",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 3.529
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+      "host": "opentitan.org",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+          "label": "OpenTitan power-manager specification",
+          "in_sources_section": false
+        },
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+          "label": "OpenTitan power-manager theory of operation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+          "content_type": "text/html",
+          "elapsed_s": 2.483
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+      "host": "past.date-conference.com",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+          "label": "DATE 2021 common-centroid study",
+          "in_sources_section": false
+        },
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+          "label": "Sharma et al., DATE 2021: Common-Centroid Layouts for Analog Circuits—Advantages and Limitations",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+          "content_type": "text/html",
+          "elapsed_s": 3.461
+        }
+      ],
+      "source_type": "primary_conference_paper",
+      "primary_source_note": "Conference publisher landing page for the cited original research."
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/analog.html",
+      "host": "skywater-pdk.readthedocs.io",
+      "uses": [
+        {
+          "page": "lab_sampling_interface.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/analog.html",
+          "label": "SKY130 analog documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://skywater-pdk.readthedocs.io/en/main/analog.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.35
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/README.html",
+      "host": "skywater-pdk.readthedocs.io",
+      "uses": [
+        {
+          "page": "lab_inverter_characterization.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/README.html",
+          "label": "SKY130 HD documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/README.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.416
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+      "host": "skywater-pdk.readthedocs.io",
+      "uses": [
+        {
+          "page": "differential_pairs.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+          "label": "official device documentation",
+          "in_sources_section": false
+        },
+        {
+          "page": "differential_pairs.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+          "label": "SKY130 PDK device details",
+          "in_sources_section": true
+        },
+        {
+          "page": "references_startup.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html#bipolar-pnp-transistor",
+          "label": "SKY130 device documentation",
+          "in_sources_section": false
+        },
+        {
+          "page": "references_startup.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html#bipolar-pnp-transistor",
+          "label": "SkyWater SKY130: Device Details",
+          "in_sources_section": true
+        },
+        {
+          "page": "calibration_trim.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+          "label": "SKY130 device details",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_bias_amplifier.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+          "label": "SkyWater SKY130: Device Details",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 4.205
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+      "host": "skywater-pdk.readthedocs.io",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "label": "SKY130 parasitic layout extraction tables",
+          "in_sources_section": true
+        },
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "label": "SKY130 RCX table",
+          "in_sources_section": false
+        },
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "label": "SKY130 parasitic layout extraction documentation",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "label": "public SKY130 RCX tables",
+          "in_sources_section": false
+        },
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "label": "SKY130 RCX tables",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.439
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://steveicarus.github.io/iverilog/usage/installation.html",
+      "host": "steveicarus.github.io",
+      "uses": [
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://steveicarus.github.io/iverilog/usage/installation.html",
+          "label": "Icarus Verilog",
+          "in_sources_section": false
+        },
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://steveicarus.github.io/iverilog/usage/installation.html",
+          "label": "Icarus Verilog installation documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://steveicarus.github.io/iverilog/usage/installation.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.171
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+      "host": "trilobyte.com",
+      "uses": [
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+          "label": "Cummings–Mills–Golson reset paper",
+          "in_sources_section": false
+        },
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+          "label": "Cummings, Mills, and Golson, Reset Design Techniques—Part Deux, 2003",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 3.512
+        }
+      ],
+      "source_type": "author_hosted_primary_paper",
+      "primary_source_note": "Cummings/Mills/Golson reset paper hosted by coauthor Steve Golson’s consultancy."
+    },
+    {
+      "url": "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+      "host": "web.mit.edu",
+      "uses": [
+        {
+          "page": "differential_pairs.html",
+          "href": "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+          "label": "MIT’s differential-amplifier analysis",
+          "in_sources_section": false
+        },
+        {
+          "page": "differential_pairs.html",
+          "href": "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+          "label": "MIT 6.012, Lecture26: differential amplifiers",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 6.019
+        }
+      ],
+      "source_type": "primary_university_teaching_material",
+      "primary_source_note": "MIT course lecture material hosted by the university."
+    },
+    {
+      "url": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+      "host": "wiki.analog.com",
+      "uses": [
+        {
+          "page": "references_startup.html",
+          "href": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+          "label": "ADI’s university reference chapter",
+          "in_sources_section": false
+        },
+        {
+          "page": "references_startup.html",
+          "href": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+          "label": "Analog Devices University: Chapter 14, Voltage References",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_bias_amplifier.html",
+          "href": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+          "label": "Analog Devices University: Voltage References",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 500,
+          "final_url": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+          "error": "Internal Server Error",
+          "elapsed_s": 8.959
+        },
+        {
+          "method": "GET",
+          "status": 206,
+          "final_url": "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 3.181,
+          "bytes_read": 8192
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+          "label": "Analog Devices StudentZone: Decoupling and bypass capacitors",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://ez.analog.com/adiacademy/university-program/a/studentzone-articles/SA1023/grounding-and-decoupling-learn-basics-now-and-save-yourself-much-grief-later-part-3-decoupling-continued",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 4.953
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "references_startup.html",
+          "href": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+          "label": "ADI AN-82",
+          "in_sources_section": false
+        },
+        {
+          "page": "references_startup.html",
+          "href": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+          "label": "Analog Devices AN-82: Understanding and Applying Voltage References",
+          "in_sources_section": true
+        },
+        {
+          "page": "calibration_trim.html",
+          "href": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+          "label": "Analog Devices AN-82",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_sampling_interface.html",
+          "href": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+          "label": "Analog Devices AN-82: Voltage references",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/en/resources/app-notes/an-82f.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 4.381
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/app-notes/an-835.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://www.analog.com/en/resources/app-notes/an-835.html",
+          "label": "Analog Devices AN-835",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/en/resources/app-notes/an-835.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 6.255
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "references_startup.html",
+          "href": "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+          "label": "ADI’s discussion of reference startup",
+          "in_sources_section": false
+        },
+        {
+          "page": "references_startup.html",
+          "href": "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+          "label": "Analog Devices: Self-Starting Can Be Hard to Do",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_bias_amplifier.html",
+          "href": "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+          "label": "Analog Devices: Self-Starting Can Be Hard to Do",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 4.84
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/coherent-sampling-vs-window-sampling.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://www.analog.com/en/resources/technical-articles/coherent-sampling-vs-window-sampling.html",
+          "label": "Analog Devices: Coherent versus window sampling",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/en/resources/technical-articles/coherent-sampling-vs-window-sampling.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 1.019
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/methods-for-calibrating-gain-error-in-dataconverter-systems.html",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "calibration_trim.html",
+          "href": "https://www.analog.com/en/resources/technical-articles/methods-for-calibrating-gain-error-in-dataconverter-systems.html",
+          "label": "Analog Devices: Calibrating gain error",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/en/resources/technical-articles/methods-for-calibrating-gain-error-in-dataconverter-systems.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.421
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "spectral_measurements.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf",
+          "label": "Analog Devices MT-003",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 1.7
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "differential_pairs.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+          "label": "ADI MT-042",
+          "in_sources_section": false
+        },
+        {
+          "page": "differential_pairs.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+          "label": "ADI MT-042: Op Amp Common-Mode Rejection Ratio",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 4.38
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-090.pdf",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "lab_sampling_interface.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-090.pdf",
+          "label": "Analog Devices MT-090: Sample-and-hold amplifiers",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-090.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 3.319
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+      "host": "www.analog.com",
+      "uses": [
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+          "label": "ADI MT-101",
+          "in_sources_section": false
+        },
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+          "label": "Analog Devices MT-101: Decoupling Techniques",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 2.263
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.intel.com/programmable/technical-pdfs/683082.pdf",
+      "host": "www.intel.com",
+      "uses": [
+        {
+          "page": "lab_mixed_signal_integration.html",
+          "href": "https://www.intel.com/programmable/technical-pdfs/683082.pdf",
+          "label": "Intel/Altera design recommendations",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "misdirected_redirect",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.altera.com/",
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_s": 8.009
+        }
+      ],
+      "source_type": "intended_primary_vendor_manual",
+      "primary_source_note": "Original vendor-manual URL now redirects to unrelated Altera homepage; target replacement required.",
+      "issue": "HTTP 200 is the Altera homepage, not the cited PDF. This is a broken document link despite successful HTTP status.",
+      "suggested_replacements": [
+        {
+          "url": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+          "title": "Quartus Prime Pro Edition User Guide: Design Recommendations, 4.2 Metastability and MTBF Reporting",
+          "version": "25.1.1",
+          "access": "GET 200; official vendor documentation; public content also opened through web retrieval"
+        },
+        {
+          "url": "https://docs.altera.com/r/docs/683082/current",
+          "title": "Quartus Prime Pro Edition User Guide: Design Recommendations",
+          "access": "GET 200; official moving-current manual entry point"
+        }
+      ]
+    },
+    {
+      "url": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+      "host": "www.opencircuitdesign.com",
+      "uses": [
+        {
+          "page": "matching_layout_extraction.html",
+          "href": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+          "label": "Magic extresist reference",
+          "in_sources_section": true
+        },
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+          "label": "Magic resistance-extraction documentation",
+          "in_sources_section": false
+        },
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+          "label": "Magic extresist reference",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_s": 2.293
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://www.opencircuitdesign.com/magic/howto.html",
+      "host": "www.opencircuitdesign.com",
+      "uses": [
+        {
+          "page": "lab_layout_extraction.html",
+          "href": "https://www.opencircuitdesign.com/magic/howto.html",
+          "label": "Magic: setting up a project",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.opencircuitdesign.com/magic/howto.html",
+          "content_type": "text/html; charset=UTF-8",
+          "elapsed_s": 2.408
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://www.ti.com/lit/an/spra953d/spra953d.pdf",
+      "host": "www.ti.com",
+      "uses": [
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://www.ti.com/lit/an/spra953d/spra953d.pdf",
+          "label": "TI's thermal-metrics application note",
+          "in_sources_section": false
+        },
+        {
+          "page": "power_package_thermal.html",
+          "href": "https://www.ti.com/lit/an/spra953d/spra953d.pdf",
+          "label": "Texas Instruments SPRA953D: Semiconductor and IC Package Thermal Metrics",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.ti.com/lit/an/spra953d/spra953d.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 2.428
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.ti.com/lit/an/spraad8a/spraad8a.pdf",
+      "host": "www.ti.com",
+      "uses": [
+        {
+          "page": "calibration_trim.html",
+          "href": "https://www.ti.com/lit/an/spraad8a/spraad8a.pdf",
+          "label": "Texas Instruments: ADC Calibration",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.ti.com/lit/an/spraad8a/spraad8a.pdf",
+          "content_type": "application/pdf",
+          "elapsed_s": 2.235
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.ti.com/lit/pdf/sloa054",
+      "host": "www.ti.com",
+      "uses": [
+        {
+          "page": "differential_pairs.html",
+          "href": "https://www.ti.com/lit/pdf/sloa054",
+          "label": "TI’s fully differential amplifier report",
+          "in_sources_section": false
+        },
+        {
+          "page": "differential_pairs.html",
+          "href": "https://www.ti.com/lit/pdf/sloa054",
+          "label": "TI SLOA054: Fully-Differential Amplifiers",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.ti.com/lit/an/sloa054e/sloa054e.pdf?ts=1793979785644",
+          "content_type": "application/pdf",
+          "elapsed_s": 9.228
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article."
+    },
+    {
+      "url": "https://www.ti.com/lit/pdf/snoa506",
+      "host": "www.ti.com",
+      "uses": [
+        {
+          "page": "differential_pairs.html",
+          "href": "https://www.ti.com/lit/pdf/snoa506",
+          "label": "TI AN-1719: Fully Differential Amplifier Analysis",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://www.ti.com/lit/an/snoa506a/snoa506a.pdf?ts=1794005780042",
+          "content_type": "application/pdf",
+          "elapsed_s": 8.642
+        }
+      ],
+      "source_type": "primary_vendor_documentation_or_authored_article",
+      "primary_source_note": "Semiconductor/EDA vendor documentation, technical paper or educational article.",
+      "verified_document_title": "AN-1719 Noise Figure Analysis Fully Differential Amplifier (Rev. A)",
+      "document_identifier": "SNOA506A",
+      "document_revision": "September 2007, revised May 2013",
+      "citation_label_note": "differential_pairs.html shortens the source label to Fully Differential Amplifier Analysis. Optional precision improvement: use the verified full title. The document introduction does support the common-mode-feedback point cited."
+    },
+    {
+      "url": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+      "host": "yosyshq.readthedocs.io",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+          "label": "Yosys equivalence commands",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 1.322
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html",
+      "host": "yosyshq.readthedocs.io",
+      "uses": [
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html",
+          "label": "Yosys cell-library tutorial",
+          "in_sources_section": false
+        },
+        {
+          "page": "rtl_synthesis_constraints.html",
+          "href": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html",
+          "label": "Yosys: Mapping to cell libraries",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 3.017
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    },
+    {
+      "url": "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html",
+      "host": "yosyshq.readthedocs.io",
+      "uses": [
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html",
+          "label": "Yosys clockgate documentation",
+          "in_sources_section": false
+        },
+        {
+          "page": "clock_gating_power_states.html",
+          "href": "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html",
+          "label": "Yosys clockgate documentation",
+          "in_sources_section": true
+        }
+      ],
+      "access_status": "accessible",
+      "attempts": [
+        {
+          "method": "HEAD",
+          "status": 200,
+          "final_url": "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html",
+          "content_type": "text/html; charset=utf-8",
+          "elapsed_s": 2.565
+        }
+      ],
+      "source_type": "primary_project_documentation",
+      "primary_source_note": "Official project documentation for the named PDK, EDA tool, numerical library or open hardware project."
+    }
+  ],
+  "followup_status": "complete_no_page_edits",
+  "initial_http_summary": {
+    "accessible": 49,
+    "confirmed_http_not_found": 1
+  },
+  "primary_source_type_counts": {
+    "mirrored_primary_research_paper": 1,
+    "primary_vendor_documentation_or_authored_article": 17,
+    "primary_project_documentation": 18,
+    "primary_project_repository": 10,
+    "primary_conference_paper": 1,
+    "author_hosted_primary_paper": 1,
+    "primary_university_teaching_material": 1,
+    "intended_primary_vendor_manual": 1
+  },
+  "replacement_access_checks": [
+    {
+      "url": "https://www.sunburst-design.com/papers/CummingsSNUG 2008Boston_CDC.pdf",
+      "status": 200,
+      "final_url": "https://www.paradigm-works.com/technical-library?term=clock+domain+crossing+%28cdc%29+design+%26+verification+techniques+using+systemverilog",
+      "content_type": "text/html; charset=UTF-8"
+    },
+    {
+      "url": "https://sunburst-design.com/papers/CummingsSNUG 2008Boston_CDC.pdf",
+      "status": 200,
+      "final_url": "https://www.paradigm-works.com/technical-library?term=clock+domain+crossing+%28cdc%29+design+%26+verification+techniques+using+systemverilog",
+      "content_type": "text/html; charset=UTF-8"
+    },
+    {
+      "url": "https://www.intel.com/content/www/us/en/docs/programmable/683082/24-2/recommended-design-practices.html",
+      "status": 200,
+      "final_url": "https://docs.altera.com/r/docs/683082/current",
+      "content_type": "text/html;charset=UTF-8"
+    },
+    {
+      "url": "https://www.paradigm-works.com/technical-library",
+      "status": 200,
+      "final_url": "https://www.paradigm-works.com/technical-library",
+      "content_type": "text/html; charset=UTF-8"
+    },
+    {
+      "url": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+      "status": 200,
+      "final_url": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+      "content_type": "text/html;charset=UTF-8",
+      "bytes_read": 2626
+    },
+    {
+      "url": "https://docs.altera.com/r/docs/683082/current",
+      "status": 200,
+      "final_url": "https://docs.altera.com/r/docs/683082/current",
+      "content_type": "text/html;charset=UTF-8",
+      "bytes_read": 2626
+    },
+    {
+      "url": "https://www.paradigm-works.com/technical-library?term=clock+domain+crossing+%28cdc%29+design+%26+verification+techniques+using+systemverilog",
+      "status": 200,
+      "final_url": "https://www.paradigm-works.com/technical-library?term=clock+domain+crossing+%28cdc%29+design+%26+verification+techniques+using+systemverilog",
+      "content_type": "text/html; charset=UTF-8",
+      "bytes_read": 8192
+    },
+    {
+      "url": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG 2008Boston_CDC.pdf",
+      "status": 200,
+      "final_url": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG 2008Boston_CDC.pdf",
+      "content_type": "text/html; charset=utf-8"
+    }
+  ],
+  "actionable_occurrences": [
+    {
+      "file": "learning/lab_mixed_signal_integration.html",
+      "url": "https://citeseerx.ist.psu.edu/document?doi=00100eef96cac6684454a5bec608d85614c574b8&repid=rep1&type=pdf",
+      "count": 2,
+      "labels": [
+        "Cummings' CDC paper",
+        "Cummings, CDC Design & Verification Techniques, SNUG Boston 2008"
+      ],
+      "replacement": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG 2008Boston_CDC.pdf",
+      "label_change": "Retain or add hosted copy attribution."
+    },
+    {
+      "file": "learning/lab_mixed_signal_integration.html",
+      "url": "https://www.intel.com/programmable/technical-pdfs/683082.pdf",
+      "count": 1,
+      "labels": [
+        "Intel/Altera design recommendations"
+      ],
+      "replacement": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting"
+    },
+    {
+      "file": "learning/cdc_reset.html",
+      "url": "https://www.intel.com/programmable/technical-pdfs/683082.pdf",
+      "count": 2,
+      "labels": [
+        "Intel/Altera design recommendations, metastability chapter",
+        "Intel/Altera Quartus Prime Pro Edition User Guide: Design Recommendations"
+      ],
+      "replacement": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+      "scope_note": "Outside the initial 13-page scope; inspected at root request while reusing its verified Cummings copy."
+    }
+  ],
+  "scope_limits": [
+    "Bounded URL-access and source-provenance review, not a fresh technical fact-check of every sentence.",
+    "HTTP success alone does not prove that a requested document is delivered; redirects were inspected and the Intel homepage redirect was flagged.",
+    "Fragment-only distinctions were deduplicated; this audit does not assert that every fragment identifier exists.",
+    "No complete copyrighted documents were saved or redistributed by this audit. GET access probes read at most 8192 bytes; metadata/reference titles were checked using primary-source retrieval.",
+    "The 50 unique URLs reflect the 13-page snapshot at audit start. Root may replace links during integration; this report preserves the observed pre-fix findings."
+  ],
+  "integration_resolutions": {
+    "status": "both identified broken/destination-drift URLs replaced",
+    "cummings": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+    "quartus": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting"
+  }
+}

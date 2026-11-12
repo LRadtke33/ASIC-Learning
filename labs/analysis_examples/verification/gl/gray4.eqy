@@ -1,0 +1,21 @@
+[options]
+depth 16
+
+[golden]
+read_verilog ../rtl/gray4.v
+prep -top gray4
+
+[revised]
+# Gate netlist with functional models inlined is hard; use liberty func via
+# read_verilog + flatten after techmap?  Instead: synth both from RTL? No.
+# Map HD cells to  etc is inverse.  Use sat miter after replacing cells
+# with their Yosys names — skip if too messy.
+# Try: read liberty as box, then ltp + sat on miter of outputs.
+read_verilog gray4_gl.v
+hierarchy -top gray4
+# cells remain black boxes — equiv will fail
+prep -top gray4 -flatten
+
+[script]
+gold:   read_verilog ../rtl/gray4.v;  hierarchy -top gray4;  proc; opt; memory; opt_clean
+gate:   ??

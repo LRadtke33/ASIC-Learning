@@ -1,0 +1,428 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)
+
+-- Executing script file `../model/design.ys' --
+
+1. Executing Verilog-2005 frontend: sync_fifo_formal.v
+Parsing formal SystemVerilog input from `sync_fifo_formal.v' to AST representation.
+Storing AST representation for module `$abstract\sync_fifo'.
+Successfully finished Verilog frontend.
+
+2. Executing PREP pass.
+
+2.1. Executing HIERARCHY pass (managing design hierarchy).
+
+2.2. Executing AST frontend in derive mode using pre-parsed AST for module `\sync_fifo'.
+Generating RTLIL representation for module `\sync_fifo'.
+Warning: Replacing memory \mem with list of registers. See sync_fifo_formal.v:31
+
+2.2.1. Analyzing design hierarchy..
+Top module:  \sync_fifo
+
+2.2.2. Analyzing design hierarchy..
+Top module:  \sync_fifo
+Removing unused module `$abstract\sync_fifo'.
+Removed 1 unused modules.
+Module sync_fifo directly or indirectly contains formal properties -> setting "keep" attribute.
+
+2.3. Executing PROC pass (convert processes to netlists).
+
+2.3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$sync_fifo_formal.v:91$153 in module sync_fifo.
+Removed 1 dead cases from process $proc$sync_fifo_formal.v:23$37 in module sync_fifo.
+Marked 6 switch rules as full_case in process $proc$sync_fifo_formal.v:23$37 in module sync_fifo.
+Removed a total of 1 dead cases.
+
+2.3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 5 redundant assignments.
+Promoted 40 assignments to connections.
+
+2.3.4. Executing PROC_INIT pass (extract init attributes).
+Found init rule in `\sync_fifo.$proc$sync_fifo_formal.v:90$177'.
+  Set init value: \f_seen_full = 1'0
+Found init rule in `\sync_fifo.$proc$sync_fifo_formal.v:52$176'.
+  Set init value: \f_seen_reset = 1'0
+Found init rule in `\sync_fifo.$proc$sync_fifo_formal.v:49$175'.
+  Set init value: \f_past_valid = 1'0
+
+2.3.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \rst_n in `\sync_fifo.$proc$sync_fifo_formal.v:91$153'.
+Found async reset \rst_n in `\sync_fifo.$proc$sync_fifo_formal.v:53$57'.
+Found async reset \rst_n in `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+
+2.3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~14 debug messages>
+
+2.3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:90$177'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:52$176'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:49$175'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:47$172'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:96$161'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:95$155'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:91$153'.
+     1/1: $0\f_seen_full[0:0]
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:89$150'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:85$143'.
+     1/1: $assert$sync_fifo_formal.v:86$145_EN
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+     1/1: $assert$sync_fifo_formal.v:82$140_EN
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+     1/4: $assert$sync_fifo_formal.v:76$127_EN
+     2/4: $assert$sync_fifo_formal.v:74$118_EN
+     3/4: $assert$sync_fifo_formal.v:72$110_EN
+     4/4: $assert$sync_fifo_formal.v:70$101_EN
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:58$59'.
+     1/4: $assert$sync_fifo_formal.v:63$69_EN
+     2/4: $assert$sync_fifo_formal.v:62$66_EN
+     3/4: $assert$sync_fifo_formal.v:61$63_EN
+     4/4: $assert$sync_fifo_formal.v:60$60_EN
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:53$57'.
+     1/1: $0\f_seen_reset[0:0]
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:50$56'.
+Creating decoders for process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+     1/17: $0\cnt[2:0]
+     2/17: $3$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_DATA[7:0]$52
+     3/17: $2$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_DATA[7:0]$51
+     4/17: $2$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_ADDR[1:0]$50
+     5/17: $2$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_ADDR[1:0]$47
+     6/17: $2$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_DATA[7:0]$48
+     7/17: $1$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_DATA[7:0]$46
+     8/17: $1$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_ADDR[1:0]$45
+     9/17: $1$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_DATA[7:0]$44
+    10/17: $1$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_ADDR[1:0]$43
+    11/17: $0\mem[3][7:0]
+    12/17: $0\mem[2][7:0]
+    13/17: $0\mem[1][7:0]
+    14/17: $0\mem[0][7:0]
+    15/17: $0\rptr[1:0]
+    16/17: $0\wptr[1:0]
+    17/17: $0\dout[7:0]
+
+2.3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:96$26$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:96$161'.
+  created $dff cell `$procdff$267' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:96$27$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:96$161'.
+  created $dff cell `$procdff$268' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:96$28$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:96$161'.
+  created $dff cell `$procdff$269' with positive edge clock.
+Creating register for signal `\sync_fifo.\f_seen_full' using process `\sync_fifo.$proc$sync_fifo_formal.v:91$153'.
+  created $adff cell `$procdff$274' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:81$22$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+  created $dff cell `$procdff$275' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:81$23$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+  created $dff cell `$procdff$276' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:81$24$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+  created $dff cell `$procdff$277' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:81$25$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+  created $dff cell `$procdff$278' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:68$1$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$279' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:69$2$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$280' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:69$3$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$281' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:69$4$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$282' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:69$5$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$283' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:70$6$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$284' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:71$7$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$285' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:71$8$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$286' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:71$9$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$287' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:71$10$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$288' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:72$11$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$289' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:73$12$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$290' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:73$13$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$291' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:73$14$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$292' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:73$15$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$293' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:74$16$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$294' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:75$17$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$295' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:75$18$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$296' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:75$19$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$297' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:75$20$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$298' with positive edge clock.
+Creating register for signal `\sync_fifo.$past$sync_fifo_formal.v:76$21$0' using process `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+  created $dff cell `$procdff$299' with positive edge clock.
+Creating register for signal `\sync_fifo.\f_seen_reset' using process `\sync_fifo.$proc$sync_fifo_formal.v:53$57'.
+  created $adff cell `$procdff$304' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.\f_past_valid' using process `\sync_fifo.$proc$sync_fifo_formal.v:50$56'.
+  created $dff cell `$procdff$305' with positive edge clock.
+Creating register for signal `\sync_fifo.\dout' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$310' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.\wptr' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$315' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.\rptr' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$320' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.\cnt' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$325' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.\mem[0]' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $dff cell `$procdff$332' with positive edge clock.
+Creating register for signal `\sync_fifo.\mem[1]' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $dff cell `$procdff$339' with positive edge clock.
+Creating register for signal `\sync_fifo.\mem[2]' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $dff cell `$procdff$346' with positive edge clock.
+Creating register for signal `\sync_fifo.\mem[3]' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $dff cell `$procdff$353' with positive edge clock.
+Creating register for signal `\sync_fifo.$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_ADDR' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$358' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.$mem2reg_wr$\mem$sync_fifo_formal.v:31$29_DATA' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$363' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_ADDR' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$368' with positive edge clock and positive level reset.
+Creating register for signal `\sync_fifo.$mem2reg_rd$\mem$sync_fifo_formal.v:35$30_DATA' using process `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+  created $adff cell `$procdff$373' with positive edge clock and positive level reset.
+
+2.3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:90$177'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:52$176'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:49$175'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:47$172'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:96$161'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:95$155'.
+Found and cleaned up 1 empty switch in `\sync_fifo.$proc$sync_fifo_formal.v:91$153'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:91$153'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:89$150'.
+Found and cleaned up 1 empty switch in `\sync_fifo.$proc$sync_fifo_formal.v:85$143'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:85$143'.
+Found and cleaned up 1 empty switch in `\sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:80$129'.
+Found and cleaned up 5 empty switches in `\sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:67$71'.
+Found and cleaned up 1 empty switch in `\sync_fifo.$proc$sync_fifo_formal.v:58$59'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:58$59'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:53$57'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:50$56'.
+Found and cleaned up 5 empty switches in `\sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+Removing empty process `sync_fifo.$proc$sync_fifo_formal.v:23$37'.
+Cleaned up 14 empty switches.
+
+2.3.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+<suppressed ~35 debug messages>
+
+2.4. Executing FUTURE pass.
+
+2.5. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+
+2.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+Removed 26 unused cells and 140 unused wires.
+<suppressed ~27 debug messages>
+
+2.7. Executing CHECK pass (checking for obvious problems).
+Checking module sync_fifo...
+Found and reported 0 problems.
+
+2.8. Executing OPT pass (performing simple optimizations).
+
+2.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+
+2.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\sync_fifo'.
+Computing hashes of 169 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+Computing hashes of 163 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+<suppressed ~18 debug messages>
+Removed a total of 6 cells.
+
+2.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \sync_fifo..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$218.
+Removed 1 multiplexer ports.
+<suppressed ~52 debug messages>
+
+2.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \sync_fifo.
+Performed a total of 0 changes.
+
+2.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\sync_fifo'.
+Computing hashes of 162 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+Computing hashes of 159 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+<suppressed ~9 debug messages>
+Removed a total of 3 cells.
+
+2.8.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+Removed 0 unused cells and 10 unused wires.
+<suppressed ~1 debug messages>
+
+2.8.7. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+<suppressed ~3 debug messages>
+
+2.8.8. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.8.9. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \sync_fifo..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~45 debug messages>
+
+2.8.10. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \sync_fifo.
+Performed a total of 0 changes.
+
+2.8.11. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\sync_fifo'.
+Computing hashes of 156 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+Removed a total of 0 cells.
+
+2.8.12. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+Removed 0 unused cells and 3 unused wires.
+<suppressed ~1 debug messages>
+
+2.8.13. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+
+2.8.14. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.8.15. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \sync_fifo..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~45 debug messages>
+
+2.8.16. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \sync_fifo.
+Performed a total of 0 changes.
+
+2.8.17. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\sync_fifo'.
+Computing hashes of 156 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+Removed a total of 0 cells.
+
+2.8.18. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+
+2.8.19. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+
+2.8.20. Finished fast OPT passes. (There is nothing left to do.)
+
+2.9. Executing WREDUCE pass (reducing word size of cells).
+Removed top 1 bits (of 2) from port B of cell sync_fifo.$add$sync_fifo_formal.v:32$49 ($add).
+Removed top 1 bits (of 2) from port B of cell sync_fifo.$add$sync_fifo_formal.v:36$53 ($add).
+Removed top 2 bits (of 3) from port B of cell sync_fifo.$add$sync_fifo_formal.v:39$54 ($add).
+Removed top 2 bits (of 3) from port B of cell sync_fifo.$sub$sync_fifo_formal.v:40$55 ($sub).
+Removed top 2 bits (of 3) from port B of cell sync_fifo.$add$sync_fifo_formal.v:70$102 ($add).
+Removed top 2 bits (of 3) from port B of cell sync_fifo.$sub$sync_fifo_formal.v:72$111 ($sub).
+Removed top 1 bits (of 3) from port B of cell sync_fifo.$eq$sync_fifo_formal.v:96$170 ($eq).
+Removed top 1 bits (of 2) from port B of cell sync_fifo.$procmux$210_CMP0 ($eq).
+Removed top 1 bits (of 2) from port B of cell sync_fifo.$procmux$216_CMP0 ($eq).
+Removed top 1 bits (of 2) from port B of cell sync_fifo.$procmux$247_CMP0 ($eq).
+
+2.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+
+2.11. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module sync_fifo.
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\sync_fifo'.
+Computing hashes of 156 cells of `\sync_fifo'.
+Finding duplicate cells in `\sync_fifo'.
+Removed a total of 0 cells.
+
+2.12.3. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \sync_fifo..
+
+2.12.4. Finished fast OPT passes.
+
+2.13. Printing statistics.
+
+=== sync_fifo ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      148 wires
+      318 wire bits
+       21 public wires
+       69 public wire bits
+        9 ports
+       25 port bits
+      156 cells
+        4   $add
+        6   $adff
+       14   $check
+       33   $dff
+       14   $eq
+        1   $le
+       33   $logic_and
+       19   $logic_not
+       27   $mux
+        1   $not
+        2   $pmux
+        2   $sub
+
+2.14. Executing CHECK pass (checking for obvious problems).
+Checking module sync_fifo...
+Found and reported 0 problems.
+
+3. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `sync_fifo'. Setting top module to sync_fifo.
+
+3.1. Analyzing design hierarchy..
+Top module:  \sync_fifo
+
+3.2. Analyzing design hierarchy..
+Top module:  \sync_fifo
+Removed 0 unused modules.
+Module sync_fifo directly or indirectly contains formal properties -> setting "keep" attribute.
+
+4. Executing jny backend.
+
+5. Executing RTLIL backend.
+Output filename: ../model/design.il
+
+Warnings: 1 unique messages, 1 total
+End of script. Logfile hash: 041f20fbed, CPU: user 0.05s system 0.01s, MEM: 27.23 MB peak
+Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)
+Time spent: 22% 6x opt_clean (0 sec), 19% 7x opt_expr (0 sec), ...

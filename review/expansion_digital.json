@@ -1,0 +1,232 @@
+{
+  "review_date": "2026-11-06",
+  "scope": "Three new pages and Lab5 assets only; original42 lesson bodies not edited by this task.",
+  "lessons": [
+    {
+      "file": "rtl_synthesis_constraints.html",
+      "words_excluding_svg_style_script": 2089,
+      "svg_figures": 3,
+      "tables": 2,
+      "status": "authored, source-reviewed, static SVG/local-link checks passed",
+      "external_sources": [
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/xor2/sky130_fd_sc_hd__xor2_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+        "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+        "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl"
+      ],
+      "key_evidence": [
+        "Actual Yosys0.52 + ABC mapping:2 edfxtp_1,2 xor2_1;2 output bits proven equivalent by equiv_simple; equiv_status -assert passed.",
+        "Library area77.5744um^2 checked independently from pinned LEF dimensions:2*(11.04*2.72)+2*(3.22*2.72).",
+        "Example SDC and numerical timing budgets explicitly assumed and unexecuted; no frequency or PPA claim."
+      ]
+    },
+    {
+      "file": "clock_gating_power_states.html",
+      "words_excluding_svg_style_script": 2213,
+      "svg_figures": 3,
+      "tables": 2,
+      "status": "authored, source-reviewed, static SVG/local-link checks passed",
+      "external_sources": [
+        "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json"
+      ],
+      "key_evidence": [
+        "Pinned dlclkp/sdlclkp functional models and Liberty checked:low-transparent enable latch;scan enable before latch;GATE/SCE setup_rising/hold_rising;clock pulse width;clock_gate_* pin flags.",
+        "dlclkp_1 output maxcap0.152903pF;dfxtp_1 CLK1.794fF.512 pins0.918528pF;assumed0.6pF wire/buffer→1.518528pF;1.8V100MHz CV^2f=.492003072mW.",
+        "No ICG insertion or power-gating implementation executed;sequence and waveform explicitly illustrative."
+      ]
+    },
+    {
+      "file": "lab_mixed_signal_integration.html",
+      "words_excluding_svg_style_script": 2499,
+      "svg_figures": 4,
+      "tables": 5,
+      "status": "authored, source-reviewed, static SVG/local-link checks passed",
+      "external_sources": [
+        "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+        "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+        "https://steveicarus.github.io/iverilog/usage/installation.html",
+        "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting"
+      ],
+      "key_evidence": [
+        "Icarus12.0 three directed clock cases passed; exactlogs,CSV,resultJSON shipped.",
+        "Deliberate isolated overwrite mutation caught at938ns by held-mailbox assertion.",
+        "Main lab is digital protocol test;no analog metastability,MTBF,physical isolation,voltage collapse,or timing qualification claimed."
+      ]
+    }
+  ],
+  "lab": {
+    "directory": "learning/labs/L05_mixed_signal_integration",
+    "rtl_files": [
+      "rtl/reset_release.sv",
+      "rtl/sync_bit.sv",
+      "rtl/mixed_signal_mailbox.sv"
+    ],
+    "testbench": "tb/tb_mixed_signal_integration.sv",
+    "runner": "run.py",
+    "recorded_results_directory": "results",
+    "fresh_results_directory": "run_results",
+    "main_observed": {
+      "tool": "Icarus Verilog version 12.0 (stable) ()",
+      "scope": "Digital event simulation; no analog metastability or physical timing model.",
+      "negative_control": false,
+      "cases": [
+        {
+          "name": "fast_source",
+          "source_period_ns": 14,
+          "readout_period_ns": 22,
+          "readout_initial_phase_ns": 3,
+          "seed": 4369,
+          "exit_code": 0,
+          "accepted": 11,
+          "delivered": 9,
+          "aborted": 2,
+          "rejected_busy": 22,
+          "min_latency_ns": 45.0,
+          "max_latency_ns": 173.0,
+          "observed": "PASS"
+        },
+        {
+          "name": "fast_readout",
+          "source_period_ns": 26,
+          "readout_period_ns": 10,
+          "readout_initial_phase_ns": 1,
+          "seed": 8738,
+          "exit_code": 0,
+          "accepted": 13,
+          "delivered": 11,
+          "aborted": 2,
+          "rejected_busy": 20,
+          "min_latency_ns": 21.0,
+          "max_latency_ns": 243.0,
+          "observed": "PASS"
+        },
+        {
+          "name": "close_clocks",
+          "source_period_ns": 20,
+          "readout_period_ns": 22,
+          "readout_initial_phase_ns": 4,
+          "seed": 13107,
+          "exit_code": 0,
+          "accepted": 11,
+          "delivered": 9,
+          "aborted": 2,
+          "rejected_busy": 22,
+          "min_latency_ns": 47.0,
+          "max_latency_ns": 217.0,
+          "observed": "PASS"
+        }
+      ]
+    },
+    "negative_control_observed": {
+      "tool": "Icarus Verilog version 12.0 (stable) ()",
+      "scope": "Digital event simulation; no analog metastability or physical timing model.",
+      "negative_control": true,
+      "cases": [
+        {
+          "name": "fast_source",
+          "source_period_ns": 14,
+          "readout_period_ns": 22,
+          "readout_initial_phase_ns": 3,
+          "seed": 4369,
+          "exit_code": 1,
+          "observed": "Expected data-hold assertion failure detected."
+        }
+      ]
+    },
+    "directed_scenarios": [
+      "Boot/reset blocking",
+      "Power-good without analog-ready",
+      "Three normal words",
+      "24 rapid offers with busy rejection",
+      "Readout clock pause and resume",
+      "In-flight power loss with readout stopped",
+      "Power restoration without readiness",
+      "Readiness withdrawal with in-flight cancellation",
+      "Clean external reset and restart"
+    ],
+    "checks": [
+      "Acceptance iff send && ready at source edge",
+      "Busy rejection contract",
+      "Expected word order and exact value",
+      "No unsolicited or duplicate destination output",
+      "No old-epoch delivery",
+      "Held mailbox remains constant throughout busy",
+      "Asynchronous reset asserts with readout clock stopped",
+      "Reset release aligns with local clock edges",
+      "No valid/ready during reset",
+      "Final accepted=delivered+aborted",
+      "Exactly two intentional in-flight cancellations",
+      "Watchdog detects no progress"
+    ],
+    "limitations": [
+      "Directed scenarios are not exhaustive proof.",
+      "Control synchronizers modeled as ordinary digital registers; analog metastability not simulated.",
+      "No receiver backpressure other than clock pause; receiver assumed always-ready.",
+      "Bundled-data path max delay, reset recovery/removal and physical constraints remain design-specific.",
+      "No crash-durable exactly-once or automatic replay."
+    ]
+  },
+  "synthesis_example": {
+    "tool": "Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)",
+    "library_url": "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "library_sha256": "ec0e1067a35c8bf20b11e58d1e8ac53326067e4dac84a125cc1b917a3518d0d9",
+    "mapping": {
+      "sky130_fd_sc_hd__edfxtp_1": 2,
+      "sky130_fd_sc_hd__xor2_1": 2
+    },
+    "total_cells": 4,
+    "library_cell_area_sum": 77.5744,
+    "equivalence": "PASS: two output bits proven against the Liberty Boolean/sequential model",
+    "scope": "Executed synthesis and functional equivalence only. No SDC-driven optimization, STA, placement, routing, clock-tree, or power estimation was run."
+  },
+  "reference": {
+    "library": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "bytes": 12800135,
+    "sha256": "ec0e1067a35c8bf20b11e58d1e8ac53326067e4dac84a125cc1b917a3518d0d9",
+    "retrieved": "2026-11-06",
+    "distribution_repository": "The-OpenROAD-Project/OpenROAD-flow-scripts",
+    "revision": "c5310d7ffdd5f8a1eed83089697631548cc08a99",
+    "source_url": "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "upstream_cell_repository": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd",
+    "upstream_license": "Apache-2.0; included LICENSE-SKY130-Apache-2.0.txt",
+    "scope": "Exact file used for the recorded synthesis and equivalence example. Typical 25 C 1.8 V library, not a full process/corner set or tapeout qualification."
+  },
+  "validation": {
+    "stats": [
+      {
+        "file": "rtl_synthesis_constraints.html",
+        "svg_figures": 3,
+        "tables": 2
+      },
+      {
+        "file": "clock_gating_power_states.html",
+        "svg_figures": 3,
+        "tables": 2
+      },
+      {
+        "file": "lab_mixed_signal_integration.html",
+        "svg_figures": 4,
+        "tables": 5
+      }
+    ],
+    "errors": []
+  },
+  "packaging_exclusions": [
+    "learning/labs/L05_mixed_signal_integration/build",
+    "learning/labs/L05_mixed_signal_integration/run_results",
+    "tooling",
+    "v2_digital_sources"
+  ],
+  "peer_review_pending": "Root lessons49/50 and analysis_examples runner to be reviewed next."
+}

@@ -1,0 +1,69 @@
+{
+  "tool": "OpenROAD dcf36133a369abc8f3c5e5738cd4d82e4903c0e0",
+  "date": "11 November 2026, America/Chicago",
+  "design": "Lab 6 SPM 45%, RUN_2026-11-11_16-09-06",
+  "inputs": {
+    "odb": "final/odb/spm.odb",
+    "spef": "final/spef/nom/spm.nom.spef",
+    "liberty": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "sdc": "final/sdc/spm.sdc",
+    "corner": "nom_tt_025C_1v80",
+    "VSRC_LOC_FILES": null,
+    "activity_override": null,
+    "enable_em": true,
+    "note": "LibreLane Classic 3.0.17 irdrop.tcl does not pass -enable_em; this invocation did. No VSRC_LOC_FILES, same as the Lab 6 resolved config. Default OpenROAD voltage-source placement. Static, vectorless (liberty+SDC, no VCD)."
+  },
+  "STA_report_power_W": 0.00127505,
+  "VPWR": {
+    "total_power_W": 0.00128,
+    "supply_V": 1.8,
+    "average_IR_drop_V": 3.52e-05,
+    "worstcase_IR_drop_V": 0.000132,
+    "percentage_drop": 0.01,
+    "worst_instance_from_csv": {
+      "inst": "FILLER_11_180",
+      "layer": "li1",
+      "x": 89.01,
+      "y": 40.8,
+      "V": 1.799868,
+      "drop_V": 0.000132
+    },
+    "em": {
+      "max_A": 3.55e-05,
+      "avg_A": 6.02e-06,
+      "n_resistors": 743,
+      "max_element": "met1 (70.52, 40.80) to met2, 35.49 \u00b5A"
+    }
+  },
+  "VGND": {
+    "total_power_W": 0.00128,
+    "supply_V": 0.0,
+    "average_IR_drop_V": 3.32e-05,
+    "worstcase_IR_drop_V": 0.0001,
+    "percentage_drop": 0.01,
+    "worst_instance_from_csv": {
+      "inst": "clkbuf_0_clk",
+      "layer": "li1",
+      "x": 52.9,
+      "y": 54.4,
+      "V": 0.0001,
+      "drop_V": 0.0001
+    },
+    "em": {
+      "max_A": 3.05e-05,
+      "avg_A": 5.73e-06,
+      "n_resistors": 751,
+      "max_element": "met1 (42.78, 70.72) to met2, 30.51 \u00b5A"
+    }
+  },
+  "worst_combined_instance": {
+    "inst": "clkbuf_0_clk",
+    "x": 52.9,
+    "y": 57.12,
+    "dvpwr": 0.00011700000000014477,
+    "dvgnd": 0.0001,
+    "dsum": 0.00021700000000014476,
+    "layer": "li1"
+  },
+  "n_instances_csv": 1226
+}

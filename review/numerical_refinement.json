@@ -1,0 +1,30 @@
+[
+  {
+    "case": "inverter",
+    "quantities": [
+      "tphl_ps",
+      "tplh_ps",
+      "energy_fJ"
+    ],
+    "base": [
+      35.98658288998911,
+      78.16769923956878,
+      34.969742425985956
+    ],
+    "finer": [
+      35.99250873857263,
+      78.17630499749883,
+      34.97143544900686
+    ],
+    "max_relative_change": 0.00016466827655291048,
+    "status": "pass"
+  },
+  {
+    "case": "sampling",
+    "quantity": "Vhold_at_91ns_V",
+    "base": 0.8994094250359688,
+    "finer": 0.8994094208495087,
+    "absolute_change_uV": 0.00418646006750123,
+    "status": "pass"
+  }
+]

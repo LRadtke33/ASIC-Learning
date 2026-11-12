@@ -1,0 +1,56 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * lab 4: detour_fill, coupling. linear rc model, not a transistor simulation.
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+src                                          0
+sig_drv                                      0
+agg                                          0
+xroute.sig_001                               0
+xroute.sig_002                               0
+xroute.sig_003                               0
+xroute.sig_004                               0
+xroute.sig_005                               0
+xroute.sig_006                               0
+xroute.sig_007                               0
+xroute.sig_008                               0
+xroute.sig_009                               0
+xroute.sig_010                               0
+xroute.sig_011                               0
+xroute.sig_012                               0
+xroute.sig_013                               0
+xroute.sig_014                               0
+xroute.sig_015                               0
+xroute.sig_016                               0
+xroute.sig_017                               0
+xroute.sig_018                               0
+xroute.sig_019                               0
+xroute.sig_020                               0
+xroute.sig_021                               0
+xroute.sig_022                               0
+xroute.sig_023                               0
+xroute.sig_024                               0
+xroute.sig_025                               0
+xroute.sig_026                               0
+xroute.sig_027                               0
+xroute.sig_028                               0
+xroute.sig_029                               0
+sig_rx                                       0
+vagg#branch                                  0
+vsrc#branch                                  0
+
+
+No. of Data Rows : 6066
+ngspice-44.2 done
+
+Warning: can't find the initialization file spinit.

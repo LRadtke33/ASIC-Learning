@@ -1,0 +1,20 @@
+* Lab 1: original two-device HD inv_1 source netlist
+.lib "../../../common/models/sky130_course.lib.spice" ff
+.include "../../reference/sky130_fd_sc_hd__inv_1.spice"
+.temp -40
+.options reltol=1e-5 abstol=1e-14 vntol=1e-8
+VDD vdd 0 1.95
+VIN a 0 PULSE(0 1.95 0.5n 1.66666666667e-10 1.66666666667e-10 3n 8n)
+XINV a 0 0 vdd vdd y sky130_fd_sc_hd__inv_1
+CLOAD y 0 50.0f
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=12
+dc VIN 0 1.95 0.002
+wrdata dc.dat v(a) v(y) i(VDD)
+tran 1p 7n 0 1p
+wrdata tran.dat v(a) v(y) i(VDD)
+quit
+.endc
+.end

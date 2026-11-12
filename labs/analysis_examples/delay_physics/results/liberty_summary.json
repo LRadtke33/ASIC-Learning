@@ -1,0 +1,317 @@
+{
+ "library": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+ "units": "ns, pF, nW (from the library header)",
+ "reff_fits": {
+  "inv_1": {
+   "cin_fF": 2.3019999999999996,
+   "leakage_nW": 0.005326682,
+   "rise": {
+    "slope_kohm_per_0p69": 8.219326603267193,
+    "reff_kohm": 8.219326603267193,
+    "intrinsic_ps": 18.737832021899077,
+    "c_self_fF": 3.30395415627026
+   },
+   "fall": {
+    "slope_kohm_per_0p69": 4.835697275599231,
+    "reff_kohm": 4.835697275599231,
+    "intrinsic_ps": 13.510757232985627,
+    "c_self_fF": 4.049221129461774
+   }
+  },
+  "inv_2": {
+   "cin_fF": 4.4590000000000005,
+   "leakage_nW": 0.004247907,
+   "rise": {
+    "slope_kohm_per_0p69": 4.564293428055148,
+    "reff_kohm": 4.564293428055148,
+    "intrinsic_ps": 17.5567744020076,
+    "c_self_fF": 5.574707451151249
+   },
+   "fall": {
+    "slope_kohm_per_0p69": 2.3278567486378887,
+    "reff_kohm": 2.3278567486378887,
+    "intrinsic_ps": 11.916469354317302,
+    "c_self_fF": 7.418946827868597
+   }
+  },
+  "inv_4": {
+   "cin_fF": 9.004,
+   "leakage_nW": 0.004462733,
+   "rise": {
+    "slope_kohm_per_0p69": 2.6892465890511406,
+    "reff_kohm": 2.6892465890511406,
+    "intrinsic_ps": 19.91017505532579,
+    "c_self_fF": 10.729892262248807
+   },
+   "fall": {
+    "slope_kohm_per_0p69": 1.2475372132623999,
+    "reff_kohm": 1.2475372132623999,
+    "intrinsic_ps": 12.271455974724951,
+    "c_self_fF": 14.255862362166242
+   }
+  },
+  "inv_8": {
+   "cin_fF": 17.653,
+   "leakage_nW": 0.006050054,
+   "rise": {
+    "slope_kohm_per_0p69": 1.4917196178277623,
+    "reff_kohm": 1.4917196178277623,
+    "intrinsic_ps": 21.481973038533102,
+    "c_self_fF": 20.870741315368527
+   },
+   "fall": {
+    "slope_kohm_per_0p69": 0.6461298428213805,
+    "reff_kohm": 0.6461298428213805,
+    "intrinsic_ps": 12.727231804412659,
+    "c_self_fF": 28.547301582779752
+   }
+  }
+ },
+ "fanout_liberty": [
+  {
+   "n": 1,
+   "load_fF": 2.3019999999999996,
+   "rise_ps": 47.89871544240155,
+   "fall_ps": 34.16227253984274
+  },
+  {
+   "n": 2,
+   "load_fF": 4.603999999999999,
+   "rise_ps": 61.197624499942826,
+   "fall_ps": 43.46883013843605
+  },
+  {
+   "n": 4,
+   "load_fF": 9.207999999999998,
+   "rise_ps": 87.2948717132873,
+   "fall_ps": 59.313794967552404
+  },
+  {
+   "n": 8,
+   "load_fF": 18.415999999999997,
+   "rise_ps": 139.62842799417606,
+   "fall_ps": 89.86560257482174
+  },
+  {
+   "n": 16,
+   "load_fF": 36.831999999999994,
+   "rise_ps": 243.66001169220456,
+   "fall_ps": 151.1682059303411
+  },
+  {
+   "n": 32,
+   "load_fF": 73.66399999999999,
+   "rise_ps": 451.1050148966397,
+   "fall_ps": 274.0365784342977
+  }
+ ],
+ "path": [
+  {
+   "q_edge": "rise",
+   "d_edge": "fall",
+   "stages": [
+    {
+     "cell": "sdfxtp_1",
+     "arc": "CLK->Q",
+     "out_edge": "rise",
+     "in_slew_ns": 0.1,
+     "load_fF": 4.009,
+     "delay_ns": 0.32957,
+     "out_slew_ns": 0.05305
+    },
+    {
+     "cell": "nand2_1",
+     "arc": "A->Y",
+     "out_edge": "fall",
+     "in_slew_ns": 0.05305,
+     "load_fF": 3.996,
+     "delay_ns": 0.05319,
+     "out_slew_ns": 0.03945
+    },
+    {
+     "cell": "inv_1",
+     "arc": "A->Y",
+     "out_edge": "rise",
+     "in_slew_ns": 0.03945,
+     "load_fF": 4.067,
+     "delay_ns": 0.05372,
+     "out_slew_ns": 0.04397
+    },
+    {
+     "cell": "nor2_1",
+     "arc": "A->Y",
+     "out_edge": "fall",
+     "in_slew_ns": 0.04397,
+     "load_fF": 3.421,
+     "delay_ns": 0.04198,
+     "out_slew_ns": 0.02752
+    },
+    {
+     "cell": "buf_2",
+     "arc": "A->X",
+     "out_edge": "fall",
+     "in_slew_ns": 0.02752,
+     "load_fF": 3.39,
+     "delay_ns": 0.10821,
+     "out_slew_ns": 0.02561
+    }
+   ],
+   "data_arrival_ns": 1.0066780519844283,
+   "data_slew_ns": 0.025609729114450204,
+   "setup_ns": 0.18695718337984166,
+   "hold_ns": -0.11132409676603613,
+   "setup_required_ns": 1.2830428166201584,
+   "setup_slack_ns": 0.2763647646357301,
+   "hold_slack_ns": 0.6480021487504645,
+   "logic_ns": 0.2571080519844284
+  },
+  {
+   "q_edge": "fall",
+   "d_edge": "rise",
+   "stages": [
+    {
+     "cell": "sdfxtp_1",
+     "arc": "CLK->Q",
+     "out_edge": "fall",
+     "in_slew_ns": 0.1,
+     "load_fF": 4.009,
+     "delay_ns": 0.31726,
+     "out_slew_ns": 0.03319
+    },
+    {
+     "cell": "nand2_1",
+     "arc": "A->Y",
+     "out_edge": "rise",
+     "in_slew_ns": 0.03319,
+     "load_fF": 3.996,
+     "delay_ns": 0.0563,
+     "out_slew_ns": 0.04861
+    },
+    {
+     "cell": "inv_1",
+     "arc": "A->Y",
+     "out_edge": "fall",
+     "in_slew_ns": 0.04861,
+     "load_fF": 4.067,
+     "delay_ns": 0.0411,
+     "out_slew_ns": 0.02675
+    },
+    {
+     "cell": "nor2_1",
+     "arc": "A->Y",
+     "out_edge": "rise",
+     "in_slew_ns": 0.02675,
+     "load_fF": 3.421,
+     "delay_ns": 0.09709,
+     "out_slew_ns": 0.08887
+    },
+    {
+     "cell": "buf_2",
+     "arc": "A->X",
+     "out_edge": "rise",
+     "in_slew_ns": 0.08887,
+     "load_fF": 3.39,
+     "delay_ns": 0.10943,
+     "out_slew_ns": 0.03054
+    }
+   ],
+   "data_arrival_ns": 1.041182651819457,
+   "data_slew_ns": 0.030537648798942458,
+   "setup_ns": 0.09104962117833985,
+   "hold_ns": -0.06315400021386991,
+   "setup_required_ns": 1.3789503788216602,
+   "setup_slack_ns": 0.33776772700220326,
+   "hold_slack_ns": 0.6343366520333269,
+   "logic_ns": 0.303922651819457
+  }
+ ],
+ "path_assumptions": {
+  "period_ns": 1.0,
+  "clk_slew_ns": 0.1,
+  "launch_latency_ns": 0.42,
+  "capture_latency_ns": 0.47,
+  "skew_ns": 0.04999999999999999,
+  "wire_um_per_net": 20.0,
+  "wire_pf_per_um": 8.47e-05,
+  "side_inputs": "nand2_1 B tied high, nor2_1 B tied low (non-controlling)",
+  "uncertainty_ns": 0.0
+ },
+ "scan_shift_hold": [
+  {
+   "edge": "rise",
+   "clk_to_q_ns": 0.32625079024655557,
+   "q_slew_ns": 0.048622261555238175,
+   "scd_hold_ns": -0.09420733718981167,
+   "scd_setup_ns": 0.12789326996911993,
+   "hold_slack_ns": 0.3704581274363673
+  },
+  {
+   "edge": "fall",
+   "clk_to_q_ns": 0.3152043214780449,
+   "q_slew_ns": 0.031123712146993103,
+   "scd_hold_ns": -0.1545351423413043,
+   "scd_setup_ns": 0.24431666032060104,
+   "hold_slack_ns": 0.4197394638193491
+  }
+ ],
+ "sce_constraints_clk0p1": {
+  "rise_0.05": {
+   "setup_ns": 0.24556266447313618,
+   "hold_ns": -0.0814527433152853
+  },
+  "rise_0.5": {
+   "setup_ns": 0.32886775714285715,
+   "hold_ns": -0.19868695510204082
+  },
+  "fall_0.05": {
+   "setup_ns": 0.21690027022074135,
+   "hold_ns": -0.14001346272386506
+  },
+  "fall_0.5": {
+   "setup_ns": 0.38357522857142856,
+   "hold_ns": -0.305361387755102
+  }
+ },
+ "d_setup_compare_clk0p1_d0p03": {
+  "dfxtp_1": {
+   "rise": 0.04272843869221157,
+   "fall": 0.09111329221157852
+  },
+  "sdfxtp_1": {
+   "rise": 0.09091138408996251,
+   "fall": 0.18875627680133278
+  }
+ },
+ "clk_to_q_compare_4fF": {
+  "dfxtp_1": {
+   "rise": 0.32836068989770684,
+   "fall": 0.31683994844747526
+  },
+  "sdfxtp_1": {
+   "rise": 0.329506844633767,
+   "fall": 0.31722232031082204
+  }
+ },
+ "pins_fF": {
+  "inv_1.A": 2.3019999999999996,
+  "nand2_1.A": 2.315,
+  "nor2_1.A": 2.373,
+  "buf_2.A": 1.727,
+  "dfxtp_1.D": 1.678,
+  "dfxtp_1.CLK": 1.794,
+  "sdfxtp_1.D": 1.696,
+  "sdfxtp_1.SCD": 1.811,
+  "sdfxtp_1.SCE": 3.387,
+  "sdfxtp_1.CLK": 1.776
+ },
+ "leakage_nW": {
+  "inv_1": 0.005326682,
+  "inv_4": 0.004462733,
+  "inv_8": 0.006050054,
+  "buf_2": 0.003934116,
+  "nand2_1": 0.00211796,
+  "nor2_1": 0.0019697,
+  "dfxtp_1": 0.008438635,
+  "sdfxtp_1": 0.009600667
+ }
+}

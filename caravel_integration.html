@@ -1,0 +1,149 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caravel Integration: The User Project Wrapper</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+<p class="lesson-meta">Lesson 56 / 84 · Part VI, Physical cells and the floorplan</p>
+<h1>Caravel Integration: The User Project Wrapper</h1>
+<p class="subtitle">The Efabless Caravel harness gives a user project a fixed pin list, four supply domains, 38 GPIOs and a 2920 × 3520&nbsp;µm area. This lesson walks the actual <code>user_project_wrapper.v</code> shipped with LibreLane 3.0.17, and the three official hardening strategies in LibreLane’s Caravel documentation.</p>
+<p class="scope-note"><strong>Where the facts come from.</strong> The port list, power-pin comments, Wishbone, logic-analyzer, GPIO, analog, clock and interrupt declarations are from the wrapper Verilog at <code>librelane/examples/spm-user_project_wrapper/user_project_wrapper.v</code> (Apache-2.0, Efabless), with <code>defines.v</code> in the same directory: <code>MPRJ_IO_PADS_1</code> = 19, <code>MPRJ_IO_PADS_2</code> = 19, <code>MPRJ_IO_PADS</code> = 38. Copies are in <code>labs/analysis_examples/caravel/</code>. Die, padframe and user-area sizes (3.60 × 5.20&nbsp;mm die, 3.588 × 5.188&nbsp;mm padframe, 2920 × 3520&nbsp;µm user area, 637 signal pins plus 8 supplies, QFN-64 9 × 9&nbsp;mm) are the course measurements already used in <a href="chip_overview.html">lesson 1</a>, <a href="die_anatomy.html">lesson 5</a> and <a href="floorplan.html">lesson 55</a> — they are not re-measured here. The three hardening strategies are from the LibreLane 3.0.17 documentation under <code>docs/source/additional_material/caravel/</code> (macro-first, flattened wrapper, top-level integration). This course has not hardened a full Caravel wrapper; Lab 6 hardened the SPM as a standalone design. Housekeeping-SPI and management-firmware behaviour is described from that documentation and from the course’s earlier Caravel lessons, not from a firmware trace we ran.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Name every port class on <code>user_project_wrapper</code> from the file itself: Wishbone, 128-bit logic analyzer, 38 GPIOs, analog I/O, <code>user_clock2</code>, three IRQs, and eight supply pins.</li>
+<li>Place the 2920 × 3520&nbsp;µm user area on the Caravel die, and know that 637 signal pins on the wrapper perimeter are a floorplan constraint, not a suggestion.</li>
+<li>Choose among LibreLane’s three documented ways to harden a project into that wrapper, and know which example settings go with each.</li>
+<li>Leave the management SoC and housekeeping SPI in the harness’s job, not in the user RTL, unless you have a reason to touch them.</li>
+</ul></div>
+<aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl>
+<dt>In the flow</dt><dd>Immediately after <a href="floorplan.html">the floorplan (lesson 55)</a>, which already used the wrapper DEF as its worked die area. Placement of a standalone block is the next lesson. Putting a finished GDS on a shuttle is <a href="tapeout.html">lesson 70</a>.</dd>
+<dt>Tools</dt><dd>The wrapper is RTL plus a fixed DEF. LibreLane’s Caravel documentation describes three hardening flows on top of the same Classic 3.0.17 engine used in Lab 6.</dd>
+<dt>Why it matters</dt><dd>A SKY130 project that is going to an Efabless-style MPW does not pick its own pad ring. It fills a socket whose pins, supplies and area are already decided. Mis-naming a pin or omitting a power connection fails integration, not just DRC.</dd>
+</dl></aside>
+<h2 id="section-1">1. The socket, not a blank die</h2>
+<p>Caravel is a harness: a management SoC, a pad ring, a housekeeping SPI, and a rectangular hole in the middle for you. Your top module is not the chip; it is <code>user_project_wrapper</code>, and the pin list of that module is the contract with the harness. The wrapper Verilog shipped with LibreLane says so at the top of the file: it “enumerates all of the pins available to the user,” and the bundled <code>SPM_example</code> “should be removed and replaced with the actual user project.”</p>
+<p>The physical hole is 2920 × 3520&nbsp;µm, from the wrapper DEF already quoted in <a href="floorplan.html">lesson 55</a>. The die around it is 3.60 × 5.20&nbsp;mm, the padframe 3.588 × 5.188&nbsp;mm, the package a 9 × 9&nbsp;mm QFN-64 — those figures are <a href="chip_overview.html">lesson 1</a> and <a href="die_anatomy.html">lesson 5</a>. LibreLane’s Caravel documentation sometimes approximates the user area as “≈ 3&nbsp;mm × 3.6&nbsp;mm”; this course keeps the DEF number. The wrapper perimeter carries 637 signal pins and 8 supply pins. Lesson 55 already computed the average signal-pin pitch: the perimeter is 2 × (2920 + 3520) = 12,880&nbsp;µm, about 20&nbsp;µm between signal pins.</p>
+
+<h2 id="section-2">2. Every port, from the Verilog</h2>
+<figure class="diagram" role="img" aria-label="Block diagram of user_project_wrapper with Wishbone, logic analyzer, GPIOs, analog, IRQ, user_clock2 and eight supplies around a user-project block.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 420" width="860" height="420" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="860" height="420" fill="#fbfcfd"/>
+  <text x="24" y="28" font-size="15" font-weight="700" fill="#33414f">user_project_wrapper — ports from the LibreLane example Verilog</text>
+  <rect x="230" y="90" width="400" height="250" rx="8" fill="#edf5fc" stroke="#2b6cb0" stroke-width="1.8"/>
+  <text x="430" y="200" text-anchor="middle" font-size="16" font-weight="700" fill="#1a365d">your project</text>
+  <text x="430" y="222" text-anchor="middle" font-size="12" fill="#5c6b7a">2920 × 3520 µm</text>
+  <text x="430" y="240" text-anchor="middle" font-size="12" fill="#5c6b7a">example instantiates SPM_example</text>
+  <rect x="16" y="100" width="196" height="150" rx="5" fill="#f7fafc" stroke="#d7dfe8"/>
+  <text x="114" y="120" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Wishbone slave</text>
+  <text x="26" y="142" font-size="11" fill="#33414f">wb_clk_i, wb_rst_i</text>
+  <text x="26" y="158" font-size="11" fill="#33414f">wbs_stb_i, wbs_cyc_i</text>
+  <text x="26" y="174" font-size="11" fill="#33414f">wbs_we_i, wbs_sel_i[3:0]</text>
+  <text x="26" y="190" font-size="11" fill="#33414f">wbs_dat_i[31:0]</text>
+  <text x="26" y="206" font-size="11" fill="#33414f">wbs_adr_i[31:0]</text>
+  <text x="26" y="222" font-size="11" fill="#33414f">wbs_ack_o</text>
+  <text x="26" y="238" font-size="11" fill="#33414f">wbs_dat_o[31:0]</text>
+  <rect x="648" y="100" width="196" height="118" rx="5" fill="#f7fafc" stroke="#d7dfe8"/>
+  <text x="746" y="120" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Logic analyzer</text>
+  <text x="658" y="142" font-size="11" fill="#33414f">la_data_in[127:0]</text>
+  <text x="658" y="158" font-size="11" fill="#33414f">la_data_out[127:0]</text>
+  <text x="658" y="174" font-size="11" fill="#33414f">la_oenb[127:0]</text>
+  <text x="658" y="198" font-size="11" fill="#5c6b7a">128 bits each way</text>
+  <rect x="230" y="356" width="400" height="50" rx="5" fill="#f7fafc" stroke="#d7dfe8"/>
+  <text x="430" y="376" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">38 user GPIOs + analog_io</text>
+  <text x="430" y="394" text-anchor="middle" font-size="11" fill="#33414f">io_in / io_out / io_oeb [37:0] · analog_io [28:0]</text>
+  <rect x="648" y="230" width="196" height="86" rx="5" fill="#f7fafc" stroke="#d7dfe8"/>
+  <text x="746" y="250" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Clock and IRQs</text>
+  <text x="658" y="272" font-size="11" fill="#33414f">user_clock2</text>
+  <text x="658" y="288" font-size="11" fill="#33414f">user_irq[2:0]</text>
+  <text x="658" y="304" font-size="11" fill="#5c6b7a">independent divider</text>
+  <rect x="16" y="266" width="196" height="120" rx="5" fill="#fff4d6" stroke="#d7b56d"/>
+  <text x="114" y="286" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Eight supplies</text>
+  <text x="26" y="306" font-size="11" fill="#33414f">vccd1, vccd2 — 1.8 V digital</text>
+  <text x="26" y="322" font-size="11" fill="#33414f">vssd1, vssd2 — digital GND</text>
+  <text x="26" y="338" font-size="11" fill="#33414f">vdda1, vdda2 — 3.3 V analog</text>
+  <text x="26" y="354" font-size="11" fill="#33414f">vssa1, vssa2 — analog GND</text>
+  <text x="26" y="374" font-size="11" fill="#5c6b7a">under USE_POWER_PINS</text>
+</svg>
+<figcaption><strong>Figure 1 — The wrapper contract.</strong> Names and widths are as declared in <code>user_project_wrapper.v</code>. The bundled example instantiates <code>SPM_example</code> and ties it to <code>vccd1</code> / <code>vssd1</code>.</figcaption>
+</figure>
+<p>GPIO width comes from <code>defines.v</code>: 19 pads on each of two sides, 38 in total, matching the “38 user GPIOs” already used in the anatomy lessons. The analog bus is declared as <code>inout [`MPRJ_IO_PADS-10:0] analog_io</code> — 29 bits, indices [28:0]. The comment in the file is precise and is worth taking literally: “analog I/O is not available on the 7 lowest-numbered GPIO pads, and so the analog_io indexing is offset from the GPIO indexing by 7 (also upper 2 GPIOs do not have analog_io).” So GPIO[0]–GPIO[6] and the two highest GPIOs have no analog_io companion; analog_io[0] sits on GPIO[7].</p>
+<p>The eight supplies are wrapped in <code>`ifdef USE_POWER_PINS</code>. Comments in the file: <code>vccd1</code> / <code>vccd2</code> are “User area 1/2 1.8V supply”; <code>vdda1</code> / <code>vdda2</code> are “3.3V supply”; <code>vssa*</code> analog ground, <code>vssd*</code> digital ground. A digital-only project typically hangs on <code>vccd1</code> / <code>vssd1</code>, as the bundled <code>SPM_example</code> does. Mixed-signal macros that want the 3.3&nbsp;V analog rails must connect <code>vdda</code> / <code>vssa</code> and respect the domain crossing — <a href="level_shifters.html">lesson 54</a> and the floorplan’s macro power-ring notes.</p>
+<p><code>defines.v</code> also records GPIO power-on defaults: “Most I/Os set to be user input pins on startup,” with <code>MGMT_INIT 1'b0</code>, <code>OENB_INIT 1'b0</code>, <code>DM_INIT 3'b001</code>, and a note that GPIOs 5 to 35 are “being set from a build-time-programmable block.” Those are the file’s words, not a measurement of a powered Caravel on a bench.</p>
+
+<h2 id="section-3">3. Wishbone, as the wrapper presents it</h2>
+<p>The wrapper is a Wishbone <em>slave</em> (the comment says “WB MI A”). The management SoC is the master: it drives <code>wb_clk_i</code>, <code>wb_rst_i</code>, strobe, cycle, write-enable, byte select, address and write data; the user project drives acknowledge and read data. A classic-cycle picture is below. It is a teaching waveform of the protocol, not a simulation of the bundled SPM_example.</p>
+<figure class="diagram" role="img" aria-label="Illustrative Wishbone classic slave read and write cycles with cyc, stb, we, ack.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 310" width="840" height="310" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="840" height="310" fill="#fbfcfd"/>
+  <text x="20" y="26" font-size="15" font-weight="700" fill="#33414f">Wishbone classic slave — teaching waveform, not a simulated trace</text>
+  <text x="200" y="48" text-anchor="middle" font-size="12" font-weight="600" fill="#5c6b7a">write</text>
+  <text x="520" y="48" text-anchor="middle" font-size="12" font-weight="600" fill="#5c6b7a">read</text>
+  <g stroke="#d7dfe8" stroke-dasharray="3 3">
+    <line x1="80" y1="54" x2="80" y2="290"/>
+    <line x1="200" y1="54" x2="200" y2="290"/>
+    <line x1="320" y1="54" x2="320" y2="290"/>
+    <line x1="440" y1="54" x2="440" y2="290"/>
+    <line x1="560" y1="54" x2="560" y2="290"/>
+    <line x1="680" y1="54" x2="680" y2="290"/>
+    <line x1="800" y1="54" x2="800" y2="290"/>
+  </g>
+  <text x="16" y="78" font-size="12" font-weight="600" fill="#33414f">clk</text>
+  <path d="M80 92 H110 V64 H200 V92 H230 V64 H320 V92 H350 V64 H440 V92 H470 V64 H560 V92 H590 V64 H680 V92 H710 V64 H800" fill="none" stroke="#33414f" stroke-width="1.6"/>
+  <text x="16" y="120" font-size="12" font-weight="600" fill="#33414f">cyc, stb</text>
+  <path d="M80 132 H200 V104 H320 V132 H440 V104 H680 V132 H800" fill="none" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="16" y="164" font-size="12" font-weight="600" fill="#33414f">we</text>
+  <path d="M80 176 H200 V148 H320 V176 H800" fill="none" stroke="#b54708" stroke-width="2"/>
+  <text x="16" y="208" font-size="12" font-weight="600" fill="#33414f">adr, dat_i</text>
+  <rect x="204" y="190" width="112" height="28" fill="#fff4d6" stroke="#d7b56d"/>
+  <text x="260" y="209" text-anchor="middle" font-size="11" fill="#7a3b08">master data</text>
+  <rect x="444" y="190" width="232" height="28" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="560" y="209" text-anchor="middle" font-size="11" fill="#1a365d">address held</text>
+  <text x="16" y="248" font-size="12" font-weight="600" fill="#33414f">ack</text>
+  <path d="M80 260 H200 V232 H320 V260 H560 V232 H680 V260 H800" fill="none" stroke="#217a3a" stroke-width="2"/>
+  <text x="16" y="288" font-size="12" font-weight="600" fill="#33414f">dat_o</text>
+  <rect x="564" y="274" width="112" height="24" fill="#e7f6ea" stroke="#217a3a"/>
+  <text x="620" y="291" text-anchor="middle" font-size="11" fill="#165b28">slave data</text>
+</svg>
+<figcaption><strong>Figure 2 — A classic Wishbone write, then a read.</strong> Illustrative. The slave raises <code>wbs_ack_o</code> when it has accepted the write or when <code>wbs_dat_o</code> is valid. The wrapper does not implement this for you; your project (or a Wishbone shim) must.</figcaption>
+</figure>
+<p>The 128-bit logic-analyzer bus (<code>la_data_in</code>, <code>la_data_out</code>, <code>la_oenb</code>) is a debug hook from the management SoC: the harness can observe or override user signals without using GPIOs. <code>user_irq[2:0]</code> is how the user project raises maskable interrupts to the management processor. <code>user_clock2</code> is a second clock, “on independent integer divider” in the file’s comment — useful when the Wishbone clock is not the clock you want for the datapath. Crossing between <code>wb_clk_i</code> and <code>user_clock2</code> is a CDC problem (<a href="cdc_reset.html">lesson 39</a>), not a free connection.</p>
+<h2 id="section-4">4. Three official ways to harden the wrapper</h2>
+<p>LibreLane’s Caravel documentation describes three strategies for turning user RTL into a wrapper GDS. They are documented recipes, not runs this course has reproduced. The names and the settings below are from those pages.</p>
+<table>
+<thead><tr><th>Strategy</th><th>Idea</th><th>Settings the docs highlight</th><th>When the docs point to it</th></tr></thead>
+<tbody>
+<tr><td>Macro-first</td><td>Harden the user design (the docs’ example is AES + a Wishbone shim) as a macro, then place that macro inside a wrapper that is mostly routing and power.</td><td>On the inner macro: <code>RT_MAX_LAYER</code> = <code>met4</code>, <code>PDN_MULTILAYER</code> = <code>false</code>, so the wrapper can still use met5 for its own PDN and route over the macro.</td><td>A large, already-closed block that you do not want the wrapper flow to flatten or re-place.</td></tr>
+<tr><td>Flattened wrapper</td><td>The wrapper and the user RTL are one synthesis and place-and-route job. No macros.</td><td><code>SYNTH_ELABORATE_ONLY</code> = <code>false</code>; CTS, fill, well taps and IR-drop reporting on.</td><td>A modest digital project that can be treated as a single flat netlist, similar in spirit to Lab 6’s standalone SPM, but with the wrapper pin list as the top.</td></tr>
+<tr><td>Top-level integration</td><td>The user design is a macro, but the wrapper flow is allowed to run its usual optimizations around it.</td><td>The docs’ AES example sets <code>RUN_IRDROP_REPORT</code> = <code>false</code>. That is the example’s choice, not a recommendation to skip IR in general — and Lab 6’s original folder recorded that IR was configured but not executed; a later OpenROAD analysis of that <code>final/</code> is in <a href="power_integrity_signoff.html">lesson 63</a>.</td><td>A middle path: a hardened macro, with the wrapper still doing CTS, fill and routing at the top.</td></tr>
+</tbody>
+</table>
+<p>Two cautions follow from those pages and from this course’s own runs. First, a pin-order file and the wrapper DEF fix the pin positions; a floorplan that ignores them will not drop into the harness. Second, <code>RUN_IRDROP_REPORT</code> being true is not the same as an IR report existing — the SPM run in Lab 6 is the worked example of that distinction (<a href="power_analysis.html">lesson 38</a>, <a href="power_integrity_signoff.html">lesson 63</a>). If you adopt the top-level-integration example’s <code>false</code>, you are choosing to skip the report, and you should say so.</p>
+
+<h2 id="section-5">5. What stays in the harness</h2>
+<p>Caravel’s management SoC and housekeeping SPI sit outside the user area. The management processor can read and write the Wishbone slave, drive the logic-analyzer bus, and (through housekeeping) observe or set GPIO modes. Firmware that runs on that processor is part of bringing a Caravel chip up, but this course has not run that firmware and does not include a trace of it. For a first user project, the practical rule is: implement the wrapper contract, connect the supplies you use, and leave the pad ring, the SPI and the management SoC alone.</p>
+<p>OpenRAM or DFFRAM macros inside the user area still take <code>vccd1</code> / <code>vssd1</code> (or the domain you assigned) and a power ring — <a href="memories.html">lesson 43</a> and the macro-ring section of <a href="floorplan.html">lesson 55</a>. They do not get a private pad.</p>
+<details class="checkpoint"><summary>How many user GPIO pads does the wrapper have, and where is that number declared?</summary><p>38. <code>defines.v</code> sets <code>MPRJ_IO_PADS_1</code> and <code>MPRJ_IO_PADS_2</code> to 19 each, and <code>MPRJ_IO_PADS</code> to their sum. The wrapper ports are <code>io_in</code>, <code>io_out</code> and <code>io_oeb</code>, each <code>[`MPRJ_IO_PADS-1:0]</code>. That matches the 38 user GPIOs already used in <a href="die_anatomy.html">lesson 5</a>.</p></details>
+<details class="checkpoint"><summary>Why is <code>analog_io</code> 29 bits wide, not 38?</summary><p>The declaration is <code>[`MPRJ_IO_PADS-10:0]</code>, and the file’s comment explains it: the 7 lowest-numbered GPIOs have no analog connection, the upper 2 also have none, and the analog index is offset by 7. 38 − 7 − 2 = 29.</p></details>
+<details class="checkpoint"><summary>If you harden a large AES block first and then drop it into the wrapper, which documented strategy is that, and what happens to met5?</summary><p>Macro-first. The inner macro is documented with <code>RT_MAX_LAYER</code> = <code>met4</code> and <code>PDN_MULTILAYER</code> = <code>false</code>, so met5 remains available for the wrapper’s power grid and for routes that cross the macro. This course has not re-run that flow; the settings are from LibreLane’s documentation.</p></details>
+<h2 id="section-6">Sources &amp; scope</h2>
+<p>Technical writing: 11 November 2026, America/Chicago. Ports and defines are from the local LibreLane 3.0.17 example files, copied to <code>labs/analysis_examples/caravel/</code>. Physical sizes are the course’s existing DEF and die figures. Hardening strategies are from LibreLane’s Caravel documentation, not from a wrapper run we executed. Lab 6 remains a standalone SPM hardening.</p>
+<ol>
+<li><code>user_project_wrapper.v</code> and <code>defines.v</code>, LibreLane <code>examples/spm-user_project_wrapper/</code> (Apache-2.0).</li>
+<li>LibreLane docs: <code>docs/source/additional_material/caravel/</code> — <code>macro_first_hardening</code>, <code>flattened_wrapper</code>, <code>top_level_integration</code>.</li>
+<li><a href="floorplan.html">Lesson 55</a>, <a href="die_anatomy.html">lesson 5</a>, <a href="chip_overview.html">lesson 1</a> for 2920 × 3520&nbsp;µm, 637 pins, die and package.</li>
+</ol>
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul>
+<li><a href="floorplan.html">Lesson 55</a>, for the wrapper DEF as a floorplan, including macro power rings.</li>
+<li><a href="tapeout.html">Lesson 70</a>, for what you hand to a shuttle after the wrapper is closed.</li>
+<li><a href="lab_rtl_to_gds.html">Lab 6</a>, the standalone SPM GDS this course did run.</li>
+<li><a href="hierarchical_eco.html">Lesson 57</a>, for LEF/Liberty abstracts, timing budgets, and LibreLane’s pre-freeze ECO steps.</li>
+<li>The Verilog in <code>labs/analysis_examples/caravel/</code>.</li>
+</ul></section>
+<div class="lesson-footer"><a href="floorplan.html"><small>← Previous</small>Floorplan</a><a href="hierarchical_eco.html"><small>Next →</small>Hierarchical Design, Abstracts &amp; ECO</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+
+
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html" aria-current="page">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</main></body></html>

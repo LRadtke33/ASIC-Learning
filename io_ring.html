@@ -1,0 +1,295 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The I/O Ring</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 64 / 84 · Part VII, The chip boundary</p><h1>The I/O Ring</h1>
+  <p class="subtitle">The core is rows of 0.46 µm sites. The outside of the chip is a ring of pad cells, much taller, abutted so their supply metal meets.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> Outlines and pin shapes come from the <code>sky130_fd_io</code> LEF files. The abutment rule is the <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst">I/O user guide</a>. Dimensions below use the pinned upstream I/O LEFs; installed wrapper cells can differ.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Distinguish pad cells from standard cells, and read their SKY130 sizes.</li><li>Explain how abutted pad cells form the ring’s supply buses on met4 and met5.</li><li>Apply the power–ground pad pairing rule and keep the ring’s several supplies separate.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Chip-level work in <a href="design_flow.html#step-4">step 4, floorplan and power grid</a>.</dd><dt>Tools</dt><dd>Caravel supplies a finished pad ring; LibreLane’s Chip flow builds one with OpenROAD’s pad-ring tool. Commercial: I/O planning in Innovus or IC Compiler II.</dd><dt>Why it matters</dt><dd>The pad ring is the chip’s only connection to the package and its first defense against static discharge.</dd></dl></aside><h2 id="section-1">1. Pads are not standard cells</h2>
+  <p>
+    A standard cell is 2.72&nbsp;µm tall and snaps to a 0.46&nbsp;µm site
+    (<a href="site_rows.html">lesson 13</a>). A pad cell is the circuit that
+    faces the package. In this I/O library the general-purpose pad
+    <code>top_gpiov2</code> is class <code>PAD</code>, 80&nbsp;µm wide by
+    200&nbsp;µm tall, with symmetry <code>X Y R90</code> so the same outline
+    can sit on any side of the chip. It has 39 pins. The LEF electrical access pin <code>PAD</code> is on met5.
+    A LEF pin rectangle is not by itself the physical passivation opening or an approved bond target. That plate is
+    <a href="rdl.html">lesson 67</a>.
+  </p>
+  <p>
+    The user guide says the library's I/O supply range is 1.71&nbsp;V to
+    5.5&nbsp;V. It describes <code>gpiov2</code> as the buffer whose receiver
+    can take 1.8&nbsp;V signaling when the I/O supply is not 1.8&nbsp;V.
+    The over-voltage cell <code>top_gpio_ovtv2</code> is a different outline,
+    140 × 200&nbsp;µm. 
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Abutted pad cells, not a standard-cell row.
+      The labels are the LEF sizes. The boxes are a sketch, not to scale.
+      The corner cell is 200 × 203.665&nbsp;µm and turns the buses. Supply
+      pins on the signal pad are short met4 stubs at the side edges, so
+      they meet the neighbor when the cells touch."><rect x="40" y="40" width="150" height="120" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="115" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">gpio</text><text x="115" y="116" text-anchor="middle" font-size="11" fill="#5c6b7a">80 × 200</text><rect x="40" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="184" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="190" y="40" width="140" height="120" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="260" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">power</text><text x="260" y="116" text-anchor="middle" font-size="11" fill="#5c6b7a">75 × 200</text><rect x="190" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="324" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="330" y="40" width="140" height="120" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="400" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">ground</text><text x="400" y="116" text-anchor="middle" font-size="11" fill="#5c6b7a">75 × 200</text><rect x="330" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="464" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="470" y="40" width="150" height="120" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="545" y="96" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">corner</text><text x="545" y="116" text-anchor="middle" font-size="11" fill="#5c6b7a">200 × 203.665</text><rect x="470" y="70" width="6" height="28" fill="#c0564a"></rect><rect x="614" y="70" width="6" height="28" fill="#c0564a"></rect><text x="370" y="190" text-anchor="middle" font-size="13" fill="#5c6b7a">metal-4 edge stubs meet where the cells touch</text><text x="370" y="212" text-anchor="middle" font-size="13" fill="#5c6b7a">the corner turns the same bus</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Abutted pad cells, not a standard-cell row.</strong>
+      The labels are the LEF sizes. The boxes are a sketch, not to scale.
+      The corner cell is 200 × 203.665&nbsp;µm and turns the buses. Supply
+      pins on the signal pad are short met4 stubs at the side edges, so
+      they meet the neighbor when the cells touch.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The ring is the buses that meet</h2>
+  <p>
+    The user guide says every power and ground pad has the I/O bussing
+    running through it on met5 and met4, and that abutting those pads
+    forms the ring. The same sentence is repeated for the reset cells. The
+    reset cell in the public list is <code>top_xres4v2</code>, 75 × 200&nbsp;µm.
+  </p>
+  <table>
+    <tbody><tr><th>Cell</th><th>Size</th><th>Details</th></tr>
+    <tr><td class="n">top_gpiov2</td><td>80 × 200</td><td class="n">39 pins. PAD is met5.</td></tr>
+    <tr><td class="n">top_gpio_ovtv2</td><td>140 × 200</td><td class="n">outline only</td></tr>
+    <tr><td class="n">top_power_hvc_wpad</td><td>75 × 200</td><td class="n">P_PAD on met5, HV (high-voltage) clamp pins</td></tr>
+    <tr><td class="n">top_ground_hvc_wpad</td><td>75 × 200</td><td class="n">G_PAD on met5, HV clamp pins</td></tr>
+    <tr><td class="n">top_power_lvc_wpad</td><td>75 × 198</td><td class="n">P_PAD on met5, LV (low-voltage) clamp pins</td></tr>
+    <tr><td class="n">top_ground_lvc_wpad</td><td>75 × 198</td><td class="n">G_PAD on met5, LV clamp pins</td></tr>
+    <tr><td class="n">top_xres4v2</td><td>75 × 200</td><td class="n">outline. Guide: buses run through it.</td></tr>
+    <tr><td class="n">corner_bus_overlay</td><td>200 × 203.665</td><td class="n">met4 and met5 only</td></tr>
+  </tbody></table>
+  <p>
+    On <code>top_gpiov2</code> the supply <em>pins</em> are not stripes across
+    the cell. <code>VDDIO</code> is met4, 1.27&nbsp;µm wide, on both side
+    edges: one piece 24.965&nbsp;µm tall (y 70.035 to 95.000) and a shorter
+    piece 4.65&nbsp;µm tall. <code>VSSIO</code>'s tall piece is 1.27 × 24.215&nbsp;µm
+    at the top edge, y 175.785 to 200. The other rails
+    (<code>VCCD</code>, <code>VSSD</code>, <code>VDDA</code>, <code>VSSA</code>,
+    and the quiet and hibernate rails) are the same kind of edge pair.
+    When two cells abut, those edge shapes touch. That is the connection.
+  </p>
+  <p>
+    The guide also says one side of a power or ground pad is DRC-clean
+    against a gpio or an sio macro, and the other side is not. The
+    restriction it states is to pair a power pad with a ground pad. Do not
+    drop a single power pad between two signal pads and assume both sides
+    are legal.
+  </p>
+
+  <p>
+      The corner cell's pins are only the ring supplies and
+      <code>AMUXBUS_A</code> / <code>AMUXBUS_B</code>, on met4 and met5.
+      <code>VDDIO</code> on that cell is a 1.27 × 24.960&nbsp;µm met4 piece
+      on the side and a 24.960 × 1.27&nbsp;µm piece on the bottom, with a
+      met5 piece 24.950&nbsp;µm the same way. The corner turns the bus.
+      The LEF height is 203.665&nbsp;µm.
+    </p>
+    <p>
+      Obstruction metal is a different shape from the pin. Inside
+      <code>top_gpiov2</code> the OBS includes an 80.0 × 53.835&nbsp;µm
+      met4 rectangle. A 76.66 × 25.765&nbsp;µm met4 obstruction covers
+      the same y range as the tall <code>VDDIO</code> pin, but it starts at
+      x 1.67 while the pin ends at x 1.27. There is a 0.40&nbsp;µm gap. A gap like this is not evidence of a short, and the 24.965&nbsp;µm pin is not the height of the bus through the whole cell; only the full layout shows those details.
+    </p>
+    <p>
+      The upstream <code>sky130_fd_io</code> subset should not be confused with
+    the complete installed I/O kit: <code>sky130_ef_io</code> extensions supply
+    common-bus slice fillers. Their placement and domain rules must match the
+    chosen wrapper library. How a gap is closed is
+      <a href="io_fill.html">lesson 66</a>. The clamps inside the power and
+      ground cells are <a href="esd_clamps.html">lesson 65</a>. The ohms along
+      the met4 stub are <a href="io_power.html">lesson 68</a>.
+    </p>
+  
+
+
+  <h2 id="section-3">3. What a ring looks like around a chip</h2>
+  <p>
+    Figure 1 is four cells touching, with the measured outlines labeled on them.
+    A chip puts that abutment on all four sides. The pads face the package. The
+    corner cell turns the met4 and met5 buses. Inside the ring, the standard-cell
+    rows of <a href="site_rows.html">lesson 13</a> fill the core. The core rails of
+    <a href="power_grid.html">lesson 14</a> eventually tie to the pad supplies. That
+    tie, and the ohms along one met4 stub, are <a href="io_power.html">lesson 68</a>.
+  </p>
+  <p>
+    The drawing below is the usual pad-ring picture: signal pads, a power pad, a
+    ground pad, four corner cells, a bus that continues where the cells abut, and
+    rows in the middle. A complete kit may also include <code>sky130_ef_io</code> fillers,
+    disconnects, and wrappers; choose a compatible ring architecture rather than
+    assuming every public master can abut every other master. This drawing is a sketch.
+    It carries no die size. The LEF sizes stay in figure 1 and in the table.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 740 460" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — A pad ring around a core, as a sketch.
+      Corners are drawn larger because corner_bus_overlay is
+      200 × 203.665&nbsp;µm, against a gpio of 80 × 200&nbsp;µm. The colored band
+      is the met4 and met5 bus the user guide says is formed when the pads
+      abut. The band is drawn continuous so the idea is visible. On
+      top_gpiov2 the supply pins are 1.27&nbsp;µm edge stubs, shown
+      in figure 1, and the LEF exposes only the connection areas. OBS marks routing blockage; it does not reveal the hidden metal’s net identity."><rect x="70" y="36" width="600" height="380" fill="#f7f4ef" stroke="#33414f" stroke-width="2"></rect><rect x="70" y="36" width="78" height="78" fill="#efe2c4" stroke="#33414f"></rect><rect x="592" y="36" width="78" height="78" fill="#efe2c4" stroke="#33414f"></rect><rect x="70" y="338" width="78" height="78" fill="#efe2c4" stroke="#33414f"></rect><rect x="592" y="338" width="78" height="78" fill="#efe2c4" stroke="#33414f"></rect><text x="109" y="79" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">corner</text><text x="631" y="79" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">corner</text><text x="109" y="381" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">corner</text><text x="631" y="381" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">corner</text><rect x="148" y="36" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="192.4" y="82" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="236.8" y="36" width="88.8" height="78" fill="#f8d0d0" stroke="#33414f"></rect><text x="281.2" y="82" text-anchor="middle" font-size="11" fill="#33414f">power</text><rect x="325.6" y="36" width="88.8" height="78" fill="#d9e8f8" stroke="#33414f"></rect><text x="370" y="82" text-anchor="middle" font-size="11" fill="#33414f">ground</text><rect x="414.4" y="36" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="458.79999999999995" y="82" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="503.2" y="36" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="547.6" y="82" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="148" y="338" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="192.4" y="384" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="236.8" y="338" width="88.8" height="78" fill="#f8d0d0" stroke="#33414f"></rect><text x="281.2" y="384" text-anchor="middle" font-size="11" fill="#33414f">power</text><rect x="325.6" y="338" width="88.8" height="78" fill="#d9e8f8" stroke="#33414f"></rect><text x="370" y="384" text-anchor="middle" font-size="11" fill="#33414f">ground</text><rect x="414.4" y="338" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="458.79999999999995" y="384" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="503.2" y="338" width="88.8" height="78" fill="#fff" stroke="#33414f"></rect><text x="547.6" y="384" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="70" y="114" width="78" height="56" fill="#fff" stroke="#33414f"></rect><text x="109" y="146" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="592" y="114" width="78" height="56" fill="#fff" stroke="#33414f"></rect><text x="631" y="146" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="70" y="170" width="78" height="56" fill="#f8d0d0" stroke="#33414f"></rect><text x="109" y="202" text-anchor="middle" font-size="11" fill="#33414f">power</text><rect x="592" y="170" width="78" height="56" fill="#f8d0d0" stroke="#33414f"></rect><text x="631" y="202" text-anchor="middle" font-size="11" fill="#33414f">power</text><rect x="70" y="226" width="78" height="56" fill="#d9e8f8" stroke="#33414f"></rect><text x="109" y="258" text-anchor="middle" font-size="11" fill="#33414f">ground</text><rect x="592" y="226" width="78" height="56" fill="#d9e8f8" stroke="#33414f"></rect><text x="631" y="258" text-anchor="middle" font-size="11" fill="#33414f">ground</text><rect x="70" y="282" width="78" height="56" fill="#fff" stroke="#33414f"></rect><text x="109" y="314" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="592" y="282" width="78" height="56" fill="#fff" stroke="#33414f"></rect><text x="631" y="314" text-anchor="middle" font-size="11" fill="#33414f">gpio</text><rect x="152" y="118" width="436" height="216" fill="none" stroke="#c0564a" stroke-width="16"></rect><rect x="168" y="134" width="404" height="184" fill="#f2f7f2" stroke="#1e6b4f"></rect><line x1="174" y1="164.66666666666666" x2="566" y2="164.66666666666666" stroke="#9bb89b"></line><line x1="174" y1="195.33333333333334" x2="566" y2="195.33333333333334" stroke="#9bb89b"></line><line x1="174" y1="226" x2="566" y2="226" stroke="#9bb89b"></line><line x1="174" y1="256.6666666666667" x2="566" y2="256.6666666666667" stroke="#9bb89b"></line><line x1="174" y1="287.33333333333337" x2="566" y2="287.33333333333337" stroke="#9bb89b"></line><text x="370" y="220" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">core rows</text><text x="370" y="240" text-anchor="middle" font-size="12" fill="#1e6b4f">2.72 µm tall</text><text x="370" y="448" text-anchor="middle" font-size="12" fill="#5c6b7a">sketch — colored band is the M4/M5 bus where pads abut</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — A pad ring around a core, as a sketch.</strong>
+      Corners are drawn larger because <code>corner_bus_overlay</code> is
+      200 × 203.665&nbsp;µm, against a gpio of 80 × 200&nbsp;µm. The colored band
+      is the met4 and met5 bus the user guide says is formed when the pads
+      abut. The band is drawn continuous so the idea is visible. On
+      <code>top_gpiov2</code> the supply pins are 1.27&nbsp;µm edge stubs, shown
+      in figure 1, and the LEF exposes only the connection areas. <code>OBS</code> marks routing blockage; it does not reveal the hidden metal’s net identity.
+    </figcaption>
+  </figure>
+
+    <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> On a Caravel project the pad ring is already built. For a custom chip, OpenROAD’s pad-ring tool places the pad cells, corners and fillers from a description of each side of the die, and LibreLane’s Chip flow runs it as its PadRing step. Commercial place-and-route tools have equivalent I/O planning commands.</p></aside><h2 id="section-4">4. Power and ground face each other</h2>
+  <p>
+    The user guide's placement rule for these pads is a pair. One side of a power or ground pad is not DRC-clean against a signal pad, so that side faces the other half of the pair. Signal pads sit on the clean side.
+  </p>
+  <p>
+    A single power pad between two signal pads puts the unclean side against a signal pad. The pair, power then ground or ground then power, is the arrangement the guide states. Section 2 has the bus metals that pair is there to continue.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — A power pad and a ground pad facing each other, with signal pads on the outer sides. This is the guide's pairing rule as a row.">
+<rect x="40" y="40" width="100" height="120" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="90" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">signal</text>
+<rect x="160" y="40" width="100" height="120" rx="4" fill="#fff" stroke="#c0564a" stroke-width="2"></rect>
+<text x="210" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#c0564a">power</text>
+<rect x="300" y="40" width="100" height="120" rx="4" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect>
+<text x="350" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#4a72c4">ground</text>
+<rect x="440" y="40" width="100" height="120" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="490" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">signal</text>
+<rect x="560" y="40" width="100" height="120" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="610" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">signal</text>
+<line x1="210" y1="160" x2="350" y2="180" stroke="#1e9e50" stroke-width="2"></line>
+<text x="370" y="200" text-anchor="middle" font-size="13" fill="#33414f">The pair faces each other. Signal pads sit outside that pair.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 3 — A power pad and a ground pad facing each other, with signal pads on the outer sides. This is the guide's pairing rule as a row.</strong></figcaption>
+  </figure>
+
+<h2 id="section-5">5. The ring has several supplies, not one VDD</h2>
+<table><thead><tr><th>Pin group</th><th>Example pins</th><th>Interface question</th></tr></thead><tbody><tr><td>Core data/control</td><td>OUT, OE_N, IN, DM[2:0]</td><td class="n">Which voltage domain drives or receives each pin?</td></tr><tr><td>I/O rails</td><td>VDDIO, VSSIO, quiet/hibernate supplies</td><td class="n">Which rails remain present during power sequencing?</td></tr><tr><td>Core/analog rails</td><td>VCCD, VSSD, VDDA, VSSA</td><td class="n">Which pads feed the corresponding core domains?</td></tr><tr><td>Pad/analog access</td><td>PAD, AMUXBUS_A/B, PAD_A_ESD_*</td><td class="n">What switch, resistor, leakage, and ESD path does the chosen mode include?</td></tr></tbody></table>
+<p>In particular, <code>VDDIO</code> is not automatically the 1.8&nbsp;V core supply. Connecting differently named rails requires the intended circuit or approved strap/disconnect cell, not a naming shortcut. Verify powered, unpowered, reset, and test configurations. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst">[I/O modes and supply connections]</a></p>
+<p><strong>Worked example:</strong> eight 80&nbsp;µm GPIO cells plus one 75&nbsp;µm power pad and one 75&nbsp;µm ground pad occupy <code>8 × 80 + 2 × 75 = 790&nbsp;µm</code> along a straight side before corners, fillers, spacing exceptions, and wrappers. This estimates perimeter demand, not die size.</p>
+<p><strong>Analog ↔ digital:</strong> a digital pad configuration can connect or disconnect an analog bus. Its logic truth table, supply state, resistor path, and physical rail continuity must be reviewed together.</p><details class="checkpoint"><summary>Check your understanding — Does an OBS rectangle prove that two supply pins are connected through it?</summary><p>No. A LEF obstruction restricts routing. Internal connectivity comes from the IP design/netlist and detailed layout, and resistance requires a suitable extracted or characterized model.</p></details>
+<details class="checkpoint"><summary>Check your understanding — why can VDDIO not be joined to the 1.8 V core supply just because both are power?</summary><p>VDDIO is the I/O supply and may be 3.3 V. Joining it to VCCD would put that voltage across 1.8 V thin-oxide devices, or force the I/O cells away from their design point. Different rails connect only through intended circuits or approved strap and disconnect cells.</p></details><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li><code>top_gpiov2</code> is 80 × 200&nbsp;µm, class <code>PAD</code>, 39 pins. The core row is 2.72&nbsp;µm.</li>
+      <li>Power and ground pads are 75&nbsp;µm wide. HV outlines are 200&nbsp;µm tall. LV outlines are 198&nbsp;µm tall.</li>
+      <li>The ring is met4 and met5 that meet when the cells abut. The corner cell turns those buses and is 200 × 203.665&nbsp;µm.</li>
+      <li>On the gpio, the supply pins are 1.27&nbsp;µm edge stubs, not a stripe across the cell.</li>
+      <li>Pair a power pad with a ground pad. The guide says one side of those pads is not DRC-clean against a signal pad.</li>
+      
+          
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-7">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. I/O revision 63752cd9 is the numerical example. Figures are schematic; wrapper dimensions and legal abutments are specific to the installed kit. The general I/O range is not permission to apply 5.5 V to thin-oxide core pins.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef">Pinned top_gpiov2 LEF — access pins and outline.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst">Pinned I/O user guide — modes, supply domains, and pad pairing.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/corner_bus_overlay/sky130_fd_io__corner_bus_overlay.lef">Corner-bus overlay geometry.</a></li>
+<li><a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_ef_io/config.tcl">open-pdks ef_io fillers and wrappers.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html" aria-current="page">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="power_integrity_signoff.html"><small>← Previous</small>Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a><a href="esd_clamps.html"><small>Next →</small>ESD and Clamps</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const cells = [
+    [40, 150, 'gpio', '80 × 200'],
+    [190, 140, 'power', '75 × 200'],
+    [330, 140, 'ground', '75 × 200'],
+    [470, 150, 'corner', '200 × 203.665']
+  ];
+  cells.forEach(([x, w, name, sub]) => {
+    s += `<rect x="${x}" y="40" width="${w}" height="120" fill="#fff" stroke="${DK}" stroke-width="2"/>`;
+    s += txt(x + w / 2, 96, name, {b: true, s: 14});
+    s += txt(x + w / 2, 116, sub, {s: 11, c: '#5c6b7a'});
+    s += `<rect x="${x}" y="70" width="6" height="28" fill="${PW}"/>`;
+    s += `<rect x="${x + w - 6}" y="70" width="6" height="28" fill="${PW}"/>`;
+  });
+  s += txt(370, 190, 'metal-4 edge stubs meet where the cells touch', {s: 13, c: '#5c6b7a'});
+  s += txt(370, 212, 'the corner turns the same bus', {s: 13, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 460" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const X = 70, Y = 36, W = 600, H = 380;
+  s += `<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#f7f4ef" stroke="${DK}" stroke-width="2"/>`;
+  const c = 78;
+  s += `<rect x="${X}" y="${Y}" width="${c}" height="${c}" fill="#efe2c4" stroke="${DK}"/>`;
+  s += `<rect x="${X + W - c}" y="${Y}" width="${c}" height="${c}" fill="#efe2c4" stroke="${DK}"/>`;
+  s += `<rect x="${X}" y="${Y + H - c}" width="${c}" height="${c}" fill="#efe2c4" stroke="${DK}"/>`;
+  s += `<rect x="${X + W - c}" y="${Y + H - c}" width="${c}" height="${c}" fill="#efe2c4" stroke="${DK}"/>`;
+  s += txt(X + c / 2, Y + c / 2 + 4, 'corner', {s: 11, b: true});
+  s += txt(X + W - c / 2, Y + c / 2 + 4, 'corner', {s: 11, b: true});
+  s += txt(X + c / 2, Y + H - c / 2 + 4, 'corner', {s: 11, b: true});
+  s += txt(X + W - c / 2, Y + H - c / 2 + 4, 'corner', {s: 11, b: true});
+  const padsTop = ['gpio', 'power', 'ground', 'gpio', 'gpio'];
+  const pw = (W - 2 * c) / padsTop.length;
+  padsTop.forEach((name, i) => {
+    const x = X + c + i * pw;
+    const fill = name === 'power' ? '#f8d0d0' : name === 'ground' ? '#d9e8f8' : '#fff';
+    s += `<rect x="${x}" y="${Y}" width="${pw}" height="${c}" fill="${fill}" stroke="${DK}"/>`;
+    s += txt(x + pw / 2, Y + 46, name, {s: 11});
+  });
+  padsTop.forEach((name, i) => {
+    const x = X + c + i * pw;
+    const fill = name === 'power' ? '#f8d0d0' : name === 'ground' ? '#d9e8f8' : '#fff';
+    s += `<rect x="${x}" y="${Y + H - c}" width="${pw}" height="${c}" fill="${fill}" stroke="${DK}"/>`;
+    s += txt(x + pw / 2, Y + H - 32, name, {s: 11});
+  });
+  const side = ['gpio', 'power', 'ground', 'gpio'];
+  const ph = (H - 2 * c) / side.length;
+  side.forEach((name, i) => {
+    const y = Y + c + i * ph;
+    const fill = name === 'power' ? '#f8d0d0' : name === 'ground' ? '#d9e8f8' : '#fff';
+    s += `<rect x="${X}" y="${y}" width="${c}" height="${ph}" fill="${fill}" stroke="${DK}"/>`;
+    s += txt(X + c / 2, y + ph / 2 + 4, name, {s: 11});
+    s += `<rect x="${X + W - c}" y="${y}" width="${c}" height="${ph}" fill="${fill}" stroke="${DK}"/>`;
+    s += txt(X + W - c / 2, y + ph / 2 + 4, name, {s: 11});
+  });
+  const band = 16;
+  const ix = X + c + 4, iy = Y + c + 4, iw = W - 2 * c - 8, ih = H - 2 * c - 8;
+  s += `<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="none" stroke="${PW}" stroke-width="${band}"/>`;
+  const cx = ix + band, cy = iy + band, cw = iw - 2 * band, ch = ih - 2 * band;
+  s += `<rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" fill="#f2f7f2" stroke="#1e6b4f"/>`;
+  for (let i = 1; i < 6; i++) {
+    const y = cy + (ch / 6) * i;
+    s += `<line x1="${cx + 6}" y1="${y}" x2="${cx + cw - 6}" y2="${y}" stroke="#9bb89b"/>`;
+  }
+  s += txt(cx + cw / 2, cy + ch / 2 - 6, 'core rows', {s: 14, b: true, c: '#1e6b4f'});
+  s += txt(cx + cw / 2, cy + ch / 2 + 14, '2.72 µm tall', {s: 12, c: '#1e6b4f'});
+  s += txt(370, 448, 'sketch — colored band is the M4/M5 bus where pads abut', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

@@ -1,0 +1,20 @@
+{
+  "scope": "Convenience-runner integration test of analysis, Lab5 and optional synthesis; other labs separately executed and verified.",
+  "results": [
+    {
+      "lab": "analysis",
+      "returncode": 0,
+      "elapsed_seconds": 1.681
+    },
+    {
+      "lab": "5",
+      "returncode": 0,
+      "elapsed_seconds": 0.09
+    },
+    {
+      "lab": "synthesis",
+      "returncode": 0,
+      "elapsed_seconds": 0.936
+    }
+  ]
+}

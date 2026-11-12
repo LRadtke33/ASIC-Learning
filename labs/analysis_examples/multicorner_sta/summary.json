@@ -1,0 +1,133 @@
+{
+  "design": "spm (LibreLane 32-bit shift-and-add multiplier example)",
+  "run": "RUN_2026-11-11_16-09-06",
+  "step": "54-openroad-stapostpnr",
+  "tools": {
+    "LibreLane": "3.0.17",
+    "OpenROAD": "dcf36133",
+    "OpenSTA": "2.7.0",
+    "PDK": "sky130A ciel 8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+    "lib": "sky130_fd_sc_hd",
+    "period_ns": 10.0,
+    "clock_uncertainty_signoff_ns": 0.1
+  },
+  "post_route_9corners": [
+    {
+      "corner": "max_ff_n40C_1v95",
+      "setup_ws": 6.493249677285913,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.25439212567636177,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "max_ss_100C_1v60",
+      "setup_ws": 3.590931209580248,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 1.0672022456703798,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "max_tt_025C_1v80",
+      "setup_ws": 5.732436021453506,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.46133254078210106,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "min_ff_n40C_1v95",
+      "setup_ws": 6.52796501998013,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.2531265546592231,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "min_ss_100C_1v60",
+      "setup_ws": 3.68752772088193,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 1.0643669580299047,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "min_tt_025C_1v80",
+      "setup_ws": 5.783293119203872,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.45925736735693307,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "nom_ff_n40C_1v95",
+      "setup_ws": 6.509280410036461,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.25355890327281544,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "nom_ss_100C_1v60",
+      "setup_ws": 3.6338089121823556,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 1.0640965076934572,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    },
+    {
+      "corner": "nom_tt_025C_1v80",
+      "setup_ws": 5.755329264957952,
+      "setup_wns": 0.0,
+      "setup_tns": 0.0,
+      "hold_ws": 0.45984445330895873,
+      "hold_wns": 0.0,
+      "hold_tns": 0.0
+    }
+  ],
+  "worst_setup": "max_ss_100C_1v60 setup WS 3.590931 ns (MET)",
+  "worst_hold": "min_ff_n40C_1v95 hold WS 0.253127 ns (MET)",
+  "max_ss_fmax_MHz": 249.11,
+  "max_ss_period_min_ns": 4.01,
+  "max_ss_clock_latency_rise_ns": [
+    0.620158,
+    0.695493
+  ],
+  "max_ss_clock_skew_rise_ns": 0.075334,
+  "nom_tt_setup_CRPR_ns": -0.022356,
+  "min_ff_hold_path_CRPR_ns": -0.015579,
+  "min_ff_hold_skew_report_CRPR_ns": -0.025947,
+  "hold_cells_inserted_at_CTS": {
+    "sky130_fd_sc_hd__dlygate4sd3_1": 33
+  },
+  "SI": "No SI / crosstalk delta-delay was reported in this STAPostPNR run; not measured.",
+  "OCV_note": "5% derate on a post-CTS OpenSTA run produced slacks identical to no-derate (derate may not have applied). 10% early 0.90 / late 1.10 on tt (no SPEF) changed setup 5.864 -> 5.749 ns and hold 0.302 -> 0.260 ns. Those 10% figures are the measured OCV result.",
+  "postCTS_noSPEF": {
+    "tt_setup": 5.864,
+    "tt_hold": 0.302,
+    "ss_setup": 3.969,
+    "ss_hold": 0.894,
+    "ff_setup": 6.531,
+    "ff_hold": 0.098,
+    "tt_ocv10_setup": 5.749,
+    "tt_ocv10_hold": 0.26
+  },
+  "prePNR": {
+    "ss_setup": 5.22,
+    "tt_setup": 6.48,
+    "ff_setup": 6.93,
+    "ff_hold": 0.046,
+    "tt_hold": 0.207,
+    "ss_hold": 0.682,
+    "note": "LibreLane pre-PNR STA, ideal clock, no parasitics. RC corners identical at that stage."
+  }
+}

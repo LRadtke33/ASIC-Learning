@@ -1,0 +1,20 @@
+{
+  "process": "SKY130 published basic RCX table values",
+  "checked_utc": "2026-11-06",
+  "source_url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+  "source_html_sha256": "446ae8c4b73d17d194d0a391fd95b254537fcffc803740c02cea456bf00e92bd",
+  "source_snapshot_bytes": 114538,
+  "source_note": "Table 91 resistance; Table 93 downward fringe; Table 95 parallel area. Documented fringe values are approximations from 5 um x 10 um test plates, not a calibrated general geometry model.",
+  "met3_sheet_ohm_per_square": 0.047,
+  "met2_met3_area_aF_per_um2": 86.1861,
+  "met3_to_met2_downward_fringe_aF_per_um": 69.846,
+  "met3_met4_area_aF_per_um2": 84.0346,
+  "scope_limitations": [
+    "Constant-width, non-self-intersecting Manhattan centerline model with a large quiet met2 reference plane.",
+    "Lower capacitance uses area plus a constant fringe-perimeter approximation; upper coupling and grounded-patch capacitance use overlap area only.",
+    "Upper edge/fringing fields, same-layer lateral coupling, shielding redistribution, floating fill, vias, pin/device capacitance, width corrections, process corners, temperature, package and substrate networks are omitted.",
+    "The 20 kohm driver/bias resistance, 50 fF receiver load, 1.8 V stimulus, geometry, and accuracy target are teaching assumptions.",
+    "SVG layouts illustrate the input geometry; they are not DRC/LVS-clean GDS or output from a foundry-qualified extraction deck.",
+    "ngspice solves the generated linear RC network; it does not validate the geometry estimator or turn its results into foundry extraction."
+  ]
+}

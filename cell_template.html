@@ -1,0 +1,381 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cell Template: Tracks, Sites &amp; Edges</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 17 / 84 · Part III, Standard-cell layout</p><h1>The Cell Template: Tracks, Sites &amp; Edges</h1>
+  <p class="subtitle">Where row height and site width come from, and how compatible cell-edge rules support legal abutment.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain how a library template fixes row height, site width and the cell-edge rules.</li><li>Count the HD row height in routing tracks: 8 × 0.34 µm = 2.72 µm.</li><li>Separate the placement site, the routing tracks and the 0.005 µm manufacturing grid.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Library architecture, decided before any cell is drawn. The tools of <a href="design_flow.html#step-4">step 4, floorplan and power grid</a> to <a href="design_flow.html#step-7">step 7, routing</a> inherit it through the technology LEF.</dd><dt>Tools</dt><dd>Planning work by the library team; the result appears as the site, track and grid definitions that OpenROAD reads.</dd><dt>Why it matters</dt><dd>The template fixes row height, routing tracks and which cells may sit side by side.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <p class="scope-note"><strong>SKY130 data and teaching models.</strong> The SKY130 facts in this lesson are the 0.46 × 2.72&nbsp;µm <code>unithd</code> site (and the 0.46 × 5.44&nbsp;µm <code>unithddbl</code>), the 0.34&nbsp;µm met1 pitch with its 0.17&nbsp;µm offset, the li1 pitches, the 0.48&nbsp;µm rails and the 0.005&nbsp;µm manufacturing grid. The 9-line template, the 6T/9T/12T height families, the regular-gate pattern and the half-rule edge contract are teaching models of how libraries are designed. Real libraries set their own conventions, and SKY130’s internal poly and diffusion geometry has to be read from its layout and rules.</p><h2 id="section-1">1. The template comes first</h2>
+  <p>A library architecture defines related choices such as row height, site width, rail positions and well boundaries. Ordinary cells in a compatible family follow that template; special, multiheight and other library families may use different frames or edge restrictions. This lesson explains those choices and separates a generic template from the measured HD examples.</p>
+
+  <h2 id="section-2">2. Row height is counted in routing tracks</h2>
+  <p>A library’s track count describes its cell height in units of a routing pitch, but libraries count differently: some count track centerlines, some count pitch intervals, some use another reference layer. A “9-track” label does <em>not</em> always mean the height is nine router pitches. For SKY130 HD the published height is 2.72&nbsp;µm and the met1 pitch is 0.34&nbsp;µm: eight pitch intervals. Section 5 separates its nine boundary-to-boundary centerlines from its eight offset routing tracks.</p>
+  <ul>
+    <li>Boundary-centered rails extend into both adjacent rows and take part of the potential signal-routing region; spacing, pins and obstructions reduce the usable capacity further.</li>
+    <li>Compatible cells use well and implant boundaries that meet their abutment rules; matching one drawn boundary says nothing about a different cell family or voltage domain.</li>
+    <li>The remaining active-region space limits the width of an individual device finger. Drive also depends on device type, length, bias, folding and internal wiring.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 720 385" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — A 9-line template. The drawing chooses nine horizontal reference centerlines, boundary-centered rails and a fixed well boundary; their positions and clearances limit the diffusion heights. The faint inverter shows the architectural idea. A reference line is not automatically a usable signal track."><rect x="182" y="28" width="346" height="156" fill="#f3efce" stroke="#b5a642" stroke-width="1.4" stroke-dasharray="5 4"></rect><rect x="260" y="64" width="150" height="106" fill="#8fbf6f" opacity="0.5" stroke="#5e8f43" stroke-width="1"></rect><rect x="260" y="206" width="150" height="92" fill="#8fbf6f" opacity="0.5" stroke="#5e8f43" stroke-width="1"></rect><rect x="326" y="52" width="18" height="264" fill="#d95252" opacity="0.55"></rect><line x1="190" y1="56" x2="520" y2="56" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="60" text-anchor="middle" font-size="10" fill="#2e9e9e">1</text><line x1="190" y1="88" x2="520" y2="88" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="92" text-anchor="middle" font-size="10" fill="#2e9e9e">2</text><line x1="190" y1="120" x2="520" y2="120" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="124" text-anchor="middle" font-size="10" fill="#2e9e9e">3</text><line x1="190" y1="152" x2="520" y2="152" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="156" text-anchor="middle" font-size="10" fill="#2e9e9e">4</text><line x1="190" y1="184" x2="520" y2="184" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="188" text-anchor="middle" font-size="10" fill="#2e9e9e">5</text><line x1="190" y1="216" x2="520" y2="216" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="220" text-anchor="middle" font-size="10" fill="#2e9e9e">6</text><line x1="190" y1="248" x2="520" y2="248" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="252" text-anchor="middle" font-size="10" fill="#2e9e9e">7</text><line x1="190" y1="280" x2="520" y2="280" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="284" text-anchor="middle" font-size="10" fill="#2e9e9e">8</text><line x1="190" y1="312" x2="520" y2="312" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="5 5"></line><text x="536" y="316" text-anchor="middle" font-size="10" fill="#2e9e9e">9</text><text x="536" y="26" text-anchor="middle" font-size="9.5" fill="#2e9e9e">track</text><rect x="190" y="40" width="330" height="288" fill="none" stroke="#6b7683" stroke-width="1.3" stroke-dasharray="6 4"></rect><rect x="182" y="34" width="346" height="12" fill="#d9534f" opacity="0.9"></rect><rect x="182" y="322" width="346" height="12" fill="#3b6fb0" opacity="0.9"></rect><line x1="600" y1="46" x2="600" y2="322" stroke="#33414f" stroke-width="1.2"></line><polygon points="596,48 604,48 600,40" fill="#33414f"></polygon><polygon points="596,320 604,320 600,328" fill="#33414f"></polygon><text x="612" y="176" text-anchor="start" font-size="11" font-weight="700" fill="#33414f">row height</text><text x="612" y="192" text-anchor="start" font-size="11" fill="#33414f">9 pitches (example)</text><line x1="252" y1="70" x2="252" y2="164" stroke="#5e8f43" stroke-width="1.2"></line><polygon points="248,72 256,72 252,64" fill="#5e8f43"></polygon><polygon points="248,162 256,162 252,170" fill="#5e8f43"></polygon><text x="246" y="108" text-anchor="end" font-size="10.5" font-weight="700" fill="#2c4a1e">max W_P</text><line x1="252" y1="212" x2="252" y2="292" stroke="#5e8f43" stroke-width="1.2"></line><polygon points="248,214 256,214 252,206" fill="#5e8f43"></polygon><polygon points="248,290 256,290 252,298" fill="#5e8f43"></polygon><text x="246" y="236" text-anchor="end" font-size="10.5" font-weight="700" fill="#2c4a1e">max W_N</text><text x="176" y="43" text-anchor="end" font-size="10" fill="#c0392b">VDD at row boundary</text><text x="176" y="331" text-anchor="end" font-size="10" fill="#3b6fb0">VSS shared boundary</text><line x1="182" y1="184" x2="130" y2="184" stroke="#98a4b0" stroke-width="1"></line><text x="126" y="174" text-anchor="end" font-size="10" fill="#33414f">n-well edge at a</text><text x="126" y="187" text-anchor="end" font-size="10" fill="#33414f">fixed height within</text><text x="126" y="200" text-anchor="end" font-size="10" fill="#33414f">this template</text><text x="355" y="368" text-anchor="middle" font-size="10.5" font-style="italic" fill="#5c6b7a">Nine hypothetical track centers; access still needs spacing and obstruction checks</text></svg></div>
+    <figcaption><strong>Figure 1 — A 9-line template.</strong> The drawing chooses nine horizontal reference centerlines, boundary-centered rails and a fixed well boundary; their positions and clearances limit the diffusion heights. The faint inverter shows the architectural idea. A reference line is not automatically a usable signal track.</figcaption>
+  </figure>
+
+  <p>
+    Track count is the library's fundamental trade-off, which is why foundries and library
+    vendors offer <strong>height families</strong>:
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Height families. With other choices held equal, shorter cells leave less room for devices and pin routing, and taller cells leave more at a larger outline area. The three frames share one site width only for comparison."><text x="360" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">same site width — different track counts</text><rect x="64" y="147" width="152" height="61.839999999999996" fill="#f3efce" stroke="#b5a642" stroke-width="1" stroke-dasharray="4 3"></rect><line x1="70" y1="166" x2="210" y2="166" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="70" y1="184" x2="210" y2="184" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="70" y1="202" x2="210" y2="202" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="70" y1="220" x2="210" y2="220" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="70" y1="238" x2="210" y2="238" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="70" y1="256" x2="210" y2="256" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><rect x="98" y="169" width="84" height="31.200000000000003" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="98" y="226.28" width="84" height="26.720000000000006" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="133" y="163" width="14" height="96" fill="#d95252" opacity="0.6"></rect><rect x="70" y="157" width="140" height="108" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="5 4"></rect><rect x="64" y="153" width="152" height="8" fill="#d9534f" opacity="0.9"></rect><rect x="64" y="261" width="152" height="8" fill="#3b6fb0" opacity="0.9"></rect><text x="140" y="289" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">6T</text><text x="140" y="305" text-anchor="middle" font-size="10" fill="#5c6b7a">dense, low power —</text><text x="140" y="319" text-anchor="middle" font-size="10" fill="#5c6b7a">weak drive, tough pin access</text><rect x="284" y="93" width="152" height="87.75999999999999" fill="#f3efce" stroke="#b5a642" stroke-width="1" stroke-dasharray="4 3"></rect><line x1="290" y1="112" x2="430" y2="112" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="130" x2="430" y2="130" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="148" x2="430" y2="148" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="166" x2="430" y2="166" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="184" x2="430" y2="184" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="202" x2="430" y2="202" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="220" x2="430" y2="220" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="238" x2="430" y2="238" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="290" y1="256" x2="430" y2="256" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><rect x="318" y="115" width="84" height="52.8" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="318" y="207.92" width="84" height="45.080000000000005" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="353" y="109" width="14" height="150" fill="#d95252" opacity="0.6"></rect><rect x="290" y="103" width="140" height="162" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="5 4"></rect><rect x="284" y="99" width="152" height="8" fill="#d9534f" opacity="0.9"></rect><rect x="284" y="261" width="152" height="8" fill="#3b6fb0" opacity="0.9"></rect><text x="360" y="289" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">9T</text><text x="360" y="305" text-anchor="middle" font-size="10" fill="#5c6b7a">the mainstream</text><text x="360" y="319" text-anchor="middle" font-size="10" fill="#5c6b7a">balance</text><rect x="504" y="39" width="152" height="113.67999999999999" fill="#f3efce" stroke="#b5a642" stroke-width="1" stroke-dasharray="4 3"></rect><line x1="510" y1="58" x2="650" y2="58" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="76" x2="650" y2="76" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="94" x2="650" y2="94" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="112" x2="650" y2="112" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="130" x2="650" y2="130" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="148" x2="650" y2="148" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="166" x2="650" y2="166" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="184" x2="650" y2="184" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="202" x2="650" y2="202" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="220" x2="650" y2="220" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="238" x2="650" y2="238" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><line x1="510" y1="256" x2="650" y2="256" stroke="#2e9e9e" stroke-width="0.8" stroke-dasharray="4 4"></line><rect x="538" y="61" width="84" height="74.4" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="538" y="189.56" width="84" height="63.44000000000001" fill="#8fbf6f" opacity="0.75" stroke="#5e8f43"></rect><rect x="573" y="55" width="14" height="204" fill="#d95252" opacity="0.6"></rect><rect x="510" y="49" width="140" height="216" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="5 4"></rect><rect x="504" y="45" width="152" height="8" fill="#d9534f" opacity="0.9"></rect><rect x="504" y="261" width="152" height="8" fill="#3b6fb0" opacity="0.9"></rect><text x="580" y="289" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">12T</text><text x="580" y="305" text-anchor="middle" font-size="10" fill="#5c6b7a">big devices, fast,</text><text x="580" y="319" text-anchor="middle" font-size="10" fill="#5c6b7a">easy routing — more area</text></svg></div>
+    <figcaption><strong>Figure 2 — Height families.</strong> With other choices held equal, shorter cells leave less room for devices and pin routing, and taller cells leave more at a larger outline area. The three frames share one site width only for comparison.</figcaption>
+  </figure>
+
+  <h2 id="section-3">3. Site width, contacted gate pitch, and library choice</h2>
+  <p>The site width is chosen so that cells repeat and abut legally. It is often related to the contacted gate pitch (CPP), but it does not have to equal one CPP. Some restricted-layout processes impose a regular pattern of gates and dummy gates, as Figure 3 illustrates. For SKY130 the established facts are the 0.46&nbsp;µm site and the matching li1 x pitch.</p>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — A regular-gate architecture. This example sets the site width equal to the contacted gate pitch and shares dummy strips at the boundaries, so the drawn gate grating is continuous across cells. Other processes use different gate, dummy and edge conventions."><defs><pattern id="ph" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#f7dcdc"></rect><line x1="0" y1="0" x2="0" y2="5" stroke="#dd9a9a" stroke-width="1.6"></line></pattern></defs><rect x="30" y="61" width="328" height="10" fill="#d9534f" opacity="0.9"></rect><rect x="30" y="241" width="328" height="10" fill="#3b6fb0" opacity="0.9"></rect><rect x="66.4" y="104" width="123.19999999999999" height="34" fill="#8fbf6f" opacity="0.7" stroke="#5e8f43"></rect><rect x="66.4" y="176" width="123.19999999999999" height="30" fill="#8fbf6f" opacity="0.7" stroke="#5e8f43"></rect><rect x="242.4" y="104" width="79.2" height="34" fill="#8fbf6f" opacity="0.7" stroke="#5e8f43"></rect><rect x="242.4" y="176" width="79.2" height="30" fill="#8fbf6f" opacity="0.7" stroke="#5e8f43"></rect><rect x="34" y="76" width="12" height="160" fill="url(#ph)" stroke="#dd9a9a" stroke-width="1"></rect><rect x="78" y="76" width="12" height="160" fill="#d95252"></rect><rect x="122" y="76" width="12" height="160" fill="#d95252"></rect><rect x="166" y="76" width="12" height="160" fill="url(#ph)" stroke="#dd9a9a" stroke-width="1"></rect><rect x="210" y="76" width="12" height="160" fill="url(#ph)" stroke="#dd9a9a" stroke-width="1"></rect><rect x="254" y="76" width="12" height="160" fill="url(#ph)" stroke="#dd9a9a" stroke-width="1"></rect><rect x="298" y="76" width="12" height="160" fill="#d95252"></rect><rect x="342" y="76" width="12" height="160" fill="url(#ph)" stroke="#dd9a9a" stroke-width="1"></rect><line x1="40" y1="50" x2="40" y2="262" stroke="#6b7683" stroke-width="1.3" stroke-dasharray="6 4"></line><line x1="216" y1="50" x2="216" y2="262" stroke="#6b7683" stroke-width="1.3" stroke-dasharray="6 4"></line><line x1="348" y1="50" x2="348" y2="262" stroke="#6b7683" stroke-width="1.3" stroke-dasharray="6 4"></line><line x1="90" y1="46" x2="122" y2="46" stroke="#33414f" stroke-width="1.2"></line><polygon points="92,42 92,50 84,46" fill="#33414f"></polygon><polygon points="120,42 120,50 128,46" fill="#33414f"></polygon><text x="106" y="24" text-anchor="middle" font-size="10.5" font-weight="700" fill="#33414f">CPP = site width</text><line x1="178" y1="46" x2="210" y2="46" stroke="#33414f" stroke-width="1.2"></line><polygon points="180,42 180,50 172,46" fill="#33414f"></polygon><polygon points="208,42 208,50 216,46" fill="#33414f"></polygon><line x1="222" y1="46" x2="254" y2="46" stroke="#33414f" stroke-width="1.2"></line><polygon points="224,42 224,50 216,46" fill="#33414f"></polygon><polygon points="252,42 252,50 260,46" fill="#33414f"></polygon><text x="216" y="38" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1e7e3e">same pitch across the edge ✓</text><line x1="40" y1="262" x2="40" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="84" y1="262" x2="84" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="128" y1="262" x2="128" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="172" y1="262" x2="172" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="216" y1="262" x2="216" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="260" y1="262" x2="260" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="304" y1="262" x2="304" y2="270" stroke="#6b7683" stroke-width="1"></line><line x1="348" y1="262" x2="348" y2="270" stroke="#6b7683" stroke-width="1"></line><text x="128" y="286" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">cell A — 4 sites</text><text x="282" y="286" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">cell B — 3 sites</text><text x="106" y="308" text-anchor="start" font-size="10" font-style="italic" fill="#5c6b7a">dark = real gates · hatched = dummy / boundary poly (half in each cell)</text></svg></div>
+    <figcaption><strong>Figure 3 — A regular-gate architecture.</strong> This example sets the site width equal to the contacted gate pitch and shares dummy strips at the boundaries, so the drawn gate grating is continuous across cells. Other processes use different gate, dummy and edge conventions.</figcaption>
+  </figure>
+
+  <h2 id="section-4">4. The edge contract</h2>
+  <p>Abutment works only for compatible cells in legal orientations. The library, PDK and placement tool can require edge classes, spacing, padding or special boundary cells, so not every cell may sit beside every other. The simple edge contract below shows one way a library can make common pairs abut cleanly:</p>
+  <ul>
+    <li><strong>Half-rule spacing:</strong> if a symmetric rule requires separation s across the boundary, setbacks of at least s/2 on both sides provide s. Context-dependent or asymmetric rules need different treatment.</li>
+    <li><strong>Compatible merge layers:</strong> selected rail, well and implant shapes run to common boundary positions. Whether shapes may merge depends on their nets, voltage domains and layer rules.</li>
+    <li><strong>Boundary gate patterns, where required:</strong> their ownership and spacing are specific to the process and library; a shared half-in, half-out dummy strip is one convention among several.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig4"><svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — One edge contract. The upper pair uses s/2 setbacks and compatible boundary shapes, with shared dummy poly. The lower pair shows a neighbor-dependent spacing failure that a check made without the neighboring geometry would miss, which is why library qualification has to cover the permitted neighbors, orientations and context-dependent rules."><text x="350" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#1e7e3e">both cells honor the edge contract</text><rect x="60" y="44" width="580" height="100" fill="#f3efce" stroke="#b5a642" stroke-width="1.4" stroke-dasharray="5 4"></rect><text x="560" y="60" text-anchor="middle" font-size="10" fill="#8a7d33">n-well merges ✓</text><rect x="60" y="40" width="580" height="10" fill="#d9534f" opacity="0.9"></rect><text x="120" y="34" text-anchor="middle" font-size="10" fill="#c0392b">rail continuous ✓</text><rect x="120" y="80" width="196" height="48" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="384" y="80" width="216" height="48" fill="#8fbf6f" stroke="#5e8f43"></rect><line x1="322" y1="104" x2="344" y2="104" stroke="#33414f" stroke-width="1.2"></line><polygon points="324,100 324,108 316,104" fill="#33414f"></polygon><polygon points="342,100 342,108 350,104" fill="#33414f"></polygon><line x1="356" y1="104" x2="378" y2="104" stroke="#33414f" stroke-width="1.2"></line><polygon points="358,100 358,108 350,104" fill="#33414f"></polygon><polygon points="376,100 376,108 384,104" fill="#33414f"></polygon><text x="333" y="122" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">s/2</text><text x="367" y="122" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">s/2</text><text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="350" y="166" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1e7e3e">s/2 + s/2 = full diffusion spacing ✓</text><defs><pattern id="ph2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#f7dcdc"></rect><line x1="0" y1="0" x2="0" y2="5" stroke="#dd9a9a" stroke-width="1.6"></line></pattern></defs><rect x="344" y="56" width="12" height="94" fill="url(#ph2)" stroke="#dd9a9a" stroke-width="1"></rect><text x="364" y="186" text-anchor="start" font-size="10" fill="#a05252">boundary poly: two halves = one legal strip ✓</text><line x1="350" y1="30" x2="350" y2="212" stroke="#6b7683" stroke-width="1.4" stroke-dasharray="6 4"></line><text x="200" y="208" text-anchor="middle" font-size="10.5" fill="#5c6b7a">cell A edge →</text><text x="505" y="208" text-anchor="middle" font-size="10.5" fill="#5c6b7a">← cell B edge</text><text x="350" y="250" text-anchor="middle" font-size="12" font-weight="700" fill="#a83232">cell A cheats: diffusion drawn to its edge</text><rect x="120" y="270" width="230" height="48" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="384" y="270" width="220" height="48" fill="#8fbf6f" stroke="#5e8f43"></rect><line x1="350" y1="258" x2="350" y2="322" stroke="#6b7683" stroke-width="1.4" stroke-dasharray="6 4"></line><line x1="356" y1="294" x2="378" y2="294" stroke="#cc4a4a" stroke-width="1.2"></line><polygon points="358,290 358,298 350,294" fill="#cc4a4a"></polygon><polygon points="376,290 376,298 384,294" fill="#cc4a4a"></polygon><text x="367" y="332" text-anchor="middle" font-size="10" font-weight="700" fill="#a83232">only s/2!</text><circle cx="367" cy="294" r="15" fill="none" stroke="#cc4a4a" stroke-width="2"></circle><text x="350" y="368" text-anchor="middle" font-size="10.5" fill="#a83232">Neighbor context reveals the illustrated spacing failure; qualification must cover legal pairings</text></svg></div>
+    <figcaption><strong>Figure 4 — One edge contract.</strong> The upper pair uses s/2 setbacks and compatible boundary shapes, with shared dummy poly. The lower pair shows a neighbor-dependent spacing failure that a check made without the neighboring geometry would miss, which is why library qualification has to cover the permitted neighbors, orientations and context-dependent rules.</figcaption>
+  </figure>
+
+  <p>The architecture also defines legal row boundaries and filler choices. Endcap/boundary cells can terminate required well, implant or gate patterns; compatible fillers can continue selected shapes through a gap. Which layers need continuity, and which cell pairings are allowed, must be established by that library and the physical-design flow.</p>
+
+<!-- sky130-cell -->
+  <h2 id="section-5">5. The SkyWater template, in micrometers</h2>
+  <p>
+    <code>unithd</code> fixes both numbers this lesson is about.
+    Site width 0.46&nbsp;µm. Row height 2.72&nbsp;µm. met1 pitch is 0.34&nbsp;µm,
+    and 2.72 / 0.34 = 8 exactly, so the row is eight pitches tall. Counting both
+    rail centers and stepping by 0.34&nbsp;µm gives nine lines:
+    0, 0.34, 0.68, 1.02, 1.36, 1.70, 2.04, 2.38, 2.72.
+    This is one way to visualize the published 9-track label; it does not make the generic Figure 1 a measured SKY130 transistor template.
+  </p>
+  <p>With the tech LEF’s <code>PITCH 0.34</code> and <code>OFFSET 0.17</code> and the row origin drawn here, track centers fall at 0.17, 0.51, 0.85, 1.19, 1.53, 1.87, 2.21 and 2.55&nbsp;µm: eight nominal tracks. The first and last lie inside the 0.48&nbsp;µm boundary rails, leaving six outside the rail rectangles, and spacing, pins and obstructions constrain those further. A real implementation can redefine its <code>TRACKS</code>, so check them rather than assuming the tech-LEF default phase.</p>
+  <figure>
+    <div class="figwrap" id="fig-sky"><svg viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 5 — Counting the same 2.72 µm height. Left: nine reference centerlines including both rail centers. Right: eight nominal centers for a 0.17 µm offset and 0.34 µm pitch. Two lie inside the rail rectangles. These are geometric counts for the displayed grid phase, not proof of six freely routable signal tracks."><text x="40" y="18" font-size="12" fill="#5c6b7a">9 lines, rail center to rail center</text><text x="400" y="18" font-size="12" fill="#5c6b7a">8 nominal tracks, offset 0.17 µm</text><line x1="36" y1="254.88" x2="150" y2="254.88" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="258.88" font-size="10" fill="#7a8794">0.00</text><line x1="36" y1="228.36" x2="150" y2="228.36" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="232.36" font-size="10" fill="#7a8794">0.34</text><line x1="36" y1="201.83999999999997" x2="150" y2="201.83999999999997" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="205.83999999999997" font-size="10" fill="#7a8794">0.68</text><line x1="36" y1="175.32" x2="150" y2="175.32" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="179.32" font-size="10" fill="#7a8794">1.02</text><line x1="36" y1="148.79999999999998" x2="150" y2="148.79999999999998" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="152.79999999999998" font-size="10" fill="#7a8794">1.36</text><line x1="36" y1="122.27999999999999" x2="150" y2="122.27999999999999" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="126.27999999999999" font-size="10" fill="#7a8794">1.70</text><line x1="36" y1="95.75999999999999" x2="150" y2="95.75999999999999" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="99.75999999999999" font-size="10" fill="#7a8794">2.04</text><line x1="36" y1="69.23999999999998" x2="150" y2="69.23999999999998" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="73.23999999999998" font-size="10" fill="#7a8794">2.38</text><line x1="36" y1="42.719999999999985" x2="150" y2="42.719999999999985" stroke="#9aa5b1" stroke-width="1.4"></line><text x="156" y="46.719999999999985" font-size="10" fill="#7a8794">2.72</text><rect x="400" y="236.15999999999997" width="150" height="37.44" fill="#3b6fb0" opacity="0.35"></rect><rect x="400" y="24" width="150" height="37.44" fill="#d9534f" opacity="0.35"></rect><line x1="400" y1="241.62" x2="550" y2="241.62" stroke="#3b6fb0" stroke-width="2"></line><text x="558" y="245.62" font-size="11" fill="#3b6fb0">0.17  in the rail</text><line x1="400" y1="215.10000000000002" x2="550" y2="215.10000000000002" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="219.10000000000002" font-size="11" fill="#2b6cb0">0.51</text><line x1="400" y1="188.57999999999998" x2="550" y2="188.57999999999998" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="192.57999999999998" font-size="11" fill="#2b6cb0">0.85</text><line x1="400" y1="162.06" x2="550" y2="162.06" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="166.06" font-size="11" fill="#2b6cb0">1.19</text><line x1="400" y1="135.54" x2="550" y2="135.54" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="139.54" font-size="11" fill="#2b6cb0">1.53</text><line x1="400" y1="109.01999999999998" x2="550" y2="109.01999999999998" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="113.01999999999998" font-size="11" fill="#2b6cb0">1.87</text><line x1="400" y1="82.5" x2="550" y2="82.5" stroke="#2b6cb0" stroke-width="2"></line><text x="558" y="86.5" font-size="11" fill="#2b6cb0">2.21</text><line x1="400" y1="55.979999999999976" x2="550" y2="55.979999999999976" stroke="#d9534f" stroke-width="2"></line><text x="558" y="59.979999999999976" font-size="11" fill="#d9534f">2.55  in the rail</text></svg></div>
+    <figcaption><strong>Figure 5 — Counting the same 2.72 µm height.</strong> Left: nine reference centerlines including both rail centers. Right: eight nominal centers for a 0.17 µm offset and 0.34 µm pitch. Two lie inside the rail rectangles. These are geometric counts for the displayed grid phase, not proof of six freely routable signal tracks.</figcaption>
+  </figure>
+  <p>The li1 pitches are 0.46&nbsp;µm in x and 0.34&nbsp;µm in y. Matching the x pitch to the site width helps repeated cell geometry line up, though it does not by itself guarantee a legal pin landing. <code>unithddbl</code> is 0.46 × 5.44&nbsp;µm for compatible double-height cells; the ordinary cells in this lesson use the 2.72&nbsp;µm HD height.</p>
+  <p>
+      The rail rectangle is identical on <code>inv_1</code>, <code>nand2_1</code>,
+      <code>fill_1</code>, <code>decap_4</code>, and <code>dfxtp_1</code>:
+      met1 from y = −0.24 to 0.24, and from y = 2.48 to 2.96, across the full
+      width of that cell. Abutment is those rectangles landing on the same
+      coordinates. The shared stripe is 0.48&nbsp;µm wide in the current-flow sense.
+      Lesson 30 multiplies that width by the met1 current limit.
+    </p>
+    <p>
+      The site width is what the placer snaps to. The LEF does not state a poly pitch; that would have to be measured from the cell layout. The LEF fact is that the site
+      and the <code>li1</code> x pitch are the same 0.46&nbsp;µm. Section 3 explains one possible relationship to gate pitch; equality has not been established for this library by the LEF. The GDS is the place to check
+      the poly grating itself.
+    </p>
+  
+
+    <h2 id="section-6">6. Coordinates land on the manufacturing grid</h2>
+  <p>
+    The tech LEF opens with <code>MANUFACTURINGGRID 0.005</code>. A coordinate in this process is an integer number of 0.005&nbsp;µm steps, which is 5&nbsp;nm.
+  </p>
+  <p>
+    The template numbers already land on that grid. Site width 0.46&nbsp;µm is 92 steps. Row height 2.72&nbsp;µm is 544 steps. met1 pitch 0.34&nbsp;µm is 68 steps. A rectangle whose edge falls between two ticks is off the grid, and the DRC that checks the grid will see it before any neighbor does.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 6 — Ticks every 0.005&nbsp;µm. The labeled 0.040&nbsp;µm mark is eight ticks, a short piece of the same grid the site width sits on.">
+<text x="370" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Every coordinate is a multiple of 0.005 µm</text>
+<line x1="40" y1="110" x2="700" y2="110" stroke="#d7dfe8" stroke-width="8"></line>
+<line x1="50" y1="100" x2="50" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="68" y1="100" x2="68" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="86" y1="100" x2="86" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="104" y1="100" x2="104" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="122" y1="100" x2="122" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="140" y1="100" x2="140" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="158" y1="100" x2="158" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="176" y1="100" x2="176" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="194" y1="100" x2="194" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="212" y1="100" x2="212" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="230" y1="100" x2="230" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="248" y1="100" x2="248" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="266" y1="100" x2="266" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="284" y1="100" x2="284" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="302" y1="100" x2="302" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="320" y1="100" x2="320" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="338" y1="100" x2="338" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="356" y1="100" x2="356" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="374" y1="100" x2="374" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="392" y1="100" x2="392" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="410" y1="100" x2="410" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="428" y1="100" x2="428" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="446" y1="100" x2="446" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="464" y1="100" x2="464" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="482" y1="100" x2="482" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="500" y1="100" x2="500" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="518" y1="100" x2="518" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="536" y1="100" x2="536" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="554" y1="100" x2="554" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="572" y1="100" x2="572" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="590" y1="100" x2="590" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="608" y1="100" x2="608" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="626" y1="100" x2="626" y2="120" stroke="#33414f" stroke-width="1"></line>
+<line x1="644" y1="100" x2="644" y2="120" stroke="#33414f" stroke-width="1"></line>
+<text x="50" y="90" text-anchor="middle" font-size="12" fill="#33414f">0</text>
+<text x="194" y="90" text-anchor="middle" font-size="12" fill="#33414f">0.040</text>
+<text x="370" y="150" text-anchor="middle" font-size="13" fill="#33414f">0.46 µm is 92 steps. 2.72 µm is 544 steps. 0.34 µm is 68 steps.</text>
+<text x="370" y="176" text-anchor="middle" font-size="13" fill="#5c6b7a">A shape that lands between ticks is off the manufacturing grid.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 6 — Ticks every 0.005&nbsp;µm. The labeled 0.040&nbsp;µm mark is eight ticks, a short piece of the same grid the site width sits on.</strong></figcaption>
+  </figure>
+
+<div class="table-scroll"><table><caption>Three grids, three purposes · <a href="#sources">Sources</a></caption><thead><tr><th scope="col">Quantity in the cited HD technology LEF</th><th scope="col">Value</th><th scope="col">Interpretation</th></tr></thead><tbody><tr><td>Manufacturing grid</td><td>0.005 µm</td><td>Geometry-coordinate quantum</td></tr><tr><td>Ordinary placement site</td><td>0.46 × 2.72 µm</td><td>Row/cell placement dimensions</td></tr><tr><td>Double-height site</td><td>0.46 × 5.44 µm</td><td>Supported two-row site</td></tr><tr><td>Nominal met1 pitch / offset</td><td>0.34 / 0.17 µm</td><td>Preferred-track spacing and phase</td></tr><tr><td>Nominal li1 x pitch</td><td>0.46 µm</td><td>Routing-grid parameter; not a measured poly pitch</td></tr></tbody></table></div>
+<details class="checkpoint"><summary>Worked checkpoint — Nine lines, eight tracks, or six free routes?</summary><p>Using the displayed row origin, centers <code>y = 0.17 + n × 0.34</code> for n = 0…7 give eight nominal tracks. Centers at 0.17 and 2.55 µm fall inside the rails, leaving <strong>six centers outside the rail rectangles</strong>. That is not six guaranteed free routes: the clearance to rails, pin shapes, vias and other obstructions must still be checked. Nine reference lines from 0 through 2.72 µm delimit eight pitch intervals.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — a shape edge sits at 1.2375 µm. Is it on the SKY130 manufacturing grid?</summary><p>No. The grid is 0.005 µm, and 1.2375 / 0.005 = 247.5 is not a whole number; 1.235 µm or 1.240 µm would be on grid. Being on the manufacturing grid says nothing about being on a routing track or a placement site.</p></details><div class="takeaways">
+    <h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>A template coordinates compatible site, rail, well and boundary geometry; special cells and other families may add restrictions.</li>
+      <li>Track names are conventions. Use the actual dimensions, routing pitch, grid phase and obstructions to assess capacity.</li>
+      <li>Shorter cells can save outline area while tightening device and pin-access space; taller cells are not automatically faster.</li>
+      <li>Site width may relate to contacted gate pitch, but the relationship and dummy-gate pattern require technology-specific evidence.</li>
+      <li>Edge contracts such as half-rule setbacks and shared boundary poly are library conventions; check the permitted cell pairs and contextual rules for the library you use.</li>
+      <li>The HD row is 8 × 0.34&nbsp;µm = 2.72&nbsp;µm tall. The offset grid has eight track centers, two of them inside the rails; the other six still need routing checks.</li>
+      <li>The technology LEF declares a 0.005 µm manufacturing grid, distinct from the placement and preferred-routing grids.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-8">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html">Foundry library heights and track names</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF pitches and grid</a></li><li><a href="https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html">LEF site and macro semantics</a></li><li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html">SKY130 poly/periphery rules</a></li></ul></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html" aria-current="page">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="cell_layout.html"><small>← Previous</small>Inside a Standard Cell's Layout</a><a href="bigger_cells.html"><small>Next →</small>Anatomy of a Bigger Cell</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const M3c = '#2e9e9e', DK = '#33414f', HI = '#d9534f', LO = '#3b6fb0';
+const NWELL = '#f3efce', NWELLB = '#b5a642', DIFF = '#8fbf6f', DIFFB = '#5e8f43', POLY = '#d95252';
+
+const wr = (x1, y1, x2, y2, c, w, dash) =>
+  `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || DK}" stroke-width="${w || 2}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 11}" ${o.b ? 'font-weight="700"' : ''} ${o.i ? 'font-style="italic"' : ''} fill="${o.c || DK}">${t}</text>`;
+const arrV = (x, y0, y1, c) =>
+  wr(x, y0 + 6, x, y1 - 6, c || DK, 1.2) +
+  `<polygon points="${x - 4},${y0 + 8} ${x + 4},${y0 + 8} ${x},${y0}" fill="${c || DK}"/>` +
+  `<polygon points="${x - 4},${y1 - 8} ${x + 4},${y1 - 8} ${x},${y1}" fill="${c || DK}"/>`;
+const arrH = (x0, x1, y, c) =>
+  wr(x0 + 6, y, x1 - 6, y, c || DK, 1.2) +
+  `<polygon points="${x0 + 8},${y - 4} ${x0 + 8},${y + 4} ${x0},${y}" fill="${c || DK}"/>` +
+  `<polygon points="${x1 - 8},${y - 4} ${x1 - 8},${y + 4} ${x1},${y}" fill="${c || DK}"/>`;
+
+// ---------- Figure 1: the 9-track template ----------
+(function () {
+  const TP = 32, X0 = 190, X1 = 520, YT = 40, YB = YT + 9 * TP; // 40..328
+  let s = `<svg viewBox="0 0 720 385" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // n-well (upper part, past top boundary)
+  s += `<rect x="${X0 - 8}" y="${YT - 12}" width="${X1 - X0 + 16}" height="156" fill="${NWELL}" stroke="${NWELLB}" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+  // faint inverter for context
+  s += `<rect x="260" y="64" width="150" height="106" fill="${DIFF}" opacity="0.5" stroke="${DIFFB}" stroke-width="1"/>`;
+  s += `<rect x="260" y="206" width="150" height="92" fill="${DIFF}" opacity="0.5" stroke="${DIFFB}" stroke-width="1"/>`;
+  s += `<rect x="326" y="52" width="18" height="264" fill="${POLY}" opacity="0.55"/>`;
+  // routing tracks (9 inside the height)
+  for (let i = 1; i <= 9; i++) {
+    const y = YT + (i - 0.5) * TP;
+    s += wr(X0, y, X1, y, M3c, 1, '5 5');
+    s += txt(X1 + 16, y + 4, i, { s: 10, c: M3c });
+  }
+  s += txt(X1 + 16, YT - 14, 'track', { s: 9.5, c: M3c });
+  // cell boundary + rails on boundaries
+  s += `<rect x="${X0}" y="${YT}" width="${X1 - X0}" height="${YB - YT}" fill="none" stroke="#6b7683" stroke-width="1.3" stroke-dasharray="6 4"/>`;
+  s += `<rect x="${X0 - 8}" y="${YT - 6}" width="${X1 - X0 + 16}" height="12" fill="${HI}" opacity="0.9"/>`;
+  s += `<rect x="${X0 - 8}" y="${YB - 6}" width="${X1 - X0 + 16}" height="12" fill="${LO}" opacity="0.9"/>`;
+  // height brace
+  s += arrV(600, YT, YB);
+  s += txt(612, (YT + YB) / 2 - 8, 'row height', { a: 'start', s: 11, b: 1 });
+  s += txt(612, (YT + YB) / 2 + 8, '9 pitches (example)', { a: 'start', s: 11 });
+  // W_P / W_N dimensions
+  s += arrV(252, 64, 170, DIFFB);
+  s += txt(246, 108, 'max W_P', { a: 'end', s: 10.5, c: '#2c4a1e', b: 1 });
+  s += arrV(252, 206, 298, DIFFB);
+  s += txt(246, 236, 'max W_N', { a: 'end', s: 10.5, c: '#2c4a1e', b: 1 });
+  // annotations
+  s += txt(X0 - 14, YT + 3, 'VDD at row boundary', { a: 'end', s: 10, c: '#c0392b' });
+  s += txt(X0 - 14, YB + 3, 'VSS shared boundary', { a: 'end', s: 10, c: LO });
+  s += wr(X0 - 8, 184, X0 - 60, 184, '#98a4b0', 1);
+  s += txt(X0 - 64, 174, 'n-well edge at a', { a: 'end', s: 10 });
+  s += txt(X0 - 64, 187, 'fixed height within', { a: 'end', s: 10 });
+  s += txt(X0 - 64, 200, 'this template', { a: 'end', s: 10 });
+  s += txt((X0 + X1) / 2, YB + 40, 'Nine hypothetical track centers; access still needs spacing and obstruction checks', { s: 10.5, c: '#5c6b7a', i: 1 });
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: 6T vs 9T vs 12T ----------
+(function () {
+  const TP = 18, YB = 265, W = 140;
+  let s = `<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += txt(360, 26, 'same site width — different track counts', { s: 12, b: 1 });
+  function cell(ox, n, name, l1, l2) {
+    const h = n * TP, yt = YB - h;
+    let t = '';
+    t += `<rect x="${ox - 6}" y="${yt - 10}" width="${W + 12}" height="${h * 0.48 + 10}" fill="${NWELL}" stroke="${NWELLB}" stroke-width="1" stroke-dasharray="4 3"/>`;
+    for (let i = 1; i <= n; i++)
+      t += wr(ox, yt + (i - 0.5) * TP, ox + W, yt + (i - 0.5) * TP, M3c, 0.8, '4 4');
+    const pH = Math.max(h * 0.40 - 12, 12), nH = Math.max(h * 0.34 - 10, 10);
+    t += `<rect x="${ox + 28}" y="${yt + 12}" width="${W - 56}" height="${pH}" fill="${DIFF}" opacity="0.75" stroke="${DIFFB}"/>`;
+    t += `<rect x="${ox + 28}" y="${YB - 12 - nH}" width="${W - 56}" height="${nH}" fill="${DIFF}" opacity="0.75" stroke="${DIFFB}"/>`;
+    t += `<rect x="${ox + W / 2 - 7}" y="${yt + 6}" width="14" height="${h - 12}" fill="${POLY}" opacity="0.6"/>`;
+    t += `<rect x="${ox}" y="${yt}" width="${W}" height="${h}" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+    t += `<rect x="${ox - 6}" y="${yt - 4}" width="${W + 12}" height="8" fill="${HI}" opacity="0.9"/>`;
+    t += `<rect x="${ox - 6}" y="${YB - 4}" width="${W + 12}" height="8" fill="${LO}" opacity="0.9"/>`;
+    t += txt(ox + W / 2, YB + 24, name, { s: 12, b: 1 });
+    t += txt(ox + W / 2, YB + 40, l1, { s: 10, c: '#5c6b7a' });
+    t += txt(ox + W / 2, YB + 54, l2, { s: 10, c: '#5c6b7a' });
+    return t;
+  }
+  s += cell(70, 6, '6T', 'dense, low power —', 'weak drive, tough pin access');
+  s += cell(290, 9, '9T', 'the mainstream', 'balance');
+  s += cell(510, 12, '12T', 'big devices, fast,', 'easy routing — more area');
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: poly grating across an abutment ----------
+(function () {
+  const P = 44, X0 = 40, EDGE = X0 + 4 * P, X2 = EDGE + 3 * P; // 40, 216, 348
+  const YT = 66, YB = 246;
+  let s = `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<defs><pattern id="ph" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#f7dcdc"/><line x1="0" y1="0" x2="0" y2="5" stroke="#dd9a9a" stroke-width="1.6"/></pattern></defs>`;
+  // rails + boundaries
+  s += `<rect x="${X0 - 10}" y="${YT - 5}" width="${X2 - X0 + 20}" height="10" fill="${HI}" opacity="0.9"/>`;
+  s += `<rect x="${X0 - 10}" y="${YB - 5}" width="${X2 - X0 + 20}" height="10" fill="${LO}" opacity="0.9"/>`;
+  // diffusions under some gates
+  s += `<rect x="${X0 + P * 0.6}" y="104" width="${P * 2.8}" height="34" fill="${DIFF}" opacity="0.7" stroke="${DIFFB}"/>`;
+  s += `<rect x="${X0 + P * 0.6}" y="176" width="${P * 2.8}" height="30" fill="${DIFF}" opacity="0.7" stroke="${DIFFB}"/>`;
+  s += `<rect x="${EDGE + P * 0.6}" y="104" width="${P * 1.8}" height="34" fill="${DIFF}" opacity="0.7" stroke="${DIFFB}"/>`;
+  s += `<rect x="${EDGE + P * 0.6}" y="176" width="${P * 1.8}" height="30" fill="${DIFF}" opacity="0.7" stroke="${DIFFB}"/>`;
+  // poly grating: every pitch position from X0 to X2
+  for (let x = X0; x <= X2; x += P) {
+    const isEdge = (x === X0 || x === EDGE || x === X2);
+    const overDiff = !isEdge && ((x > X0 && x < X0 + 4 * P) || (x > EDGE && x < X2));
+    const isDummy = (x === X0 + 3 * P) || (x === EDGE + 1 * P);
+    const fill = isEdge ? 'url(#ph)' : isDummy ? 'url(#ph)' : POLY;
+    s += `<rect x="${x - 6}" y="${YT + 10}" width="12" height="${YB - YT - 20}" fill="${fill}" ${isEdge || isDummy ? `stroke="#dd9a9a" stroke-width="1"` : ''}/>`;
+  }
+  // cell boundaries
+  for (const x of [X0, EDGE, X2])
+    s += wr(x, YT - 16, x, YB + 16, '#6b7683', 1.3, '6 4');
+  // pitch dimensions
+  s += arrH(X0 + P, X0 + 2 * P, 46);
+  s += txt(X0 + 1.5 * P, 24, 'CPP = site width', { s: 10.5, b: 1 });
+  s += arrH(EDGE - P, EDGE, 46) + arrH(EDGE, EDGE + P, 46);
+  s += txt(EDGE, 38, 'same pitch across the edge ✓', { s: 10.5, c: '#1e7e3e', b: 1 });
+  // site ticks
+  for (let x = X0; x <= X2; x += P) s += wr(x, YB + 16, x, YB + 24, '#6b7683', 1);
+  s += txt(X0 + 2 * P, YB + 40, 'cell A — 4 sites', { s: 11, b: 1 });
+  s += txt(EDGE + 1.5 * P, YB + 40, 'cell B — 3 sites', { s: 11, b: 1 });
+  // legend-ish labels
+  s += txt(X0 + 1.5 * P, YB + 62, 'dark = real gates · hatched = dummy / boundary poly (half in each cell)', { s: 10, c: '#5c6b7a', i: 1, a: 'start' });
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+
+// ---------- Figure 4: the edge contract, honored and cheated ----------
+(function () {
+  const EDGE = 350;
+  let s = `<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // ----- top: honored -----
+  s += txt(350, 26, 'both cells honor the edge contract', { s: 12, b: 1, c: '#1e7e3e' });
+  // n-well continuous
+  s += `<rect x="60" y="44" width="580" height="100" fill="${NWELL}" stroke="${NWELLB}" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+  s += txt(560, 60, 'n-well merges ✓', { s: 10, c: '#8a7d33' });
+  // rail continuous
+  s += `<rect x="60" y="40" width="580" height="10" fill="${HI}" opacity="0.9"/>`;
+  s += txt(120, 34, 'rail continuous ✓', { s: 10, c: '#c0392b' });
+  // diffusions with half-rule setbacks
+  const s2 = 34;
+  s += `<rect x="120" y="80" width="${EDGE - s2 - 120}" height="48" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  s += `<rect x="${EDGE + s2}" y="80" width="${560 - EDGE - s2 + 40}" height="48" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  s += arrH(EDGE - s2, EDGE, 104) + arrH(EDGE, EDGE + s2, 104);
+  s += txt(EDGE - s2 / 2, 122, 's/2', { s: 10, b: 1 });
+  s += txt(EDGE + s2 / 2, 122, 's/2', { s: 10, b: 1 });
+  s += txt(EDGE, 166, 's/2 + s/2 = full diffusion spacing ✓', { s: 10.5, c: '#1e7e3e', b: 1 }).replace('<text ','<text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" ');
+  // boundary poly shared
+  s += `<defs><pattern id="ph2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#f7dcdc"/><line x1="0" y1="0" x2="0" y2="5" stroke="#dd9a9a" stroke-width="1.6"/></pattern></defs>`;
+  s += `<rect x="${EDGE - 6}" y="56" width="12" height="94" fill="url(#ph2)" stroke="#dd9a9a" stroke-width="1"/>`;
+  s += txt(EDGE + 14, 186, 'boundary poly: two halves = one legal strip ✓', { s: 10, c: '#a05252', a: 'start' });
+  // cell boundary line
+  s += wr(EDGE, 30, EDGE, 212, '#6b7683', 1.4, '6 4');
+  s += txt(200, 208, 'cell A edge →', { s: 10.5, c: '#5c6b7a' });
+  s += txt(505, 208, '← cell B edge', { s: 10.5, c: '#5c6b7a' });
+
+  // ----- bottom: cheated -----
+  s += txt(350, 250, 'cell A cheats: diffusion drawn to its edge', { s: 12, b: 1, c: '#a83232' });
+  s += `<rect x="120" y="270" width="${EDGE - 120}" height="48" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  s += `<rect x="${EDGE + s2}" y="270" width="220" height="48" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  s += wr(EDGE, 258, EDGE, 322, '#6b7683', 1.4, '6 4');
+  s += arrH(EDGE, EDGE + s2, 294, '#cc4a4a');
+  s += txt(EDGE + s2 / 2, 332, 'only s/2!', { s: 10, b: 1, c: '#a83232' });
+  s += `<circle cx="${EDGE + s2 / 2}" cy="294" r="15" fill="none" stroke="#cc4a4a" stroke-width="2"/>`;
+  s += txt(350, 368, 'Neighbor context reveals the illustrated spacing failure; qualification must cover legal pairings', { s: 10.5, c: '#a83232' });
+  s += `</svg>`;
+  document.getElementById('fig4').innerHTML = s;
+})();
+</script>
+<script>
+(function () {
+  const S = 78, x0 = 210, yTop = 24;
+  const Y = y => yTop + (2.96 - y) * S;
+  let s = `<svg viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<text x="40" y="18" font-size="12" fill="#5c6b7a">9 lines, rail center to rail center</text>`;
+  s += `<text x="400" y="18" font-size="12" fill="#5c6b7a">8 nominal tracks, offset 0.17 µm</text>`;
+  // inclusive pitch lines
+  for (let i = 0; i <= 8; i++) {
+    const yUm = i * 0.34;
+    const y = Y(yUm);
+    s += `<line x1="36" y1="${y}" x2="150" y2="${y}" stroke="#9aa5b1" stroke-width="1.4"/>`;
+    s += `<text x="156" y="${y + 4}" font-size="10" fill="#7a8794">${yUm.toFixed(2)}</text>`;
+  }
+  // rails behind the router column
+  const rail = (y1, y2, fill) =>
+    `<rect x="400" y="${Y(y2)}" width="150" height="${(y2 - y1) * S}" fill="${fill}" opacity="0.35"/>`;
+  s += rail(-0.24, 0.24, '#3b6fb0');
+  s += rail(2.48, 2.96, '#d9534f');
+  const tracks = [];
+  for (let i = 0; i < 8; i++) tracks.push(0.17 + i * 0.34);
+  tracks.forEach(yUm => {
+    const y = Y(yUm);
+    const color = yUm > 2.48 ? '#d9534f' : (yUm < 0.24 ? '#3b6fb0' : '#2b6cb0');
+    s += `<line x1="400" y1="${y}" x2="550" y2="${y}" stroke="${color}" stroke-width="2"/>`;
+    const inRail = yUm < 0.24 || yUm > 2.48;
+    s += `<text x="558" y="${y + 4}" font-size="11" fill="${color}">${yUm.toFixed(2)}${inRail ? '  in the rail' : ''}</text>`;
+  });
+  s += `</svg>`;
+  document.getElementById('fig-sky').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

@@ -1,0 +1,8 @@
+# running in gray4_bmc/src/
+read -formal -D FORMAL gray4_formal.v
+prep -top gray4
+
+hierarchy -smtcheck
+rename -witness
+write_jny -no-connections ../model/design.json
+write_rtlil ../model/design.il

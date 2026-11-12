@@ -1,0 +1,1307 @@
+[
+  {
+    "number": 1,
+    "slug": "chip_overview",
+    "file": "chip_overview.html",
+    "title": "What Is a Chip? Board, Package & Die",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "foundations"
+    ],
+    "description": "The nested parts of a finished chip, with real sizes from a SKY130 Caravel die.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 1
+  },
+  {
+    "number": 2,
+    "slug": "silicon_wafer",
+    "file": "silicon_wafer.html",
+    "title": "The Silicon Wafer: From Crystal to Dies",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "foundations"
+    ],
+    "description": "Wafers, die grids, scribe lines, yield, dicing, seal rings and shared shuttles.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 2
+  },
+  {
+    "number": 3,
+    "slug": "fabrication_layers",
+    "file": "fabrication_layers.html",
+    "title": "How a Die Is Built: SKY130 Layers & Lithography",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "foundations"
+    ],
+    "description": "Front-end devices, back-end wiring, masks and the official SKY130 layer stack.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 3
+  },
+  {
+    "number": 4,
+    "slug": "mosfet_basics",
+    "file": "mosfet_basics.html",
+    "title": "The MOSFET: SKY130’s Transistor",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "analog",
+      "digital",
+      "foundations"
+    ],
+    "description": "Gate, source, drain and body; NMOS, PMOS, threshold, wells and SKY130 device names.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 4
+  },
+  {
+    "number": 5,
+    "slug": "die_anatomy",
+    "file": "die_anatomy.html",
+    "title": "Anatomy of a Die: Core, Pad Ring & Seal Ring",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "foundations"
+    ],
+    "description": "What sits where on a finished die, using the Caravel harness as the example.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 5
+  },
+  {
+    "number": 6,
+    "slug": "packages",
+    "file": "packages.html",
+    "title": "Packages: Wire Bonds, Flip-Chip, QFN & WLCSP",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "foundations"
+    ],
+    "description": "How a die is protected and connected, and what each connection adds electrically.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 6
+  },
+  {
+    "number": 7,
+    "slug": "pcb_path",
+    "file": "pcb_path.html",
+    "title": "The PCB and the Path to the Transistor",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "physical",
+      "analog",
+      "foundations"
+    ],
+    "description": "Board layers, footprints, escape routing, decoupling and the complete supply loop.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 7
+  },
+  {
+    "number": 8,
+    "slug": "design_flow",
+    "file": "design_flow.html",
+    "title": "The Design Flow and Its Files: RTL to GDS",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "digital",
+      "physical",
+      "foundations"
+    ],
+    "description": "PDK, netlists, Liberty, LEF, DEF, GDS and the checks that come before tapeout.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 8
+  },
+  {
+    "number": 9,
+    "slug": "signals_primer",
+    "file": "signals_primer.html",
+    "title": "Signals Primer: DC, AC, RMS, Decibels & the FFT",
+    "part": "I",
+    "part_name": "Foundations: the physical chip and its vocabulary",
+    "tags": [
+      "analog",
+      "foundations"
+    ],
+    "description": "Units, sine waves, RMS, decibels, time constants, spectra and what an FFT computes.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 9
+  },
+  {
+    "number": 10,
+    "slug": "logic_gates",
+    "file": "logic_gates.html",
+    "title": "Logic Gates at Transistor Level",
+    "part": "II",
+    "part_name": "Transistors to logic gates",
+    "tags": [
+      "digital"
+    ],
+    "description": "Translate Boolean logic into complementary transistor networks.",
+    "new": false,
+    "old_number": 5,
+    "number_10nov": 10
+  },
+  {
+    "number": 11,
+    "slug": "drive_strength",
+    "file": "drive_strength.html",
+    "title": "Drive Strength & Transistor Sizing",
+    "part": "II",
+    "part_name": "Transistors to logic gates",
+    "tags": [
+      "digital"
+    ],
+    "description": "Balance speed, input load, power, area, and real cell implementation.",
+    "new": false,
+    "old_number": 7,
+    "number_10nov": 11
+  },
+  {
+    "number": 12,
+    "slug": "gate_topologies",
+    "file": "gate_topologies.html",
+    "title": "More Gate Topologies",
+    "part": "II",
+    "part_name": "Transistors to logic gates",
+    "tags": [
+      "digital"
+    ],
+    "description": "Complex gates, transmission gates, latches, and sequential storage.",
+    "new": false,
+    "old_number": 8,
+    "number_10nov": 12
+  },
+  {
+    "number": 13,
+    "slug": "site_rows",
+    "file": "site_rows.html",
+    "title": "Site Rows & Standard Cell Placement",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Placement sites, row orientation, rail alignment, and legal abutment.",
+    "new": false,
+    "old_number": 1,
+    "number_10nov": 13
+  },
+  {
+    "number": 14,
+    "slug": "power_grid",
+    "file": "power_grid.html",
+    "title": "Power Grid & Routing Grids",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Supply delivery, routing conventions, and local voltage loss.",
+    "new": false,
+    "old_number": 3,
+    "number_10nov": 14
+  },
+  {
+    "number": 15,
+    "slug": "metal_layers",
+    "file": "metal_layers.html",
+    "title": "Metal Layers, Vias & Stackup",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Read the interconnect stack and understand via connections.",
+    "new": false,
+    "old_number": 4,
+    "number_10nov": 15
+  },
+  {
+    "number": 16,
+    "slug": "cell_layout",
+    "file": "cell_layout.html",
+    "title": "Inside a Standard Cell Layout",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Connect schematic devices to the polygons and pins in a cell.",
+    "new": false,
+    "old_number": 6,
+    "number_10nov": 16
+  },
+  {
+    "number": 17,
+    "slug": "cell_template",
+    "file": "cell_template.html",
+    "title": "Cell Template: Tracks, Sites & Edges",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Understand library-specific geometry and the cell-edge contract.",
+    "new": false,
+    "old_number": 9,
+    "number_10nov": 17
+  },
+  {
+    "number": 18,
+    "slug": "bigger_cells",
+    "file": "bigger_cells.html",
+    "title": "Anatomy of a Bigger Cell",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "Follow series/parallel devices through a NAND layout.",
+    "new": false,
+    "old_number": 11,
+    "number_10nov": 18
+  },
+  {
+    "number": 19,
+    "slug": "pin_access",
+    "file": "pin_access.html",
+    "title": "Pin Access & Porosity",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "physical"
+    ],
+    "description": "See how pin geometry and blockages constrain routing.",
+    "new": false,
+    "old_number": 10,
+    "number_10nov": 19
+  },
+  {
+    "number": 20,
+    "slug": "dff_inside",
+    "file": "dff_inside.html",
+    "title": "A Flip-Flop from the Inside",
+    "part": "III",
+    "part_name": "Standard-cell layout",
+    "tags": [
+      "digital"
+    ],
+    "description": "Read latch structure, clock phases, and actual library devices.",
+    "new": false,
+    "old_number": 12,
+    "number_10nov": 20
+  },
+  {
+    "number": 21,
+    "slug": "loads",
+    "file": "loads.html",
+    "title": "Loads",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Recognize pin, wire, and effective capacitance as analog loads.",
+    "new": false,
+    "old_number": 13,
+    "number_10nov": 21
+  },
+  {
+    "number": 22,
+    "slug": "liberty",
+    "file": "liberty.html",
+    "title": "Liberty Files: What a Cell Library Records",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "Function, pin capacitance, timing arcs and corners: what a Liberty file records about each cell.",
+    "new": false,
+    "old_number": 14,
+    "number_10nov": 22
+  },
+  {
+    "number": 23,
+    "slug": "liberty_tables",
+    "file": "liberty_tables.html",
+    "title": "Reading Liberty Timing Tables",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "Read a 7 × 7 delay table, interpolate between squares, and pass slew from one stage to the next.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": 23
+  },
+  {
+    "number": 24,
+    "slug": "liberty_characterization",
+    "file": "liberty_characterization.html",
+    "title": "Standard-Cell Characterization: How Liberty Is Made",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "How a Liberty table is measured: slew×load sweeps, setup bisection, NLDM vs CCS vs LVF. Thresholds from the bundled HD file (lesson 23); no new 7×7 table.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 25,
+    "slug": "timing",
+    "file": "timing.html",
+    "title": "Timing",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "Distinguish propagation delay, slew, and sequential constraints.",
+    "new": false,
+    "old_number": 15,
+    "number_10nov": 24
+  },
+  {
+    "number": 26,
+    "slug": "setup_hold",
+    "file": "setup_hold.html",
+    "title": "Setup & Hold",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "Use signed library constraints, clock arrival times, and slack.",
+    "new": false,
+    "old_number": 34,
+    "number_10nov": 25
+  },
+  {
+    "number": 27,
+    "slug": "latch_time_borrowing",
+    "file": "latch_time_borrowing.html",
+    "title": "Latch-Based Design & Time Borrowing",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "digital"
+    ],
+    "description": "Level-sensitive latches and time borrowing, with HD dlxtp_1 / dlrtp_1 / dlxbn_1 LEF sizes. Teaching STA; DFFRAM not re-run.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 28,
+    "slug": "parasitics",
+    "file": "parasitics.html",
+    "title": "Routing Resistance & Parasitics",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Calculate first-order wire R/C and know when extraction is needed.",
+    "new": false,
+    "old_number": 16,
+    "number_10nov": 26
+  },
+  {
+    "number": 29,
+    "slug": "delay_physics",
+    "file": "delay_physics.html",
+    "title": "Delay from Physics: Transistor, Contact, Via, Wire & Gate",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "analog",
+      "digital",
+      "physical"
+    ],
+    "description": "Derive gate and wire delay from SKY130 device current, contacts, vias, wire RC and gate capacitance; fanout, FO4 and repeaters.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 30,
+    "slug": "electromigration",
+    "file": "electromigration.html",
+    "title": "Electromigration",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "physical"
+    ],
+    "description": "Separate current-density, heating, lifetime, and IR-drop questions.",
+    "new": false,
+    "old_number": 17,
+    "number_10nov": 27
+  },
+  {
+    "number": 31,
+    "slug": "reliability_aging",
+    "file": "reliability_aging.html",
+    "title": "Reliability & Aging: HCI, BTI, TDDB & Self-Heating",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "physical",
+      "digital"
+    ],
+    "description": "HCI, BTI, TDDB and self-heating. Teaching; no SKY130 aging parameter extracted.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 32,
+    "slug": "dfm_yield",
+    "file": "dfm_yield.html",
+    "title": "DFM, Variation & Yield: A Digital View",
+    "part": "IV",
+    "part_name": "Loads, timing and interconnect",
+    "tags": [
+      "physical",
+      "digital"
+    ],
+    "description": "Systematic vs random variation, corners vs Monte Carlo, litho hotspots, redundant vias, yield in cost via lesson 2. No invented SKY130 yield.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "slug": "rtl_patterns",
+    "file": "rtl_patterns.html",
+    "title": "RTL Patterns: FSMs, Handshakes, Resets & Lint",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "A 3-state traffic light mapped by Yosys: binary vs one-hot area, async reset onto dfrtp/dfstp, valid/ready, and Verilator lint.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null,
+    "number": 33
+  },
+  {
+    "number": 34,
+    "slug": "rtl_synthesis_constraints",
+    "file": "rtl_synthesis_constraints.html",
+    "title": "RTL, Synthesis & Timing Constraints",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Translate RTL into library cells; understand real timing constraints and inference.",
+    "new": false,
+    "old_number": 45,
+    "number_10nov": 28
+  },
+  {
+    "number": 35,
+    "slug": "clock_tree",
+    "file": "clock_tree.html",
+    "title": "The Clock Tree",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Distribute a physical clock and distinguish skew from jitter.",
+    "new": false,
+    "old_number": 23,
+    "number_10nov": 29
+  },
+  {
+    "number": 36,
+    "slug": "clock_generation",
+    "file": "clock_generation.html",
+    "title": "Clock Generation: Oscillators, DCO, PLL & Jitter",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "An 11-stage inv_1 ring, measured at 1.849 GHz at 1.80 V, and Caravel’s documented DCO and PLL.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 37,
+    "slug": "clock_gating_power_states",
+    "file": "clock_gating_power_states.html",
+    "title": "Clock Gating & Power States",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital",
+      "analog",
+      "physical"
+    ],
+    "description": "Clock gating, enables, reset, retention, isolation, and restart contracts.",
+    "new": false,
+    "old_number": 46,
+    "number_10nov": 30
+  },
+  {
+    "number": 38,
+    "slug": "power_analysis",
+    "file": "power_analysis.html",
+    "title": "Power Analysis & Low-Power Cells",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "OpenSTA report_power on the Lab 6 SPM at nine corners, with default activity, clock-tree power after CTS, and the SKY130 lpflow cells. No VCD, no UPF, no IR map.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 39,
+    "slug": "cdc_reset",
+    "file": "cdc_reset.html",
+    "title": "Clock-Domain Crossings & Reset",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Treat metastability, coherent data transfer, and reset release correctly.",
+    "new": false,
+    "old_number": 37,
+    "number_10nov": 31
+  },
+  {
+    "number": 40,
+    "slug": "scan",
+    "file": "scan.html",
+    "title": "Scan",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Understand scan flops, shift/capture behavior, and test timing.",
+    "new": false,
+    "old_number": 24,
+    "number_10nov": 32
+  },
+  {
+    "number": 41,
+    "slug": "dft_test",
+    "file": "dft_test.html",
+    "title": "DFT Beyond Scan: Faults, ATPG, BIST and JTAG",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Fault models, test-time arithmetic, at-speed launch, BIST, March C− and the IEEE 1149.1 TAP. Scan-cell areas from the SKY130 HD LEF.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 42,
+    "slug": "timed_path",
+    "file": "timed_path.html",
+    "title": "A Timed Logic Path: Registers, Clocks, Scan & Speed/Power",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "One SKY130 register-to-register path with clock tree, scan mux, setup/hold arithmetic and speed-versus-power choices.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 43,
+    "slug": "memories",
+    "file": "memories.html",
+    "title": "Memories: SRAM, OpenRAM and DFFRAM",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "A 6T SRAM cell and the OpenRAM 1RW+1R macros in this PDK, with area-per-bit from the LEF compared with a HD flop. DFFRAM is described, not measured.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 44,
+    "slug": "datapath_arithmetic",
+    "file": "datapath_arithmetic.html",
+    "title": "Datapath & Arithmetic",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "SKY130 fa, ha and maj3, and Yosys 0.52 mappings of a structural 16-bit RCA, an inferred 16-bit add and an inferred 8-bit multiply.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 45,
+    "slug": "multicorner_sta",
+    "file": "multicorner_sta.html",
+    "title": "Multi-Corner STA: OCV, CRPR & Hold Cells",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Nine SKY130 corners on a real LibreLane SPM, with OpenSTA paths, OCV, CRPR, and the delay cells that repaired hold.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 46,
+    "slug": "functional_verification",
+    "file": "functional_verification.html",
+    "title": "Functional Verification: Testbenches, Assertions, Formal & Gate-Level Sim",
+    "part": "V",
+    "part_name": "Digital implementation",
+    "tags": [
+      "digital"
+    ],
+    "description": "Self-checking TBs, cocotb, SymbiYosys formal, and a SKY130 gate-level sim with OpenSTA SDF delays — all actually run.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 47,
+    "slug": "fill_cells",
+    "file": "fill_cells.html",
+    "title": "Fill Cells",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Why physical gaps need the right spacer or decap cell.",
+    "new": false,
+    "old_number": 2,
+    "number_10nov": 33
+  },
+  {
+    "number": 48,
+    "slug": "well_taps",
+    "file": "well_taps.html",
+    "title": "Well Taps & Latch-up",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Connect body potentials, parasitic devices, and tap placement.",
+    "new": false,
+    "old_number": 18,
+    "number_10nov": 34
+  },
+  {
+    "number": 49,
+    "slug": "endcaps",
+    "file": "endcaps.html",
+    "title": "Endcaps",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Terminate rows with the cells specified by the library and flow.",
+    "new": false,
+    "old_number": 19,
+    "number_10nov": 35
+  },
+  {
+    "number": 50,
+    "slug": "tie_cells",
+    "file": "tie_cells.html",
+    "title": "Tie Cells",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "Drive constants with appropriate library cells and legal fanout.",
+    "new": false,
+    "old_number": 20,
+    "number_10nov": 36
+  },
+  {
+    "number": 51,
+    "slug": "antenna",
+    "file": "antenna.html",
+    "title": "Antenna Diodes",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Understand manufacturing charge damage and checked antenna views.",
+    "new": false,
+    "old_number": 21,
+    "number_10nov": 37
+  },
+  {
+    "number": 52,
+    "slug": "decap",
+    "file": "decap.html",
+    "title": "Decap Cells",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Connect MOS capacitors, stored charge, and PDN impedance.",
+    "new": false,
+    "old_number": 22,
+    "number_10nov": 38
+  },
+  {
+    "number": 53,
+    "slug": "spare_eco",
+    "file": "spare_eco.html",
+    "title": "Spare Cells & ECO",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "Plan realizable late changes with available cells and metal.",
+    "new": false,
+    "old_number": 25,
+    "number_10nov": 39
+  },
+  {
+    "number": 54,
+    "slug": "level_shifters",
+    "file": "level_shifters.html",
+    "title": "Level Shifters",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Cross voltage domains while respecting supplies and power states.",
+    "new": false,
+    "old_number": 26,
+    "number_10nov": 40
+  },
+  {
+    "number": 55,
+    "slug": "floorplan",
+    "file": "floorplan.html",
+    "title": "Floorplan",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Fit rows, macros, interfaces, and routing resources into the die.",
+    "new": false,
+    "old_number": 27,
+    "number_10nov": 41
+  },
+  {
+    "slug": "caravel_integration",
+    "file": "caravel_integration.html",
+    "title": "Caravel Integration: The User Project Wrapper",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "The user_project_wrapper pin contract, 38 GPIOs, four supply domains, and LibreLane’s three hardening strategies.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null,
+    "number": 56
+  },
+  {
+    "number": 57,
+    "slug": "hierarchical_eco",
+    "file": "hierarchical_eco.html",
+    "title": "Hierarchical Design, Abstracts & ECO",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "LEF/Liberty/Verilog abstracts, timing budgets, and LibreLane Odb.InsertECOBuffers / InsertECODiodes from using_ecos.md. Complements metal-only spare-cell ECO. No ECO run claimed.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 58,
+    "slug": "placement",
+    "file": "placement.html",
+    "title": "Placement: Global, Legalization & Detailed",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "Global placement, unithd legalization, design repair, and a 30/45/60 utilization sweep on a real SPM.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 59,
+    "slug": "routing_timing_closure",
+    "file": "routing_timing_closure.html",
+    "title": "Routing & Timing Closure",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "GCell congestion, detailed-route DRC iterations, layer wirelength, and how a route feeds multi-corner STA.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 60,
+    "slug": "digital_signal_integrity",
+    "file": "digital_signal_integrity.html",
+    "title": "Digital Signal Integrity: Crosstalk Delay & Glitch",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "Miller factors, a hand coupling estimate on HD met1, timing windows, glitches and NDRs.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 61,
+    "slug": "metal_fill",
+    "file": "metal_fill.html",
+    "title": "Metal Fill & Cell Fill",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Distinguish planarization density from row continuity and account for coupling.",
+    "new": false,
+    "old_number": 28,
+    "number_10nov": 42
+  },
+  {
+    "number": 62,
+    "slug": "physical_signoff",
+    "file": "physical_signoff.html",
+    "title": "Physical Verification Signoff",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical"
+    ],
+    "description": "Magic and KLayout DRC, GDS XOR, Netgen LVS, and a manufacturability report, with antenna in lesson 44.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 63,
+    "slug": "power_integrity_signoff",
+    "file": "power_integrity_signoff.html",
+    "title": "Power-Integrity Signoff: Static IR, Dynamic IR & EM",
+    "part": "VI",
+    "part_name": "Physical cells and the floorplan",
+    "tags": [
+      "physical",
+      "digital"
+    ],
+    "description": "What LibreLane’s IRDropReport actually runs, static versus dynamic IR, and why Lab 6 has no IR map.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 64,
+    "slug": "io_ring",
+    "file": "io_ring.html",
+    "title": "The I/O Ring",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "physical"
+    ],
+    "description": "Understand pad buses, supplies, and real I/O interfaces.",
+    "new": false,
+    "old_number": 29,
+    "number_10nov": 43
+  },
+  {
+    "number": 65,
+    "slug": "esd_clamps",
+    "file": "esd_clamps.html",
+    "title": "ESD & Clamps",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "physical"
+    ],
+    "description": "Follow protection current paths and distinguish ESD test models.",
+    "new": false,
+    "old_number": 30,
+    "number_10nov": 44
+  },
+  {
+    "number": 66,
+    "slug": "io_fill",
+    "file": "io_fill.html",
+    "title": "I/O Fill",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "physical"
+    ],
+    "description": "Use the correct pad-bus filler family and physical dimensions.",
+    "new": false,
+    "old_number": 31,
+    "number_10nov": 45
+  },
+  {
+    "number": 67,
+    "slug": "rdl",
+    "file": "rdl.html",
+    "title": "RDL Routing",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "physical"
+    ],
+    "description": "Separate on-chip routing, bond access, redistribution, and package rules.",
+    "new": false,
+    "old_number": 32,
+    "number_10nov": 46
+  },
+  {
+    "number": 68,
+    "slug": "io_power",
+    "file": "io_power.html",
+    "title": "I/O Power & IR Drop",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Calculate bounded resistance examples and reason about distributed current.",
+    "new": false,
+    "old_number": 33,
+    "number_10nov": 47
+  },
+  {
+    "number": 69,
+    "slug": "power_package_thermal",
+    "file": "power_package_thermal.html",
+    "title": "Power, Package & Thermal Coupling",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Supply impedance, package inductance, decoupling resonance, and temperature coupling.",
+    "new": false,
+    "old_number": 48,
+    "number_10nov": 48
+  },
+  {
+    "slug": "tapeout",
+    "file": "tapeout.html",
+    "title": "Tapeout, MPW & Tiny Tapeout",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "physical",
+      "digital"
+    ],
+    "description": "Lab 6 final/ deliverables, a signoff checklist, and Tiny Tapeout’s published SKY130 tile and pinout.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null,
+    "number": 70
+  },
+  {
+    "number": 71,
+    "slug": "post_silicon_bringup",
+    "file": "post_silicon_bringup.html",
+    "title": "Post-Silicon Bring-Up, Test & Characterization",
+    "part": "VII",
+    "part_name": "The chip boundary: I/O, ESD and package",
+    "tags": [
+      "digital",
+      "physical"
+    ],
+    "description": "Wafer sort versus final test, shmoo plots, a power-then-clocks debug order, Caravel SPI and microcotb.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 72,
+    "slug": "analog_bias",
+    "file": "analog_bias.html",
+    "title": "MOSFET Bias, Gain & Headroom",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "Move beyond an on/off switch to operating regions, current mirrors, and bias.",
+    "new": false,
+    "old_number": 35,
+    "number_10nov": 49
+  },
+  {
+    "number": 73,
+    "slug": "feedback_stability",
+    "file": "feedback_stability.html",
+    "title": "Feedback & Stability",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "Relate loop gain, phase margin, loading, and time-domain response.",
+    "new": false,
+    "old_number": 36,
+    "number_10nov": 50
+  },
+  {
+    "number": 74,
+    "slug": "differential_pairs",
+    "file": "differential_pairs.html",
+    "title": "Differential Pairs, Common Mode & CMFB",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "Differential and common-mode signals, current steering, gain, headroom, and CMFB.",
+    "new": false,
+    "old_number": 43,
+    "number_10nov": 51
+  },
+  {
+    "number": 75,
+    "slug": "noise_mismatch",
+    "file": "noise_mismatch.html",
+    "title": "Noise, Mismatch & Variation",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "Separate noise, fixed errors, process shifts, and statistical yield.",
+    "new": false,
+    "old_number": 39,
+    "number_10nov": 52
+  },
+  {
+    "number": 76,
+    "slug": "references_startup",
+    "file": "references_startup.html",
+    "title": "References, Temperature & Startup",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "PTAT/CTAT references, temperature compensation, multiple equilibria, startup and brownout.",
+    "new": false,
+    "old_number": 44,
+    "number_10nov": 53
+  },
+  {
+    "number": 77,
+    "slug": "comparators_ldo_por",
+    "file": "comparators_ldo_por.html",
+    "title": "Comparators & Power Management: StrongARM, LDO & POR",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog"
+    ],
+    "description": "StrongARM, LDO loop, and POR threshold-and-delay. Teaching; no SKY130 characterisation.",
+    "new": false,
+    "old_number": null,
+    "number_10nov": null
+  },
+  {
+    "number": 78,
+    "slug": "matching_layout_extraction",
+    "file": "matching_layout_extraction.html",
+    "title": "Matching, Layout & Extracted Netlists",
+    "part": "VIII",
+    "part_name": "Analog circuits",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Common-centroid limits, device surroundings, parasitics, and reliable post-layout probes.",
+    "new": false,
+    "old_number": 47,
+    "number_10nov": 54
+  },
+  {
+    "number": 79,
+    "slug": "sampling_aliasing",
+    "file": "sampling_aliasing.html",
+    "title": "Sampling, Aliasing & Settling",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Budget acquisition, aliases, switch error, and sampling-clock jitter.",
+    "new": false,
+    "old_number": 40,
+    "number_10nov": 55
+  },
+  {
+    "number": 80,
+    "slug": "converters",
+    "file": "converters.html",
+    "title": "ADC & DAC Interfaces",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Link converter codes and specifications to physical analog requirements.",
+    "new": false,
+    "old_number": 38,
+    "number_10nov": 56
+  },
+  {
+    "number": 81,
+    "slug": "spectral_measurements",
+    "file": "spectral_measurements.html",
+    "title": "FFT, Noise & Distortion Measurements",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Coherent captures, FFT scaling, windows, SNR, SINAD, harmonics, and noise bandwidth.",
+    "new": false,
+    "old_number": 50,
+    "number_10nov": 57
+  },
+  {
+    "number": 82,
+    "slug": "calibration_trim",
+    "file": "calibration_trim.html",
+    "title": "Calibration, Trimming & Testability",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "digital"
+    ],
+    "description": "Trim range and resolution, offset/gain correction, temperature curvature, and testability.",
+    "new": false,
+    "old_number": 49,
+    "number_10nov": 58
+  },
+  {
+    "number": 83,
+    "slug": "crosstalk_return_paths",
+    "file": "crosstalk_return_paths.html",
+    "title": "Crosstalk, Return Paths & Isolation",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "physical"
+    ],
+    "description": "Estimate coupled glitches and reason about real return-current paths.",
+    "new": false,
+    "old_number": 41,
+    "number_10nov": 59
+  },
+  {
+    "number": 84,
+    "slug": "mixed_signal_verification",
+    "file": "mixed_signal_verification.html",
+    "title": "Mixed-Signal Verification & Bring-Up",
+    "part": "IX",
+    "part_name": "Mixed-signal: sampling, conversion and verification",
+    "tags": [
+      "analog",
+      "digital",
+      "physical"
+    ],
+    "description": "Build interface contracts and tests that span circuit, logic, and layout.",
+    "new": false,
+    "old_number": 42,
+    "number_10nov": 60
+  }
+]

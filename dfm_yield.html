@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFM, Variation &amp; Yield</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 32 / 84 · Part IV, Loads, timing and interconnect</p>
+
+<h1>DFM, Variation &amp; Yield: A Digital View</h1>
+<p class="subtitle">A correct GDS can still yield poorly. Systematic variation, random variation, lithography hotspots and via opens are different problems, and they enter the cost of a chip in different ways.</p>
+<p class="scope-note"><strong>Where this sits.</strong> <a href="silicon_wafer.html">Lesson 2</a> already has yield arithmetic (die per wafer, a simple yield model). <a href="noise_mismatch.html">Lesson 75</a> is analog mismatch (Pelgrom, with a PDK V<sub>th</sub> slope). <a href="multicorner_sta.html">Lesson 45</a> is digital corners. This lesson is the digital-view companion: when corners are enough, when Monte Carlo is the right question, what a litho hotspot and a redundant via are for, and how yield shows up in cost. Figures are teaching unless a number is tied to a file we already cited.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Separate systematic from random variation, and corners from Monte Carlo, for digital logic.</li>
+<li>Say what a lithography hotspot and a redundant via are doing for yield.</li>
+<li>Connect yield to die cost without inventing a SKY130 yield percentage.</li>
+</ul></div>
+
+<h2 id="section-1">1. Systematic and random are not the same knob</h2>
+<p><strong>Systematic</strong> variation is correlated across a region or a layout pattern: a dense-versus-sparse lithography bias, a CMP dishing in a wide metal, a gradient across the wafer, a well-proximity effect. You fight it with design rules, dummy fill (<a href="metal_fill.html">lesson 61</a>), matching orientation, and by not asking a 1&nbsp;µm device to sit next to a 100&nbsp;µm empty field and expect the same printed width.</p>
+<p><strong>Random</strong> variation is uncorrelated from device to device: dopant fluctuation, line-edge roughness, a via that does or does not open. You fight it with area (Pelgrom, lesson 75), with redundancy, and with statistical margin.</p>
+<p>Digital STA’s usual answer is <strong>corners</strong>: a slow cell library and a worst RC, or a fast library and a hold-flavoured RC, as in lesson 45. A corner is a pessimistic simultaneous extreme. It is good at “does any path still close if everything is slow,” and bad at “what fraction of dice fail,” because real chips are not all-slow at once on every device. <strong>Monte Carlo</strong> draws from a statistical model and counts failures. It is the right question for an analog offset or a yield target; it is expensive to run on a full digital STA, and this course has not run a digital MC on the SPM.</p>
+
+<figure class="diagram" role="img" aria-label="Teaching comparison of a process corner box and a Monte Carlo cloud.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 260" width="760" height="260" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="260" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">Corners versus a statistical cloud — teaching, not an SPM Monte Carlo</text>
+  <rect x="80" y="70" width="240" height="150" fill="none" stroke="#2b6cb0" stroke-width="1.8"/>
+  <circle cx="90" cy="80" r="6" fill="#2b6cb0"/>
+  <circle cx="310" cy="80" r="6" fill="#2b6cb0"/>
+  <circle cx="90" cy="210" r="6" fill="#2b6cb0"/>
+  <circle cx="310" cy="210" r="6" fill="#2b6cb0"/>
+  <circle cx="200" cy="145" r="6" fill="#1e6b4f"/>
+  <text x="200" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#2b6cb0">corner box (ss, ff, …)</text>
+  <text x="200" y="148" text-anchor="middle" font-size="11" fill="#1e6b4f">tt</text>
+  <text x="500" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#b54708">Monte Carlo cloud</text>
+  <!-- random dots, deterministic positions, stay inside a blob, some near but not at corners -->
+  <circle cx="455" cy="140" r="3.5" fill="#c0564a"/><circle cx="470" cy="155" r="3.5" fill="#c0564a"/>
+  <circle cx="490" cy="130" r="3.5" fill="#c0564a"/><circle cx="510" cy="148" r="3.5" fill="#c0564a"/>
+  <circle cx="525" cy="165" r="3.5" fill="#c0564a"/><circle cx="540" cy="125" r="3.5" fill="#c0564a"/>
+  <circle cx="560" cy="150" r="3.5" fill="#c0564a"/><circle cx="575" cy="170" r="3.5" fill="#c0564a"/>
+  <circle cx="505" cy="110" r="3.5" fill="#c0564a"/><circle cx="480" cy="180" r="3.5" fill="#c0564a"/>
+  <circle cx="530" cy="190" r="3.5" fill="#c0564a"/><circle cx="545" cy="100" r="3.5" fill="#c0564a"/>
+  <circle cx="495" cy="200" r="3.5" fill="#c0564a"/><circle cx="600" cy="145" r="3.5" fill="#c0564a"/>
+  <text x="200" y="248" text-anchor="middle" font-size="12" fill="#5c6b7a">a simultaneous extreme</text>
+  <text x="520" y="248" text-anchor="middle" font-size="12" fill="#5c6b7a">a distribution; yield is a count</text>
+</svg>
+<figcaption><strong>Figure — Two views of variation.</strong> Teaching drawing. Corners sit at the box; Monte Carlo fills a cloud. A chip that fails a corner may still be a tiny fraction of real dice — or a real systematic issue that MC with the wrong model will miss.</figcaption>
+</figure>
+
+<details class="checkpoint"><summary>Check your understanding — a path fails ss 125&nbsp;°C by 5&nbsp;ps. Is the yield zero?</summary><p>Not automatically. ss 125&nbsp;°C is a simultaneous slow-cell, high-temperature extreme. Many dice will be closer to typical. The fail does mean you do not have corner closure, which is the usual digital signoff contract. Yield is a different, statistical claim, and this course has not measured one on the SPM.</p></details>
+
+<h2 id="section-2">2. Litho hotspots and redundant vias</h2>
+<p>A <strong>lithography hotspot</strong> is a layout pattern that the optical process prints poorly: a pinch, a bridge, a line-end that pulls back. Foundry recommended rules and, at advanced nodes, litho-simulation checks, exist to catch these before tapeout. SKY130’s DRC deck already encodes a large part of that experience as spacings and densities; a “passed DRC” is necessary and not always a complete litho signoff on a leading-edge node. This course’s Lab 7 is DRC/LVS practice, not a litho-simulator run.</p>
+<p>A <strong>redundant via</strong> is a second (or third) cut on the same connection, so that a single via open does not kill the net. Yield models often treat via opens as a dominant random fail. The cost is a little extra metal and congestion; the benefit is on every via in the design, which is why routers have a “multi-cut via” effort. It is a DFM knob, not a timing knob — though a double via also lowers resistance, which is a small IR and delay gift.</p>
+
+<figure class="diagram" role="img" aria-label="Single via versus two redundant vias on a metal connection.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 180" width="760" height="180" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="180" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">A single via and a redundant pair — teaching</text>
+  <rect x="80" y="70" width="200" height="28" fill="#c5d4e8" stroke="#33414f"/>
+  <rect x="80" y="130" width="200" height="28" fill="#e8d5c5" stroke="#33414f"/>
+  <rect x="165" y="90" width="22" height="48" fill="#5c6b7a"/>
+  <text x="180" y="60" text-anchor="middle" font-size="12" fill="#33414f">one cut — one open fails the net</text>
+  <rect x="420" y="70" width="240" height="28" fill="#c5d4e8" stroke="#33414f"/>
+  <rect x="420" y="130" width="240" height="28" fill="#e8d5c5" stroke="#33414f"/>
+  <rect x="490" y="90" width="22" height="48" fill="#1e6b4f"/>
+  <rect x="545" y="90" width="22" height="48" fill="#1e6b4f"/>
+  <text x="540" y="60" text-anchor="middle" font-size="12" fill="#33414f">two cuts — both must fail</text>
+</svg>
+<figcaption><strong>Figure — Redundant vias.</strong> Teaching. The probability that both cuts are open is much smaller than one, if the fails are reasonably independent. A correlated process defect can still take both.</figcaption>
+</figure>
+
+<h2 id="section-3">3. Yield is a cost number</h2>
+<p>Lesson 2’s arithmetic still holds: cost per good die is (wafer cost) / (dice per wafer × yield). A DFM rule that costs 2&nbsp;% area and buys 5&nbsp;% yield can be a bargain; one that costs 10&nbsp;% area for a negligible fail rate is not. You cannot do that sum without a yield model and a fail-rate for the rule, and this course does not invent a SKY130 foundry yield. What you <em>can</em> say is that via redundancy, fill, recommended rules, and not packing a litho-hostile pattern are the usual cheap knobs, and that a shuttle’s “it DRCed” is the start of that conversation, not the end.</p>
+
+<details class="checkpoint"><summary>Check your understanding — why isn’t a 100&nbsp;% DRC-clean GDS a 100&nbsp;% yield?</summary><p>DRC is a rule check, not a process. Random via opens, particles, and parametric tails (a V<sub>th</sub> in the far end of the distribution) are not all written as DRC errors. Systematic litho issues at the edge of the rules can still print badly. Packaging and test then remove more dice. Yield is measured on silicon, and improved by DFM, margin, and process control together.</p></details>
+
+<h2 id="key-takeaways">Key takeaways</h2>
+<ul>
+<li>Systematic variation is patterned or graded; random variation is device-to-device. Corners ask a simultaneous extreme; Monte Carlo asks a distribution. Digital signoff is usually corners; yield is a count.</li>
+<li>Litho hotspots and via opens are classic DFM targets. Redundant vias are a standard, cheap defence. This course has not run a litho simulator.</li>
+<li>Yield enters cost through lesson 2’s arithmetic. No SKY130 yield percentage is quoted here.</li>
+</ul>
+<section class="sources"><h2 id="sources">Sources &amp; scope</h2>
+<p>Teaching. Yield arithmetic in lesson 2; analog mismatch in lesson 75; digital corners in lesson 45. No SPM Monte Carlo and no foundry yield number.</p>
+<ol>
+<li><a href="silicon_wafer.html">Lesson 2</a> — die per wafer and yield in the cost model.</li>
+<li><a href="multicorner_sta.html">Lesson 45</a> — the nine-corner STA already run on the SPM.</li>
+<li><a href="noise_mismatch.html">Lesson 75</a> — Pelgrom and the PDK <code>vth0_slope</code>.</li>
+<li><a href="metal_fill.html">Lesson 61</a> — density fill as a systematic-variation knob.</li>
+</ol>
+</section>
+
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html" aria-current="page">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+<div class="lesson-footer"><a href="reliability_aging.html"><small>← Previous</small>Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a><a href="rtl_patterns.html"><small>Next →</small>RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main></body></html>

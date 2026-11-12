@@ -1,0 +1,16 @@
+{
+  "tool": "Icarus Verilog version 12.0 (stable) ()",
+  "scope": "Digital event simulation; no analog metastability or physical timing model.",
+  "negative_control": true,
+  "cases": [
+    {
+      "name": "fast_source",
+      "source_period_ns": 14,
+      "readout_period_ns": 22,
+      "readout_initial_phase_ns": 3,
+      "seed": 4369,
+      "exit_code": 1,
+      "observed": "Expected data-hold assertion failure detected."
+    }
+  ]
+}

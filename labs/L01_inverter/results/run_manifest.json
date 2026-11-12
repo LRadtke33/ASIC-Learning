@@ -1,0 +1,21 @@
+{
+  "kind": "Actual ngspice DC/transient simulation of unmodified SKY130 source-netlist inverter",
+  "tool": "******\n** ngspice-44.2 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2024, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Sun Jan 12 08:19:15 UTC 2025\n******",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "models_revision": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+  "model_wrapper_sha256": "93b4a996977c95caade912278bb47c46381ce71fdc87c52bd77ae36848748c26",
+  "conditions": "Deterministic corner simulations; mismatch switches disabled in bundled upstream files. No silicon or signoff result.",
+  "cases": 18,
+  "standard_cell_revision": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+  "measurement_definitions": {
+    "delay": "50% input to 50% output, opposite polarity",
+    "slew": "20% to 80% or 80% to 20%",
+    "energy": "integral of -VDD*i(VDD) over 0..7ns; one complete output discharge/recharge cycle"
+  },
+  "limitations": [
+    "Source-level two-MOS cell; no extracted local interconnect or physical junction geometry supplied.",
+    "Different simulator/model preparation from original Liberty characterization; comparison is not reproduction of the characterized library.",
+    "No statistical mismatch, aged-device, routing, EM or signoff analysis."
+  ]
+}

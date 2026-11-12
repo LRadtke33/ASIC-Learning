@@ -1,0 +1,186 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</title><link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><main id="main-content"><nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 46 / 84 · Part V, Digital implementation</p>
+<h1>Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</h1>
+<p class="subtitle">A 4-bit Gray counter and a 4-deep FIFO, checked three ways that were actually run: a self-checking Verilog testbench, a cocotb Python test, and SymbiYosys formal — then the counter is mapped to sky130_fd_sc_hd and simulated at gate level, with OpenSTA SDF delays measured in Icarus.</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> Every PASS, FAIL, cover step, cell count and delay in this lesson was recorded on 11 November 2026. Icarus Verilog 12.0 ran the self-checking testbenches and the gate-level simulations; cocotb 2.1.0 ran the Python tests against the same Icarus; SymbiYosys with Yosys 0.62 and Z3 4.13.3 ran BMC, cover and k-induction; Yosys 0.62 mapped <code>gray4</code> onto sky130_fd_sc_hd; OpenSTA 2.7.0 wrote the SDF. Sources, scripts and the recorded log are in <code>labs/analysis_examples/verification/</code>. UVM is discussed as an industry idea only — it was not run.</p>
+
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Write a self-checking testbench with a <code>require</code> task and a scoreboard, and drive it so it cannot race the DUT clock.</li>
+<li>Run the same checks from Python with cocotb, and say what coverage would add.</li>
+<li>Express a property as an assertion, prove it with bounded model checking and k-induction, and watch formal produce a counterexample for a planted bug.</li>
+<li>Map a design to SKY130 HD, simulate the netlist, and measure a CLK→Q delay that matches an OpenSTA SDF IOPATH.</li>
+</ul></div>
+
+<aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Functional simulation starts with the RTL at <a href="design_flow.html#step-3">step 3, synthesis</a> and is repeated on the gate netlist after <a href="design_flow.html#step-8">step 8, extraction and timing signoff</a>, using an SDF from the same STA that signed the chip off. Multi-corner STA itself is <a href="multicorner_sta.html">lesson 45</a>.</dd><dt>Tools</dt><dd>Icarus Verilog, cocotb, Yosys, SymbiYosys (<code>sby</code>), OpenSTA <code>write_sdf</code>. Commercial: VCS, Xcelium, Questa, VC Formal, Jasper, and UVM testbenches.</dd><dt>Why it matters</dt><dd>A clean timing report says the chip <em>can</em> meet the clock. It does not say the chip <em>does the right thing</em>. That is this lesson’s job.</dd></dl></aside>
+
+<h2 id="section-1">1. What has to be true</h2>
+<p>The two teaching designs are small on purpose. <code>gray4</code> is a 4-bit Gray-code counter: after reset the output is <code>0000</code>; each enabled clock advances one Gray step (Hamming distance 1) and wraps from <code>1000</code> back to <code>0000</code>. <code>sync_fifo</code> is a 4-deep, 8-bit synchronous FIFO: writes are ignored when it is full, reads are ignored when it is empty, occupancy is consistent, and data comes out in the order it went in.</p>
+<p>Those sentences are the specification. A testbench is a machine that tries to catch the design disagreeing with them. It can do that by walking through a prepared sequence (simulation), by speaking the sentences as assertions and asking a solver to find a counterexample (formal), and by repeating the same checks on the gates the synthesizer actually emitted, with real cell delays (gate-level simulation). The right picture is not a pipeline that you finish once; it is the same properties, checked at three depths.</p>
+
+<figure role="img" aria-labelledby="fig-stack-cap">
+<svg viewBox="0 0 700 230" width="700" height="230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="700" height="230" fill="#fbfaf6"/>
+  <text x="350" y="22" text-anchor="middle" font-size="13" font-weight="600">The same properties, three depths</text>
+  <rect x="30" y="50" width="200" height="80" rx="6" fill="#edf2f7" stroke="#2c5282"/>
+  <text x="130" y="78" text-anchor="middle" font-size="12" font-weight="600">Self-checking TB</text>
+  <text x="130" y="96" text-anchor="middle" font-size="10">Icarus 12.0  ·  PASS</text>
+  <text x="130" y="112" text-anchor="middle" font-size="10">cocotb 2.1.0  ·  PASS</text>
+  <rect x="250" y="50" width="200" height="80" rx="6" fill="#e6fffa" stroke="#276749"/>
+  <text x="350" y="78" text-anchor="middle" font-size="12" font-weight="600">Formal</text>
+  <text x="350" y="96" text-anchor="middle" font-size="10">sby + Z3  ·  BMC PASS</text>
+  <text x="350" y="112" text-anchor="middle" font-size="10">k-induction PASS, mutant FAIL</text>
+  <rect x="470" y="50" width="200" height="80" rx="6" fill="#feebc8" stroke="#c05621"/>
+  <text x="570" y="78" text-anchor="middle" font-size="12" font-weight="600">Gate-level + SDF</text>
+  <text x="570" y="96" text-anchor="middle" font-size="10">Yosys 16 HD cells, PASS</text>
+  <text x="570" y="112" text-anchor="middle" font-size="10">CLK→Q 0.374 / 0.389 ns</text>
+  <text x="350" y="160" text-anchor="middle" font-size="11">Specification: Gray steps have Hamming distance 1; the FIFO never drops or reorders a byte.</text>
+  <text x="350" y="182" text-anchor="middle" font-size="11">Simulation walks examples.  Formal searches for a counterexample.  Gate-level asks:</text>
+  <text x="350" y="202" text-anchor="middle" font-size="11">is that still true of the SKY130 netlist, with cell delays from OpenSTA?</text>
+</svg>
+<figcaption id="fig-stack-cap">Figure 1. Three recorded checks of the same specification, all run for this lesson. UVM, not pictured, is the industry framework that scales the left-hand box; it is described in section 8 and was not run.</figcaption>
+</figure>
+
+<h2 id="section-2">2. A self-checking testbench, without races</h2>
+<p>A testbench that prints “done” is not a test. The pattern used here is a <code>require(ok, msg)</code> task that increments an error counter and a <code>$display("FAIL …")</code> when a prediction misses, and a final <code>PASS</code> only when that counter is still zero. For the FIFO, the prediction is a queue scoreboard: every accepted write is pushed, every read is compared with the front of the queue.</p>
+<p>The other habit is about time. If the testbench assigns <code>en</code> or <code>din</code> at the same rising edge the DUT samples, the simulator is free to let either side go first — and we watched that race fail, on the first draft of these testbenches, in exactly that way (the first Gray step was skipped; the first FIFO byte was lost). The fix is the one you should copy: <em>drive and sample on the falling edge</em> when the DUT is rising-edge clocked. A 10&nbsp;ns teaching period gives 5&nbsp;ns of clear setup on both sides of the edge.</p>
+<p>Icarus Verilog 12.0, with those testbenches:</p>
+<pre>PASS  tb_gray4       32 steps + 8 holds, 0 errors
+PASS  tb_sync_fifo   fill/full-ignore/drain/simultaneous, 0 errors</pre>
+<p>The FIFO test fills four unique bytes, confirms <code>full</code>, proves a write-to-full is ignored, drains against the scoreboard, then does a simultaneous write and read at mid-occupancy and checks that the count stays two and that the bytes still come out in order. The Gray test walks two full wraps (32 steps) checking Hamming distance, the binary decode, and the Gray encoding, then freezes <code>en</code> for eight cycles. You can rerun both with <code>labs/analysis_examples/verification/run.sh</code>.</p>
+
+<h2 id="section-3">3. The same checks in Python: cocotb 2.1.0</h2>
+<p>cocotb drives the same DUT through the same simulator, but the test is a Python coroutine. A <code>Clock</code> object ticks the clock; <code>FallingEdge(dut.clk)</code> waits; <code>dut.en.value = 1</code> deposits a stimulus; <code>assert</code> is the checker. The Gray and FIFO tests in <code>cocotb/test_gray4.py</code> and <code>test_sync_fifo.py</code> mirror the Verilog testbenches — including falling-edge sampling and a Python <code>list</code> as the FIFO scoreboard.</p>
+<pre>cocotb 2.1.0, Icarus 12.0
+  test_gray4.test_reset_and_sequence         PASS    425.00 ns
+  test_sync_fifo.test_fill_drain_scoreboard  PASS    225.00 ns</pre>
+<p>The payoff is not that Python is prettier. It is that the scoreboard, a file-format model, or a bit-accurate reference can be ordinary Python, and that the same test can be pointed at Icarus today and at a commercial simulator tomorrow. A Makefile in the lab folder is the whole build: <code>make SIM=icarus</code> from <code>cocotb/</code>.</p>
+<p><strong>Coverage</strong> asks a different question: not “did this test pass?” but “which of the things that can happen did the test actually try?” Code coverage (lines, branches, FSM states) is what the simulator can count for you. Functional coverage is what you write: a coverpoint on FIFO occupancy, a cross of <code>full</code> with a write, a wrap of the Gray counter. We did not collect a coverage database on this run; the formal <em>cover</em> statements in section 5 are the same idea, asked of a solver rather than of a test.</p>
+
+<h2 id="section-4">4. Assertions, and the SVA you will see at work</h2>
+<p>An assertion is a property the design is not allowed to violate, checked continuously rather than at a single <code>require</code> call. SystemVerilog Assertions (SVA) write those properties with a clock and a disabling condition:</p>
+<pre>property p_hamming;
+    @(posedge clk) disable iff (!rst_n)
+        en |=> ($countones(gray ^ $past(gray)) == 1);
+endproperty
+assert property (p_hamming);</pre>
+<p>That is the concurrent form: “if <code>en</code> was high, the next Gray value is one bit away.” A <em>cover</em> property asks the complementary question: “is there any legal trace that reaches this state?” An <em>assume</em> property restricts the stimulus (for example, “the testbench will never write when the FIFO is full”) — dangerous if you assume something the real world will not honour.</p>
+<p>The open-source Yosys frontend used below consumes <em>immediate</em> assertions, written as <code>assert (…)</code> inside an <code>always @(posedge clk)</code> block, guarded by a <code>f_past_valid</code> flag so that <code>$past</code> is not examined on the first cycle. Those are the properties that were actually proved. A concurrent-SVA illustration of the same Gray properties sits in the lab folder as <code>formal/gray4_sva_illustration.sv</code>, for reading; it was not one of the recorded SymbiYosys runs.</p>
+
+<h2 id="section-5">5. Formal: BMC, cover, k-induction, and a mutant</h2>
+<p>SymbiYosys (<code>sby</code>) wraps Yosys and an SMT solver. This run used Yosys 0.62, <code>yosys-smtbmc</code>, and Z3 4.13.3. A system Boolector 1.5 that happened to be on <code>PATH</code> rejected SMT-LIB <code>set-option</code> and is the wrong engine; the <code>.sby</code> files therefore say <code>smtbmc z3</code>.</p>
+<p>Three modes, three questions:</p>
+<ul>
+<li><strong>Bounded model checking (BMC)</strong> unrolls the design for <em>k</em> cycles and asks: is there any input sequence of length ≤ <em>k</em> that violates an assertion? A PASS means no bug of that depth — not that the design is correct for ever.</li>
+<li><strong>Cover</strong> asks the solver to <em>find</em> a trace that reaches a state, and writes a VCD when it does. A cover that is reached in two steps, on a property that should take a full Gray wrap, is often a vacuous trace that never went through reset; more on that in a moment.</li>
+<li><strong>Prove</strong>, here by <strong>k-induction</strong>: if the assertions hold for <em>k</em> cycles from reset (the base case) <em>and</em> any window of <em>k</em> legal cycles can be shown to extend by one more legal cycle (the inductive step), the properties hold for every depth. A PASS here is a real proof, for those assertions.</li>
+</ul>
+
+<figure role="img" aria-labelledby="fig-formal-cap">
+<svg viewBox="0 0 700 200" width="700" height="200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="700" height="200" fill="#fbfaf6"/>
+  <text x="350" y="20" text-anchor="middle" font-size="13" font-weight="600">BMC unrolls from reset; k-induction also steps from any legal window</text>
+  <!-- BMC -->
+  <text x="20" y="50" font-size="11" font-weight="600" fill="#2c5282">BMC, depth 24</text>
+  <circle cx="50" cy="85" r="12" fill="#2c5282"/>
+  <text x="50" y="89" text-anchor="middle" font-size="9" fill="white">rst</text>
+  <line x1="62" y1="85" x2="98" y2="85" stroke="#2c5282" stroke-width="2"/>
+  <circle cx="110" cy="85" r="10" fill="#bee3f8" stroke="#2c5282"/>
+  <line x1="120" y1="85" x2="156" y2="85" stroke="#2c5282" stroke-width="2"/>
+  <circle cx="168" cy="85" r="10" fill="#bee3f8" stroke="#2c5282"/>
+  <line x1="178" y1="85" x2="230" y2="85" stroke="#2c5282" stroke-width="2" stroke-dasharray="3,2"/>
+  <circle cx="245" cy="85" r="10" fill="#bee3f8" stroke="#2c5282"/>
+  <text x="245" y="115" text-anchor="middle" font-size="9">k = 24</text>
+  <text x="20" y="140" font-size="11">gray4: PASS.  A planted binary-counter mutant FAILs at step 4.</text>
+  <!-- induction -->
+  <text x="380" y="50" font-size="11" font-weight="600" fill="#276749">k-induction</text>
+  <rect x="380" y="68" width="90" height="34" rx="4" fill="#c6f6d5" stroke="#276749"/>
+  <text x="425" y="89" text-anchor="middle" font-size="10">k legal steps</text>
+  <line x1="470" y1="85" x2="520" y2="85" stroke="#276749" stroke-width="2"/>
+  <polygon points="520,80 532,85 520,90" fill="#276749"/>
+  <rect x="536" y="68" width="80" height="34" rx="4" fill="#c6f6d5" stroke="#276749"/>
+  <text x="576" y="89" text-anchor="middle" font-size="10">k+1 holds</text>
+  <text x="380" y="140" font-size="11">gray4 prove: PASS (basecase + induction).</text>
+  <text x="20" y="172" font-size="11">Cover, after a real reset: the Gray wrap 0000 → … → 1000 → 0000 is reached at step 18.</text>
+  <text x="20" y="190" font-size="11">FIFO cover: full at step 6, empty-after-full at step 10, simultaneous wr/rd at step 5.  All PASS.</text>
+</svg>
+<figcaption id="fig-formal-cap">Figure 2. What the three SymbiYosys modes did on these designs, with the recorded outcomes.</figcaption>
+</figure>
+
+<p>Recorded results, all with an explicit starting reset (<code>initial assume (rst_n == 0)</code>):</p>
+<table>
+<caption>Table 1. SymbiYosys runs, 11 November 2026. Engine: <code>smtbmc z3</code>.</caption>
+<thead><tr><th>Job</th><th>Mode</th><th>Depth</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><code>gray4_bmc</code></td><td>BMC</td><td>24</td><td>PASS</td></tr>
+<tr><td><code>gray4_cover</code></td><td>cover</td><td>24</td><td>PASS, wrap reached at step 18</td></tr>
+<tr><td><code>gray4_prove</code></td><td>prove (k-induction)</td><td>16</td><td>PASS, basecase and induction</td></tr>
+<tr><td><code>gray4_bug</code></td><td>BMC on a binary counter</td><td>12</td><td><strong>FAIL at step 4</strong>, Hamming-distance assertion</td></tr>
+<tr><td><code>fifo_bmc</code></td><td>BMC</td><td>20</td><td>PASS</td></tr>
+<tr><td><code>fifo_cover</code></td><td>cover</td><td>20</td><td>PASS, three covers reached</td></tr>
+</tbody>
+</table>
+<p>The mutant is the teaching tool. <code>gray4_bug.v</code> is a plain binary counter pretending to be Gray. BMC finds the Hamming-distance failure at step 4: after reset (<code>0000</code>), one enabled step to <code>0001</code> (distance 1, legal), the next step to <code>0010</code> (distance 2, illegal). Formal does not need a hand-written test for that case; it searches for it.</p>
+<p>The starting-reset assume is not optional decoration. Without it, the first FIFO BMC <em>failed</em> — because formal is free to power the occupancy register up at <code>3'b111</code>, which is already <code>count &gt; 4</code>, and a combinational assertion fires before any clock. A first cover of the Gray wrap came back at step 2, which is too fast to be a real wrap: the solver had picked a register value that already satisfied the cover, without ever going through reset. After <code>initial assume (rst_n == 0)</code> and a “seen reset, then seen <code>1000</code>” flag, the wrap is reached at step 18, which is exactly reset plus sixteen increments. Formal explores every initial state you do not rule out. Rule out the ones your hardware will not have.</p>
+
+<h2 id="section-6">6. Gate-level simulation on sky130_fd_sc_hd</h2>
+<p>Yosys 0.62, with the HD <code>tt_025C_1v80</code> Liberty file, mapped <code>gray4</code> to 16 standard cells with a chip area of 196.4384&nbsp;µm²: four <code>dfrtp_1</code> flops and a handful of inverters, muxes, and XOR/XNOR/AOI gates. The netlist is <code>gl/gray4_gl.v</code>. OpenSTA 2.7.0 linked that netlist against the same Liberty, created a 10&nbsp;ns clock, and wrote <code>gray4.sdf</code> (290 lines, timescale 1&nbsp;ns, voltage 1.80, temperature 25&nbsp;°C). There is no SPEF, so every interconnect delay in that SDF is zero; the cell IOPATHs are real. On flop <code>_21_</code>:</p>
+<pre>(CELLTYPE "sky130_fd_sc_hd__dfrtp_1")
+(INSTANCE _21_)
+  (IOPATH CLK Q (0.374::0.374) (0.389::0.389))</pre>
+<p>That is a 0.374&nbsp;ns rising and 0.389&nbsp;ns falling CLK→Q, at the load OpenSTA computed for that instance.</p>
+<p>Two Icarus simulations sit on either side of that file.</p>
+<p><strong>Functional gate-level, no SDF.</strong> The SKY130 functional models (<code>`define FUNCTIONAL</code>, no power pins, <code>UNIT_DELAY #0.001</code>) simulate the netlist as zero-delay logic with a 1&nbsp;ps placeholder. Icarus 12.0: <code>PASS  tb_gray4_gl  USE_SDF=0  32 steps, 0 errors</code>, and every captured CLK→Q was 0.001&nbsp;ns — the unit delay. The Gray properties still hold of the synthesized gates. That is already worth doing: synthesis can drop a reset, invert a polarity, or map a latch you did not ask for, and a RTL testbench will not see it.</p>
+<p><strong>OpenSTA delays, measured.</strong> Icarus 12.0 accepted a <code>$sdf_annotate</code> of <code>gray4.sdf</code> but did not apply the IOPATH delays: a controlled one-buffer test with a known 0.374&nbsp;ns SDF left the measured delay at 0. The SKY130 <em>timing</em> models (the ones with <code>specify</code> blocks that SDF would back-annotate) also cannot be used as-is in this Icarus — <code>$setuphold</code> delayed clocks are not driven, and the flops go to X. Both limits are of this simulator, not of the SDF. The delays themselves were compiled as <code>specify</code> numbers taken from that same OpenSTA IOPATH, in <code>gl/tb_ckq_specify.v</code>, and Icarus with <code>-gspecify</code> then measured:</p>
+<pre>Q=1  CLK→Q = 0.3740 ns
+Q=0  CLK→Q = 0.3890 ns
+CKQ  n=8  rises=4  falls=4  min=0.3740  mean=0.3815  max=0.3890 ns
+PASS  tb_ckq_specify</pre>
+
+<figure role="img" aria-labelledby="fig-ckq-cap">
+<svg viewBox="0 0 700 180" width="700" height="180" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="700" height="180" fill="#fbfaf6"/>
+  <text x="350" y="20" text-anchor="middle" font-size="13" font-weight="600">CLK→Q: unit-delay functional GL versus OpenSTA SDF numbers</text>
+  <!-- clock -->
+  <text x="30" y="55" font-size="10" font-weight="600">clk</text>
+  <path d="M80 60 L200 60 L200 40 L320 40 L320 60 L500 60" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="30" y="100" font-size="10" font-weight="600">Q, functional</text>
+  <path d="M80 110 L200 110 L200 90 L320 90 L320 110 L500 110" fill="none" stroke="#2c5282" stroke-width="1.5"/>
+  <text x="210" y="82" font-size="9" fill="#2c5282">0.001 ns</text>
+  <text x="30" y="150" font-size="10" font-weight="600">Q, SDF delays</text>
+  <path d="M80 160 L200 160 L215 160 L215 140 L320 140 L335 140 L335 160 L500 160" fill="none" stroke="#c05621" stroke-width="1.5"/>
+  <text x="218" y="132" font-size="9" fill="#c05621">0.374 ns rise</text>
+  <text x="345" y="132" font-size="9" fill="#c05621">0.389 ns fall</text>
+  <line x1="200" y1="36" x2="200" y2="165" stroke="#ccc" stroke-dasharray="2,2"/>
+</svg>
+<figcaption id="fig-ckq-cap">Figure 3. Same netlist, two delay models. The functional SKY130 sim (blue) passes the Gray checks at a 1&nbsp;ps unit delay. The orange edges use the OpenSTA SDF IOPATH for <code>dfrtp_1</code> instance <code>_21_</code>, compiled as <code>specify</code> delays, and measure 0.3740&nbsp;ns and 0.3890&nbsp;ns — matching the SDF to 0.1&nbsp;ps.</figcaption>
+</figure>
+
+<p>OpenSTA’s own check of that netlist, at tt and 10&nbsp;ns, reported a setup worst slack of 8.40&nbsp;ns (MET) and a datapath hold of 0.10&nbsp;ns (MET). A <em>removal</em> check on <code>rst_n</code> is violated (−0.31&nbsp;ns) because the input was left unconstrained; that is a constraint issue, the same class of problem as an unconstrained async reset in <a href="cdc_reset.html">lesson 39</a>, not a hold failure of the Gray datapath.</p>
+<p><strong>X-propagation.</strong> In a unit-delay functional sim, a flop that never sees a clean reset may still power up as 0 in the Verilog. In a timing model, a setup or hold violation can drive the output to X, and X then spreads through the combinational cone. A test that passed at RTL and failed with Xs at gate level is often a real race — or a testbench that is still changing inputs on the active edge. When you move this flow to a simulator that does apply SDF and honour <code>$setuphold</code>, treat an X as a failure until you have explained it. Icarus, on the functional models, will not give you that X; do not take a clean functional-GL PASS as evidence that hold is safe. Hold is a STA question (<a href="multicorner_sta.html">lesson 45</a>), confirmed in a timing-aware gate sim when the simulator can represent it.</p>
+
+<h2 id="section-7">7. Equivalence, and what we did not run</h2>
+<p>Yosys also ships EQY, an equivalence-checking wrapper: it builds a miter between a “gold” RTL and a “revised” gate netlist and tries to prove the outputs match for every input. That is the right tool when you want to say “synthesis did not change the function,” independently of any test. It was not run on this <code>gray4</code> netlist — the HD cells would need a functional expansion the lab does not set up. The recorded substitute is the combination of formal properties on the RTL and a passing gate-level sim of the same properties. An EQY PASS would still be a stronger synthesis check, and is the next thing to add if you extend the lab.</p>
+
+<h2 id="section-8">8. UVM, briefly</h2>
+<p>UVM (Universal Verification Methodology) is the SystemVerilog class library most commercial digital teams use to scale the left-hand box of Figure&nbsp;1. A driver puts transactions on a bus; a monitor watches the pins and turns them back into transactions; a scoreboard — the same idea as the FIFO queue in section 2 — compares those against a reference model; a sequencer and a constraint solver generate the stimulus. None of that was run here. For a block the size of <code>gray4</code> it would be heavier than the design. For a chip with several buses, several privilege modes and a queue of engineers, it is how the self-checking testbench stops being a single file. The properties in sections 4 and 5 still belong in that world: UVM is a stimulus and scoreboard framework, not a replacement for assertions or formal.</p>
+
+<h2 id="section-9">9. A verification checklist</h2>
+<ul>
+<li>A specification you can point at: “Hamming distance 1,” “no drop, no reorder,” not “it looks like it works.”</li>
+<li>A self-checking testbench with an error counter, a scoreboard or reference, a deliberate failing case (the formal mutant in this lesson; a sabotaged mailbox in Lab&nbsp;5), and stimulus that does not race the clock.</li>
+<li>The same checks in a form you are willing to grow — cocotb or UVM — and a coverage question you can answer.</li>
+<li>Assertions on the properties that must always hold, proved with BMC for depth and with induction (or a commercial formal tool) for unboundedness. Assume a starting reset. Read every FAIL trace; plant a bug on purpose once, so you know the assertion is wired up.</li>
+<li>A gate-level sim of the SKY130 netlist, with an SDF from the same OpenSTA corner you care about. Know what your simulator actually does with <code>$sdf_annotate</code> and with X. Do not confuse a functional-model PASS with a timing-aware one.</li>
+</ul>
+
+<details class="checkpoint"><summary>Check your understanding — a FIFO BMC fails on the first cycle, with <code>count == 7</code>, and nobody has even raised <code>wr</code>. What should you look at before you “fix” the RTL?</summary><p>Formal is using an arbitrary initial value of the occupancy register. A 3-bit counter can power up as 7, which already violates <code>count ≤ 4</code>. Add <code>initial assume (rst_n == 0)</code> (or equivalent) so every trace starts in reset, and only then decide whether the RTL is wrong. This is the failure we saw before adding that assume, and it disappeared afterwards (FIFO BMC PASS at depth 20).</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — a Gray-counter testbench, driven on the rising edge, reports Hamming failures starting at the first enabled step. The RTL looks right. What is the more likely bug?</summary><p>A race: the testbench changed <code>en</code> at the same edge the DUT sampled, and the first increment either happened “for free” or was missed, so the scoreboard and the DUT were one step apart from then on. Drive and sample on the opposite edge. That is the failure the first draft of <code>tb_gray4</code> had, and the falling-edge rewrite is what produced the recorded PASS.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — functional gate-level simulation of a SKY130 netlist PASSes, with CLK→Q equal to the unit delay. Can you conclude hold is safe at ff?</summary><p>No. The functional models do not apply SDF IOPATHs or <code>$setuphold</code>, and a unit-delay sim will not expose a hold race. Hold is a STA question at the min-ff corner (<a href="multicorner_sta.html">lesson 45</a>). A timing-aware gate sim, on a simulator that actually annotates the SDF and propagates X on a violation, is the confirmation — not a functional-model PASS.</p></details>
+
+<div class="lesson-footer"><a href="multicorner_sta.html"><small>← Previous</small>Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a><a href="fill_cells.html"><small>Next →</small>Fill Cells</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html" aria-current="page">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</body></html>

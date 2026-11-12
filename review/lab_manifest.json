@@ -1,0 +1,88 @@
+[
+  {
+    "number": 1,
+    "file": "lab_inverter_characterization.html",
+    "title": "Characterize a SKY130 Inverter",
+    "folder": "L01_inverter",
+    "run": "run.py",
+    "readme": "README.txt",
+    "prereqs": [
+      5,
+      13,
+      14,
+      15
+    ],
+    "scope": "18 actual SKY130 transistor benches, each with DC and transient analysis.",
+    "tools": "Python, NumPy, Matplotlib, ngspice",
+    "outputs": "DC transfer, delay/slew, supply current/energy; comparison with archived Liberty."
+  },
+  {
+    "number": 2,
+    "file": "lab_bias_amplifier.html",
+    "title": "Bias, Gain & Startup",
+    "folder": "L02_bias_amplifier",
+    "run": "run_lab.py",
+    "readme": "README.md",
+    "prereqs": [
+      35,
+      36,
+      43,
+      44
+    ],
+    "scope": "35 nominal SKY130 MOS benches plus six explicitly behavioral startup benches.",
+    "tools": "Python and ngspice",
+    "outputs": "Mirror compliance, gm/gds, amplifier AC/transient response, ramps and brownout."
+  },
+  {
+    "number": 3,
+    "file": "lab_sampling_interface.html",
+    "title": "Sampling Switches & Reference Loading",
+    "folder": "L03_sampling_interface",
+    "run": "run.py",
+    "readme": "README.txt",
+    "prereqs": [
+      38,
+      39,
+      40
+    ],
+    "scope": "57 ideal/MOS acquisition benches and three assumed reference-load RLC benches.",
+    "tools": "Python, NumPy, Matplotlib, ngspice",
+    "outputs": "Pre/post-opening errors, hold change, source impedance, reference ripple and recovery."
+  },
+  {
+    "number": 4,
+    "file": "lab_layout_extraction.html",
+    "title": "Geometry, Parasitics & Probe Mapping",
+    "folder": "L04_layout_extraction",
+    "run": "run_lab.py",
+    "readme": "README.md",
+    "prereqs": [
+      16,
+      28,
+      41,
+      47,
+      48
+    ],
+    "scope": "Four teaching geometries, eight actual RC-network SPICE transients, refinement and independent solver checks.",
+    "tools": "Python; ngspice or built-in numerical solver",
+    "outputs": "RC networks, geometry images, coordinate/probe maps, delay, coupling, and mismatch."
+  },
+  {
+    "number": 5,
+    "file": "lab_mixed_signal_integration.html",
+    "title": "Mixed-Signal Integration Across Clocks & Power Events",
+    "folder": "L05_mixed_signal_integration",
+    "run": "run.py",
+    "readme": "README.md",
+    "prereqs": [
+      34,
+      37,
+      42,
+      45,
+      46
+    ],
+    "scope": "Three digital clock configurations, a deliberate failing negative control, and a separate mapped/equivalent RTL example.",
+    "tools": "Python and Icarus Verilog; optional Yosys/ABC",
+    "outputs": "Self-checking transactions, accepted/delivered/aborted counts, restart tests, and synthesis evidence."
+  }
+]

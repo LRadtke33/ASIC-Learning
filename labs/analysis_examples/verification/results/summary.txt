@@ -1,0 +1,24 @@
+Recorded on 11 November 2026 (America/Chicago).  Tools and outcomes.
+
+Icarus Verilog 12.0
+  PASS  tb_gray4       32 steps + 8 holds, 0 errors
+  PASS  tb_sync_fifo   fill/full-ignore/drain/simultaneous, 0 errors
+
+cocotb 2.1.0 + Icarus 12.0
+  PASS  test_gray4.test_reset_and_sequence          425.00 ns
+  PASS  test_sync_fifo.test_fill_drain_scoreboard   225.00 ns
+
+SymbiYosys (Yosys 0.62, yosys-smtbmc, Z3 4.13.3)
+  gray4_bmc    PASS  depth 24
+  gray4_cover  PASS  wrap reached at step 18
+  gray4_prove  PASS  k-induction (basecase + induction)
+  gray4_bug    FAIL  Hamming-distance assert, step 4
+  fifo_bmc     PASS  depth 20
+  fifo_cover   PASS  full @ step 6, empty-after-full @ step 10, simultaneous @ step 5
+
+Yosys 0.62 + sky130_fd_sc_hd tt_025C_1v80
+  gray4 → 16 cells, area 196.4384 µm², 4× dfrtp_1
+  OpenSTA 2.7.0 write_sdf: gray4.sdf (290 lines), CLK→Q on _21_ = 0.374 / 0.389 ns
+  Functional GL (Icarus, `define FUNCTIONAL, UNIT_DELAY #0.001): PASS, CLK→Q = 0.001 ns
+  Icarus $sdf_annotate: did not apply IOPATH delays (controlled test)
+  specify compiled from those SDF numbers: CLK→Q rise 0.3740, fall 0.3890 ns (n=8)

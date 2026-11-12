@@ -1,0 +1,36 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * lab 4: compact, step. linear rc model, not a transistor simulation.
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+src                                          0
+sig_drv                                      0
+agg                                          0
+xroute.sig_001                               0
+xroute.sig_002                               0
+xroute.sig_003                               0
+xroute.sig_004                               0
+xroute.sig_005                               0
+xroute.sig_006                               0
+xroute.sig_007                               0
+xroute.sig_008                               0
+xroute.sig_009                               0
+sig_rx                                       0
+vagg#branch                                  0
+vsrc#branch                                  0
+
+
+No. of Data Rows : 6019
+ngspice-44.2 done
+
+Warning: can't find the initialization file spinit.

@@ -1,0 +1,10 @@
+{
+  "rtl/mixed_signal_mailbox.sv": "b04455f4d1f7d450063a3a2e61be79de794df468c9c8e2254a8cff8358c9819e",
+  "rtl/reset_release.sv": "0aa853f2c2f94348053f97f94539ea80d430ddf5a217a68b22877d0b4c73885b",
+  "rtl/sync_bit.sv": "c011f753187c5fcbbdc5db20a0a655016c75fef1998da6a91cb975e6cbd3e8f5",
+  "run.py": "92b11ed16dbce50c0b81ee5dd6e47088daf5db1fb9c95200944e2e445b6a3e29",
+  "synthesis_example/enabled_xor.v": "b491408846f0d9f5ddf1b7795bba0bd3359467b531e0722be6a74c9049067c57",
+  "synthesis_example/example.sdc": "98dd0447462bd07684dc5959a3c3ed8b8d15f3b2a7601c07bed42d8b66d30ab4",
+  "synthesis_example/run_synthesis.py": "db23b3431dead7e5e71c6e0c7905123ebb3c207aff990276bfdb20880cf6704c",
+  "tb/tb_mixed_signal_integration.sv": "07f0cb870f3538805b3258f7d4614349200d008adb2f604caeeaaa73ae0be7df"
+}

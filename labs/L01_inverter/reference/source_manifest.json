@@ -1,0 +1,12 @@
+[
+  {
+    "file": "sky130_fd_sc_hd__inv_1.spice",
+    "sha256": "1099e3641c46d241852db47974540b3ad161e20e01b74f2fd5cc152627011909",
+    "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice"
+  },
+  {
+    "file": "sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+    "sha256": "2ebd0770e6de56dd67ce2c46c3d242be923778492c2ab814dfd3741445f8f86d",
+    "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json"
+  }
+]

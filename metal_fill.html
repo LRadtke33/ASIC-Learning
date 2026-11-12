@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metal Fill and Cell Fill</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 61 / 84 · Part VI, Physical cells and the floorplan</p><h1>Metal Fill and Cell Fill</h1>
+  <p class="subtitle">Cell fill is a spacer that finishes the row. Metal fill is extra metal so a density check can pass. In this tech LEF the density line is a maximum, on four metals, and it is not a current limit.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The density lines are <code>sky130_fd_sc_hd.tlef</code>, the same file as <a href="electromigration.html">lesson 30</a>. The spacers are <a href="fill_cells.html">lesson 47</a>.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Tell cell fill (row spacers) from metal fill (density shapes).</li><li>Read the tech LEF density rule: a 70% maximum on met1–met4 in a 700 µm window.</li><li>Include metal fill in extraction, because it changes wire capacitance.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>After <a href="design_flow.html#step-7">step 7, routing</a> and before <a href="design_flow.html#step-10">step 10, tapeout</a>, followed by a final extraction.</dd><dt>Tools</dt><dd>LibreLane’s Chip flow has KLayout filler and density steps; open_pdks has a Magic-based SKY130 fill script; OpenROAD has <code>density_fill</code>. Commercial: Calibre.</dd><dt>Why it matters</dt><dd>Density rules keep polishing even across the wafer, and the added metal changes wire capacitance.</dd></dl></aside><h2 id="section-1">1. Two fills, two jobs</h2>
+  <p>
+    In an abutting-cell flow, leftover row gaps need the approved filler/boundary
+    treatment so that rail and well/implant continuity and spacing rules are met.
+    A blank placement site is not automatically an electrical open if a separate
+    power shape crosses it, but it is not automatically a legal completed layout either. The spacer
+    that tiles the hole is cell fill: <code>fill_1</code>, <code>fill_2</code>,
+    <code>fill_4</code>, and <code>fill_8</code>, class <code>CORE SPACER</code>,
+    no transistors in the spice of <code>fill_1</code> and <code>fill_8</code>.
+    That is <a href="fill_cells.html">lesson 47</a>.
+  </p>
+  <p>
+    Metal fill is not a cell. It is extra metal, added after the routes
+    exist, so the fraction of a window that is covered by a layer stays
+    inside the foundry's density rule. The spacer continues the row. The
+    metal shapes do not have to be inside a cell at all.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Do not use one to do the other's job.
+      Left: fill_1 closes a gap in the row. Right: small metal
+      rectangles in a window. The tech LEF's density number is a cap of 70%
+      on met1 through met4. It is not an instruction to fill until 70%."><text x="180" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">cell fill</text><rect x="40" y="48" width="300" height="70" fill="#f7f9fb" stroke="#718096"></rect><rect x="50" y="60" width="70" height="46" fill="#fff" stroke="#33414f"></rect><text x="85" y="86" text-anchor="middle" font-size="12" fill="#33414f">inv</text><rect x="130" y="60" width="36" height="46" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect><text x="148" y="86" text-anchor="middle" font-size="11" fill="#1e9e50">fill</text><rect x="176" y="60" width="70" height="46" fill="#fff" stroke="#33414f"></rect><text x="211" y="86" text-anchor="middle" font-size="12" fill="#33414f">nand</text><text x="520" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">metal density</text><rect x="400" y="48" width="280" height="120" fill="#fff" stroke="#718096"></rect><rect x="420" y="70" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="470" y="60" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="530" y="90" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="580" y="68" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="450" y="110" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="540" y="120" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><rect x="600" y="100" width="28" height="16" fill="#4a72c4" opacity="0.85"></rect><text x="540" y="188" text-anchor="middle" font-size="12" fill="#5c6b7a">maximum 70% on met1–met4</text><text x="180" y="160" text-anchor="middle" font-size="12" fill="#5c6b7a">closes the row</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Do not use one to do the other's job.</strong>
+      Left: <code>fill_1</code> closes a gap in the row. Right: small metal
+      rectangles in a window. The tech LEF's density number is a cap of 70%
+      on met1 through met4. It is not an instruction to fill until 70%.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The tech LEF gives only a maximum metal density</h2>
+  <p>
+    met1, met2, met3, and met4 each carry
+    <code>MAXIMUMDENSITY 70</code>. The check window is 700&nbsp;µm by
+    700&nbsp;µm, and the window steps by 70&nbsp;µm. That is a maximum: no
+    more than 70% of the window may be that layer. The same file does not
+    put this line on <code>li1</code>, on any via, or on met5. It does
+    not publish a minimum density. The <a href="https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html">process periphery rules</a> add pattern-density checks that are not in the tech LEF. For the aluminium back-end, rules <code>m1.pd.1</code> through <code>m4.pd.1</code> set a recommended minimum oxide-pattern density of 0.7, checked in 700&nbsp;µm windows stepping by 70&nbsp;µm (<code>m*.pd.2a</code>, <code>m*.pd.2b</code>; flags RR and A). A copper back-end option has a separate maximum of 0.77 in 50&nbsp;µm windows (<code>m1.13</code>–<code>m4.13</code>, flag CU). Some quantities refer to oxide rather than metal coverage. Use the approved process deck and fill recipe; neither a missing LEF keyword nor the bare number 70% is the complete rule.
+  </p>
+  <p>
+    The number is also not electromigration
+    (<a href="electromigration.html">lesson 30</a>). Current limits are the
+    milliamp-per-micrometer lines. Density is how much of the window is
+    covered. A wire can be under the current limit and still push a window
+    over 70%, and a window can be sparse and still have one narrow wire
+    over its current limit.
+  </p>
+
+  <p>
+      Cell fill does continue some metal: the 0.48&nbsp;µm rails. That metal
+      counts in whatever window it sits in. It is not the tool's metal-fill
+      pass, and it does not exist on met2 and above.
+      <code>fill_1</code> has no signal pins and no devices. Adding it does
+      not add a gate, a decap, or a spare
+      (<a href="decap.html">lesson 52</a>,
+      <a href="spare_eco.html">lesson 53</a>).
+    </p>
+    <p>
+      met5 has no <code>MAXIMUMDENSITY</code> line in this file. That only states what this abstraction contains. It does not exempt met5,
+    li1, special devices, or their surroundings from the actual process density,
+    slotting, spacing, or exclusion rules.
+    </p>
+  
+
+
+    <h2 id="section-3">3. Pattern density changes manufacturing and parasitics</h2>
+  <p>
+    A common CMP (chemical–mechanical polishing) teaching picture is that wide metal can dish and dense patterned regions can erode. The actual behavior depends on the materials and process sequence; do not assume every SKY130 metal is a copper damascene layer. Density and slotting rules also support process uniformity. Figure 2 is a generic polishing illustration, not a measured SKY130 cross-section.
+  </p>
+  <p>
+    The tech LEF cap is the reason that pass has a ceiling. <code>MAXIMUMDENSITY 70</code> on met1 through met4, in a 700&nbsp;µm window, means a window that is already full must not receive more fill. The cap is a maximum. The process deck and foundry fill recipe determine the required density range and exemptions; this LEF does not publish that complete recipe.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 214" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Generic CMP pattern-dependence sketch. Dishing and polishing uniformity depend on the material and process recipe. This is not a measured SKY130 cross-section; the separate 70% LEF maximum is the value in section 2.">
+<text x="180" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Wide metal, after polish</text>
+<text x="540" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Filled pattern</text>
+<rect x="50" y="70" width="260" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<path d="M70 70 Q180 110 290 70" fill="#f7f9fb" stroke="none"></path>
+<text x="180" y="150" text-anchor="middle" font-size="12" fill="#5c6b7a">the middle dishes</text>
+<rect x="420" y="70" width="30" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="470" y="70" width="30" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="520" y="70" width="30" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="570" y="70" width="30" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="620" y="70" width="30" height="50" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<text x="540" y="150" text-anchor="middle" font-size="12" fill="#5c6b7a">small shapes polish together</text>
+<text x="370" y="196" text-anchor="middle" font-size="12" fill="#5c6b7a">The 70% cap on met1–met4 is why the fill pass cannot keep adding metal.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Generic CMP pattern-dependence sketch. Dishing and polishing uniformity depend on the material and process recipe. This is not a measured SKY130 cross-section; the separate 70% LEF maximum is the value in section 2.</strong></figcaption>
+  </figure>
+
+<h2 id="section-4">4. Fill belongs in the electrical model</h2>
+<table><thead><tr><th>Change near a signal</th><th>Electrical consequence</th><th>Review</th></tr></thead><tbody><tr><td>Floating fill</td><td class="n">Capacitive network to several neighboring conductors</td><td class="n">Do not simply label it AC ground</td></tr><tr><td>Grounded fill/shield</td><td class="n">Can reduce direct coupling while increasing ground capacitance</td><td class="n">Check return impedance and legal connection method</td></tr><tr><td>Unequal fill near a matched pair</td><td class="n">Unequal parasitic capacitance and loading</td><td class="n">Apply approved analog exclusion/symmetry treatment</td></tr><tr><td>Fill after timing closure</td><td class="n">Delay and slew may change</td><td class="n">Extract and verify the filled layout</td></tr></tbody></table>
+<p><strong>Worked example — assumed extraction result:</strong> a high-impedance node has <code>R = 20&nbsp;kΩ</code> and <code>C = 50&nbsp;fF</code>, so <code>τ = RC = 1.0&nbsp;ns</code> and its one-pole frequency is about 159&nbsp;MHz. If final fill adds 10&nbsp;fF, <code>τ = 1.2&nbsp;ns</code> and the pole moves to about 133&nbsp;MHz. This is an electrical consequence of the assumed added capacitance, not a SKY130 fill-capacitance prediction.</p>
+<p><strong>Analog ↔ digital:</strong> digital timing and an analog amplifier’s pole or matching budget can both change after fill. A “density-only” edit can therefore require electrical verification. Coordinate exclusions early enough to meet both density and circuit requirements.</p><details class="checkpoint"><summary>Check your understanding — Does absence of MAXIMUMDENSITY on met5 mean unlimited metal is legal?</summary><p>No. It means that keyword is absent in this particular LEF. The approved process rules may impose other density, slotting, spacing, device-exclusion, or package constraints.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a 700 µm window on met2 is already 65% dense. How much fill may be added there?</summary><p>Only up to the 70% maximum in this LEF — about 5% more of the window area — and only if the process deck’s own density rules agree. The new fill also raises nearby wire capacitance, so re-extract afterward.</p></details><aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> On SKY130 shuttle chips, density fill is generated after routing by a script in open_pdks that drives Magic. LibreLane’s Chip flow has KLayout-based Filler and Density steps, and OpenROAD has a <code>density_fill</code> command. Whichever tool adds the fill, extract the parasitics again afterward so that timing sees the added capacitance. The usual commercial tool is Calibre.</p></aside><div class="takeaways">
+    <h2 id="section-5">Key takeaways</h2>
+    <ul>
+      <li>Cell fill is <code>fill_1/2/4/8</code>. It finishes the row and has no transistors.</li>
+      <li>Metal fill is extra metal for a density window. It is not a cell in this library.</li>
+      <li><code>MAXIMUMDENSITY 70</code> is a maximum on met1 through met4, in a 700&nbsp;µm window stepped by 70&nbsp;µm.</li>
+      <li>This tech LEF states no minimum density, and it does not put the cap on <code>li1</code>, vias, or met5.</li>
+      <li>70% is not a current limit and not a target to fill up to.</li>
+          <li>Metal fill helps satisfy process uniformity rules and changes parasitic capacitance. Re-extract and recheck the design after final fill.</li>
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-6">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. HD routing values are pinned to ac7fb61f. The generic CMP picture and worked added-capacitance example illustrate mechanisms; they do not establish a fill recipe or extracted SKY130 result.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD routing LEF — density entries.</a></li>
+<li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html">SKY130 periphery rules — option-specific density, slotting, and exclusions.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/fin/README.html">OpenROAD metal-fill insertion.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html">OpenRCX — resistance/capacitance extraction with surrounding geometry.</a></li>
+</ol></section>
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_layout_extraction.html">Observe the electrical effect of a grounded patch</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html" aria-current="page">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="digital_signal_integrity.html"><small>← Previous</small>Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a><a href="physical_signoff.html"><small>Next →</small>Physical Verification Signoff</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += txt(180, 28, 'cell fill', {b: true, s: 14});
+  s += `<rect x="40" y="48" width="300" height="70" fill="#f7f9fb" stroke="${GD}"/>`;
+  s += `<rect x="50" y="60" width="70" height="46" fill="#fff" stroke="${DK}"/>`;
+  s += txt(85, 86, 'inv', {s: 12});
+  s += `<rect x="130" y="60" width="36" height="46" fill="#fff" stroke="${CAP}" stroke-width="2"/>`;
+  s += txt(148, 86, 'fill', {s: 11, c: CAP});
+  s += `<rect x="176" y="60" width="70" height="46" fill="#fff" stroke="${DK}"/>`;
+  s += txt(211, 86, 'nand', {s: 12});
+  s += txt(520, 28, 'metal density', {b: true, s: 14});
+  s += `<rect x="400" y="48" width="280" height="120" fill="#fff" stroke="${GD}"/>`;
+  [[420,70],[470,60],[530,90],[580,68],[450,110],[540,120],[600,100]].forEach(([x,y]) => {
+    s += `<rect x="${x}" y="${y}" width="28" height="16" fill="${MET}" opacity="0.85"/>`;
+  });
+  s += txt(540, 188, 'maximum 70% on met1–met4', {s: 12, c: '#5c6b7a'});
+  s += txt(180, 160, 'closes the row', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

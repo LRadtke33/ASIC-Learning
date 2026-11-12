@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spare Cells and ECO</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 53 / 84 · Part VI, Physical cells and the floorplan</p><h1>Spare Cells and ECO</h1>
+  <p class="subtitle">An engineering change after the base layers are frozen has to be made in metal. A spare cell is real gates, placed in advance, so that metal change has something to reconnect. A fill cell is not that.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The cell is <code>macro_sparecell</code>. Outline and pins are the LEF. The bundle is the schematic spice. Function and capacitance are <code>tt_025C_1v80</code>.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain why a metal-only change needs spare gates placed in advance.</li><li>Read SKY130’s <code>macro_sparecell</code>: 29 sites holding NAND, NOR, inverter and tie cells.</li><li>Check a change electrically — load, timing, antenna — not only logically.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Spare cells are placed in <a href="design_flow.html#step-5">step 5, placement</a>. They are used after <a href="design_flow.html#step-9">step 9, physical verification</a>, or after first silicon, when a fix may change only metal.</dd><dt>Tools</dt><dd>LibreLane provides ECO steps for small layout edits. Commercial: the ECO features of Innovus or IC Compiler II, with Conformal ECO.</dd><dt>Why it matters</dt><dd>Spare cells let a bug be fixed with a few new metal masks instead of a whole new mask set.</dd></dl></aside><h2 id="section-1">1. A metal-only ECO needs devices already in place</h2>
+  <p>An engineering change order (ECO) is a design modification; it can occur before or after layout, and is not inherently metal-only. In a <strong>metal-only ECO</strong>, the allowed base-layer masks are frozen. Existing spare gates can be reconnected using the permitted interconnect masks. Exactly which contact/via/metal layers may change is a manufacturing and project constraint; an empty site does not create new transistors.</p>
+  <p>
+    Empty sites filled by <code>fill_1</code> (<a href="fill_cells.html">lesson 47</a>)
+    are not spare gates. Those cells have no transistors. A gap left on
+    purpose is room. It becomes a gate only if a gate was placed there.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — What the schematic instantiates.
+      Two nand2_2, two nor2_2, two inv_2,
+      and one conb_1. The LEF brings out a single signal pin,
+      LO, function 0. The internal pins are not in the abstract."><rect x="40" y="36" width="460" height="120" rx="8" fill="#fff" stroke="#33414f" stroke-width="2"></rect><rect x="58" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="88" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">nand</text><rect x="128" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="158" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">nand</text><rect x="198" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="228" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">nor</text><rect x="268" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="298" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">nor</text><rect x="338" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="368" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">inv</text><rect x="408" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="#4a72c4"></rect><text x="438" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">inv</text><text x="270" y="58" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">macro_sparecell, 29 sites</text><line x1="500" y1="96" x2="608" y2="96" stroke="#33414f" stroke-width="2"></line><text x="554" y="84" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">LO = 0</text><text x="554" y="118" text-anchor="middle" font-size="11" fill="#5c6b7a">conb_1</text><rect x="620" y="36" width="100" height="120" rx="8" fill="#f7f9fb" stroke="#718096" stroke-width="2"></rect><text x="670" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#718096">fill_1</text><text x="670" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">no devices</text><text x="370" y="185" text-anchor="middle" font-size="13" fill="#5c6b7a">The filler continues the row. It does not contain the gates.</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — What the schematic instantiates.</strong>
+      Two <code>nand2_2</code>, two <code>nor2_2</code>, two <code>inv_2</code>,
+      and one <code>conb_1</code>. The LEF brings out a single signal pin,
+      <code>LO</code>, function 0. The internal pins are not in the abstract.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. macro_sparecell is 29 sites</h2>
+  <p><code>sky130_fd_sc_hd__macro_sparecell</code> is a class <code>CORE</code> cell on the <code>unithd</code> site with <code>SIZE 13.340 BY 2.720</code>: 13.34 / 0.46 = 29 sites, or 36.2848&nbsp;µm². Its typical-corner leakage is 0.04487112&nbsp;nW, and its footprint name is <code>sky130_fd_sc_hd__sparecell</code>.</p>
+  <p>
+    The only signal pin is <code>LO</code>, direction output, function
+    <code>0</code>, max capacitance 1.8948&nbsp;pF.
+    <code>ANTENNAGATEAREA</code> on that pin is 1.980&nbsp;µm². That is eight
+    times the 0.2475&nbsp;µm² gate of <code>inv_1</code>. The pin is on
+    <code>li1</code> and on a <code>met1</code> strap. Supplies are
+    <code>VGND</code> and <code>VPWR</code>. OBS is <code>mcon</code> and
+    <code>met1</code>. There is no <code>met2</code> in the OBS.
+  </p>
+
+  <p>The published macro netlist lists two <code>nand2_2</code>, two <code>nor2_2</code>, two <code>inv_2</code> and one <code>conb_1</code>. Its positional instance ordering is not directly consistent with the separately published child <code>.subckt</code> declarations. Therefore the instance inventory is useful evidence, but that hierarchical file is not treated here as a verified runnable simulation deck. Resolve the ordering or use a validated extracted netlist before simulating or reusing the hidden gates.</p>
+    <p>
+      An ECO that uses the hidden gates edits the layout, where the transistors
+      already exist. It does not ask this LEF abstract for a NAND input. The
+      abstract does not have one. Leaving a region of <code>fill_*</code> and
+      calling it spare logic will not give you those transistors later.
+    </p>
+  
+
+
+    <h2 id="section-3">3. The change is a metal strap onto a cell that is already there</h2>
+  <p>
+    An ECO that may only move metal needs the transistors already placed, with their inputs held by <code>conb_1</code> so the unused gates are not floating. The conceptual edit disconnects a tie and routes a new input/output using only the permitted layers. It must not leave any old output shorted to the new driver or any unused input floating.
+  </p>
+  <p>
+    A fill cell cannot take the same strap and become a gate. Fill has rails and no devices (<a href="fill_cells.html">lesson 47</a>). The spare cell is the one that already contains the NAND, NOR, and inverter. 
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — The same spare, before and after. Transistors stay. One metal connection replaces a tie.">
+<text x="180" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Before</text>
+<text x="540" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">After the metal change</text>
+<rect x="50" y="50" width="250" height="100" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="175" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">spare gates</text>
+<text x="175" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">inputs on conb_1</text>
+<rect x="420" y="50" width="250" height="100" rx="4" fill="#f2f7f2" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="545" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">same transistors</text>
+<text x="545" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">one input tied to a new net</text>
+<line x1="306" y1="100" x2="408" y2="100" stroke="#1e9e50" stroke-width="2"></line><path d="M416,100 L406,95 L406,105 Z" fill="#1e9e50"></path><text x="360" y="92" text-anchor="middle" font-size="11" fill="#1e7e3e">metal-only ECO</text>
+<text x="370" y="180" text-anchor="middle" font-size="13" fill="#33414f">Fill has no devices, so a metal strap cannot turn it into a gate.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — The same spare, before and after. Transistors stay. One metal connection replaces a tie.</strong></figcaption>
+  </figure>
+
+<h2 id="section-4">4. Check the ECO electrically, not only logically</h2><p>For an illustrative metal-only fix, suppose a spare gate adds 80 ps of logic delay and its detour adds 40 ps of extracted wire delay. A path with 100 ps of setup margin now has <code>100−80−40 = −20 ps</code> slack, even if the Boolean expression is correct. The numbers are assumed; actual values require the chosen cell, slew, load and extracted route.</p><table><tbody><tr><th>Check</th><th>Reason</th></tr><tr><td>Logical equivalence and test</td><td>The new connection must implement the intended behavior in every mode</td></tr><tr><td>DRC and LVS</td><td>Permitted masks must produce legal geometry and correct connectivity</td></tr><tr><td>Timing, slew and loading</td><td>Detours and new fanout consume margin; hold can also change</td></tr><tr><td>Analog review</td><td>A new switching route can couple into references or alter a return path</td></tr></tbody></table><details class="checkpoint"><summary>Checkpoint: can a metal-only ECO use a normal filler as a NAND?</summary><p>No. A standard filler does not contain the NAND transistors. Use suitable preplaced spare devices, or change the mask scope. The macro’s hidden gates also need a verified abstraction/netlist for the modified implementation.</p></details>
+<details class="checkpoint"><summary>Check your understanding — why spread spare cells across the core instead of grouping them in one corner?</summary><p>A metal-only change must wire a spare gate to the logic it fixes. A distant spare needs long new routes that add delay, coupling and congestion, and they may not fit in the layers allowed to change. Spares spread evenly keep every region within reach.</p></details><aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> LibreLane documents ECO steps that insert buffers or diodes into an existing layout between flow steps; larger changes are scripted against OpenROAD’s database. Commercial flows use the ECO features of Innovus or IC Compiler II, together with tools such as Conformal ECO. Whatever makes the edit, rerun extraction, timing, DRC and LVS afterward.</p></aside><div class="takeaways">
+    <h2 id="section-5">Key takeaways</h2>
+    <ul>
+      <li>A spare cell is gates placed early so a metal-only change can reconnect them.</li>
+      <li><code>macro_sparecell</code> is 29 sites, 13.34 × 2.72&nbsp;µm, leakage 0.04487112&nbsp;nW.</li>
+      <li>Inside: two <code>nand2_2</code>, two <code>nor2_2</code>, two <code>inv_2</code>, one <code>conb_1</code>.</li>
+      <li>The only signal pin is <code>LO</code>, function 0, max load 1.8948&nbsp;pF, gate antenna 1.980&nbsp;µm².</li>
+      <li>Ordinary fill cells do not provide spare logic gates; spare cells deliberately contain reusable logic.</li>
+          <li>A metal-only ECO may reconnect existing spare logic, within the allowed mask set; every ECO still needs connectivity, physical, and timing verification.</li>
+          <li>Pre-freeze ECO cell inserts (<code>Odb.InsertECOBuffers</code>, <code>Odb.InsertECODiodes</code>) are <a href="hierarchical_eco.html">lesson 57</a>; they are not a metal-only change.</li>
+    </ul>
+  </div>
+
+<section class="sources"><h2 id="section-6">Sources &amp; scope</h2><p>Technical review: 6 November 2026. Cell data use HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. The published hierarchical port-order mismatch is explicitly retained as a limitation, not silently repaired or assumed safe.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.spice">SKY130 macro_sparecell schematic inventory</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.lef">SKY130 macro_sparecell abstract</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell__tt_025C_1v80.lib.json">SKY130 macro_sparecell Liberty</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2.spice">Published child inverter terminal ordering</a></li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/rsz/README.html">OpenROAD resizing and repair documentation</a></li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html" aria-current="page">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="decap.html"><small>← Previous</small>Decap Cells</a><a href="level_shifters.html"><small>Next →</small>Level Shifters</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="36" width="460" height="120" rx="8" fill="#fff" stroke="${DK}" stroke-width="2"/>`;
+  const items = [
+    [58, 'nand'], [128, 'nand'], [198, 'nor'], [268, 'nor'], [338, 'inv'], [408, 'inv']
+  ];
+  items.forEach(([x, name]) => {
+    s += `<rect x="${x}" y="70" width="60" height="36" rx="4" fill="#f7f9fb" stroke="${MET}"/>`;
+    s += txt(x + 30, 92, name, {s: 12, c: MET, b: true});
+  });
+  s += txt(270, 58, 'macro_sparecell, 29 sites', {b: true, s: 14});
+  s += `<line x1="500" y1="96" x2="608" y2="96" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(554, 84, 'LO = 0', {s: 13, b: true});
+  s += txt(554, 118, 'conb_1', {s: 11, c: '#5c6b7a'});
+  s += `<rect x="620" y="36" width="100" height="120" rx="8" fill="#f7f9fb" stroke="${GD}" stroke-width="2"/>`;
+  s += txt(670, 90, 'fill_1', {s: 14, b: true, c: GD});
+  s += txt(670, 112, 'no devices', {s: 12, c: '#5c6b7a'});
+  s += txt(370, 185, 'The filler continues the row. It does not contain the gates.', {s: 13, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

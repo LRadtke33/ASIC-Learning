@@ -1,0 +1,6 @@
+{
+ "source": "ngspice-41 showmod on the bundled SKY130 tt models (results/decks/gate_cap_params.spice), W=0.65/1.0 um, L=0.15 um",
+ "nfet_01v8": {"toxe_m": 4.148e-09, "epsrox": 3.9, "cgso_F_per_m": 2.44907e-10, "cgdo_F_per_m": 2.44907e-10, "lint_m": 1.1932e-08, "wint_m": 2.1859e-08},
+ "pfet_01v8_hvt": {"toxe_m": 4.23e-09, "epsrox": 3.9, "cgso_F_per_m": 5.93202e-11, "cgdo_F_per_m": 5.93202e-11, "lint_m": -2.026e-08, "wint_m": 9.364e-09},
+ "inv_1_dc_max_gain_from_lab1": {"gain_v_per_v": -18.61, "vin_V": 0.766, "source": "labs/L01_inverter/results/tt_25C_9.52062fF_10ps/dc.dat"}
+}

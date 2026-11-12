@@ -1,0 +1,444 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>More Gate Topologies</title>
+<style>
+.wide svg {min-width: 660px;}
+.duo {display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start;}
+.duo .figwrap {flex: 1 1 380px;}
+.duo .side {flex: 0 1 auto; padding-top: 6px;}
+td:last-child {text-align: left;}
+tr.active td {background: #fff3cd;}
+table.netlist {font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.85rem;}
+table.netlist td {text-align: left;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 12 / 84 · Part II, Transistors to logic gates</p><h1>More Gate Topologies</h1>
+  <p class="subtitle">Beyond NAND and NOR: complex gates, transmission gates, tristates, and how a latch and flip-flop store a bit — with the netlist signatures to spot each one.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Recognize AOI and OAI gates, transmission gates and tristate inverters by their netlist signatures.</li><li>Explain how a latch stores a bit, and how two latches of opposite phase make an edge-triggered flip-flop.</li><li>Compare wide NAND and NOR gates using logical effort.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Library design, and reading netlists from <a href="design_flow.html#step-3">step 3, synthesis</a> onward.</dd><dt>Tools</dt><dd>Yosys with ABC maps logic onto AOI, OAI and flip-flop cells; ngspice shows how each one behaves.</dd><dt>Why it matters</dt><dd>Recognizing these structures lets you read a synthesized netlist or a cell layout instead of treating it as a black box.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. Complex gates: AOI and OAI</h2>
+  <p>
+    The <a href="logic_gates.html">series/parallel recipe</a> isn't limited to two inputs of the
+    same kind — you can mix series and parallel in one pull-down network and get a whole logic
+    expression in a single stage. An <strong>AOI21</strong> (AND-OR-INVERT, 2-input AND + 1 more
+    input) computes <code>out&nbsp;=&nbsp;!((A·B)&nbsp;+&nbsp;C)</code>: the pull-down puts A and
+    B in series (the AND) and C in parallel with that pair (the OR); the pull-up is the exact
+    dual. <strong>OAI</strong> gates are the same idea with series/parallel swapped.
+  </p>
+  <p>An AND followed by a NOR uses about ten transistors in a simple complementary implementation; AOI21 uses six and removes one logical stage. This can save area and delay, but the actual benefit depends on transistor stacks, the switching input, pin capacitance, load and routing. Compare characterized arcs rather than assuming every complex gate is faster or lower-power.</p>
+
+  <figure>
+    <div class="figwrap wide" id="figaoi"><svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — AOI21. The transistor schematic is on the left and the gate-level equivalent it replaces on the right. In the pull-down network Na and Nb are in series and Nc is in parallel with that pair; the pull-up is the dual, with Pa and Pb in parallel and that pair in series with Pc. Its netlist signature is three PMOS and three NMOS around one output, with a mix of private (series) and shared (parallel) nets — decode it with the method from lesson 10."><line x1="100" y1="30" x2="360" y2="30" stroke="#d9534f" stroke-width="4" stroke-linecap="round"></line><text x="92" y="34" text-anchor="end" font-size="11" font-weight="700" fill="#d9534f">VDD</text><line x1="100" y1="350" x2="360" y2="350" stroke="#3b6fb0" stroke-width="4" stroke-linecap="round"></line><text x="92" y="354" text-anchor="end" font-size="11" font-weight="700" fill="#3b6fb0">VSS</text><line x1="170" y1="30" x2="170" y2="65" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="270" y1="30" x2="270" y2="65" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="170" y1="65" x2="170" y2="89" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="162" y1="65" x2="162" y2="89" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="156.5" cy="77" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="152.5" y1="77" x2="144" y2="77" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="182" y="71" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">Pa</text><text x="138" y="81" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">A</text><line x1="270" y1="65" x2="270" y2="89" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="278" y1="65" x2="278" y2="89" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="283.5" cy="77" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="287.5" y1="77" x2="296" y2="77" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="258" y="71" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">Pb</text><text x="302" y="81" text-anchor="start" font-size="11" font-weight="700" fill="#33414f">B</text><line x1="170" y1="89" x2="170" y2="118" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="270" y1="89" x2="270" y2="118" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="170" y1="118" x2="270" y2="118" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="220" cy="118" r="3" fill="#33414f"></circle><line x1="220" y1="118" x2="220" y2="135" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="220" y1="135" x2="220" y2="159" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="212" y1="135" x2="212" y2="159" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="206.5" cy="147" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="202.5" y1="147" x2="194" y2="147" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="232" y="141" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">Pc</text><text x="188" y="151" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">C</text><line x1="220" y1="159" x2="220" y2="195" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="220" cy="195" r="3" fill="#33414f"></circle><line x1="150" y1="195" x2="300" y2="195" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="300" y1="195" x2="330" y2="195" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="362" y="199" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">OUT</text><line x1="150" y1="195" x2="150" y2="215" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="150" y1="215" x2="150" y2="239" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="142" y1="215" x2="142" y2="239" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="142" y1="227" x2="124" y2="227" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="162" y="221" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">Na</text><text x="118" y="231" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">A</text><line x1="150" y1="239" x2="150" y2="275" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="150" y1="275" x2="150" y2="299" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="142" y1="275" x2="142" y2="299" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="142" y1="287" x2="124" y2="287" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="162" y="281" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">Nb</text><text x="118" y="291" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">B</text><line x1="150" y1="299" x2="150" y2="350" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="300" y1="195" x2="300" y2="245" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="300" cy="195" r="3" fill="#33414f"></circle><line x1="300" y1="245" x2="300" y2="269" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="308" y1="245" x2="308" y2="269" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="308" y1="257" x2="326" y2="257" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="288" y="251" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">Nc</text><text x="332" y="261" text-anchor="start" font-size="11" font-weight="700" fill="#33414f">C</text><line x1="300" y1="269" x2="300" y2="350" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="128" y="248" text-anchor="end" font-size="10" font-style="italic" fill="#7a8794">series</text><text x="128" y="261" text-anchor="end" font-size="10" font-style="italic" fill="#7a8794">= AND</text><text x="345" y="250" text-anchor="start" font-size="10" font-style="italic" fill="#7a8794">parallel</text><text x="345" y="264" text-anchor="start" font-size="10" font-style="italic" fill="#7a8794">= OR</text><text x="575" y="60" text-anchor="middle" font-size="11" font-style="italic" fill="#7a8794">replaces:</text><path d="M470,90 h28 a24,24 0 0 1 0,48 h-28 z" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></path><line x1="448" y1="100" x2="470" y2="100" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="442" y="104" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">A</text><line x1="448" y1="128" x2="470" y2="128" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="442" y="132" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">B</text><line x1="522" y1="114" x2="560" y2="114" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="560" y1="114" x2="560" y2="152" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="560" y1="152" x2="578" y2="152" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><path d="M578,140 q14,22 0,44 q30,-2 46,-22 q-16,-20 -46,-22 z" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></path><circle cx="630" cy="162" r="5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="448" y1="172" x2="582" y2="172" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="442" y="176" text-anchor="end" font-size="11" font-weight="700" fill="#33414f">C</text><line x1="635" y1="162" x2="665" y2="162" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="672" y="166" text-anchor="start" font-size="11" font-weight="700" fill="#33414f">OUT</text><text x="575" y="230" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">out = !((A·B) + C)</text><text x="575" y="258" text-anchor="middle" font-size="10.5" fill="#a83232">2 stages, ~10 transistors</text><text x="575" y="274" text-anchor="middle" font-size="10.5" fill="#1e7e3e">vs AOI21: 1 stage, 6</text></svg></div>
+    <figcaption><strong>Figure 1 — AOI21.</strong> The transistor schematic is on the left and the gate-level equivalent it replaces on the right. In the pull-down network Na and Nb are in series and Nc is in parallel with that pair; the pull-up is the dual, with Pa and Pb in parallel and that pair in series with Pc. Its netlist signature is three PMOS and three NMOS around one output, with a mix of private (series) and shared (parallel) nets — decode it with the method from <a href="logic_gates.html">lesson 10</a>.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The transmission gate: a switch, not a driver</h2>
+  <p>A transmission gate connects two signal nets through an NMOS and PMOS in parallel, with complementary gate controls. The NMOS conducts low signal voltages well and the PMOS conducts high signal voltages well; together they pass a wider signal range than either alone. Their ON resistance remains voltage dependent and their OFF state has leakage and capacitive feedthrough. Allowed signal voltages and body connections matter; the pair is not an ideal short or an ideal open.</p>
+  <p>
+    <strong>The recognition trick:</strong> in a netlist, a t-gate is the pair whose source
+    <em>and</em> drain sit on the same two nets — and <strong>neither net is a supply</strong>.
+    Devices not anchored to VDD/VSS are your tip-off that you've left plain pull-up/pull-down
+    logic. T-gates are everywhere in multiplexers, latches, and flip-flops.
+  </p>
+
+  <figure>
+    <div class="figwrap wide" id="figtg"><svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Transmission gate, closed and open. EN goes to the NMOS gate,
+      its complement to the PMOS gate, so both switch together. Closed: the two nets are joined
+      (either device path conducts, both levels pass well). Open: no intended DC conduction path; leakage, junctions and capacitive feedthrough still couple the nets."><text x="170" y="28" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e7e3e">EN = 1 → closed (nets joined)</text><text x="170" y="56" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1e9e50">net X</text><line x1="170" y1="62" x2="170" y2="88" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><line x1="130" y1="88" x2="210" y2="88" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><circle cx="170" cy="88" r="3" fill="#1e9e50"></circle><line x1="130" y1="88" x2="130" y2="118" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><line x1="210" y1="88" x2="210" y2="118" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><line x1="130" y1="118" x2="130" y2="142" stroke="#1e9e50" stroke-width="5" stroke-linecap="round"></line><line x1="122" y1="118" x2="122" y2="142" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="122" y1="130" x2="104" y2="130" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="142" y="124" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">N</text><text x="142" y="139" text-anchor="start" font-size="9.5" font-weight="700" fill="#1e9e50">ON</text><text x="98" y="134" text-anchor="end" font-size="11" font-weight="700" fill="#d9534f">EN</text><line x1="210" y1="118" x2="210" y2="142" stroke="#1e9e50" stroke-width="5" stroke-linecap="round"></line><line x1="218" y1="118" x2="218" y2="142" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="223.5" cy="130" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="227.5" y1="130" x2="236" y2="130" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="198" y="124" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">P</text><text x="198" y="139" text-anchor="end" font-size="9.5" font-weight="700" fill="#1e9e50">ON</text><text x="242" y="134" text-anchor="start" font-size="11" font-weight="700" fill="#3b6fb0">EN̄</text><line x1="130" y1="142" x2="130" y2="172" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><line x1="210" y1="142" x2="210" y2="172" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><line x1="130" y1="172" x2="210" y2="172" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><circle cx="170" cy="172" r="3" fill="#1e9e50"></circle><line x1="170" y1="172" x2="170" y2="198" stroke="#1e9e50" stroke-width="2" stroke-linecap="round"></line><text x="170" y="214" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1e9e50">net Y</text><text x="170" y="248" text-anchor="middle" font-size="10" fill="#5c6b7a">NMOS passes the 0s well, PMOS the 1s —</text><text x="170" y="262" text-anchor="middle" font-size="10" fill="#5c6b7a">finite, signal-dependent ON resistance</text><line x1="360" y1="20" x2="360" y2="280" stroke="#e3e9ef" stroke-width="1.5"></line><text x="530" y="28" text-anchor="middle" font-size="12.5" font-weight="700" fill="#a83232">EN = 0 → open (high impedance)</text><text x="530" y="56" text-anchor="middle" font-size="11.5" font-weight="700" fill="#98a4b0">net X</text><line x1="530" y1="62" x2="530" y2="88" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="490" y1="88" x2="570" y2="88" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><circle cx="530" cy="88" r="3" fill="#98a4b0"></circle><line x1="490" y1="88" x2="490" y2="118" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="570" y1="88" x2="570" y2="118" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="490" y1="118" x2="490" y2="142" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="482" y1="118" x2="482" y2="142" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="482" y1="130" x2="464" y2="130" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="502" y="124" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">N</text><text x="502" y="139" text-anchor="start" font-size="9.5" font-weight="700" fill="#8a95a1">OFF</text><text x="458" y="134" text-anchor="end" font-size="11" font-weight="700" fill="#3b6fb0">EN</text><line x1="570" y1="118" x2="570" y2="142" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="578" y1="118" x2="578" y2="142" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="583.5" cy="130" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="587.5" y1="130" x2="596" y2="130" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="558" y="124" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">P</text><text x="558" y="139" text-anchor="end" font-size="9.5" font-weight="700" fill="#8a95a1">OFF</text><text x="602" y="134" text-anchor="start" font-size="11" font-weight="700" fill="#d9534f">EN̄</text><line x1="490" y1="142" x2="490" y2="172" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="570" y1="142" x2="570" y2="172" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="490" y1="172" x2="570" y2="172" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><circle cx="530" cy="172" r="3" fill="#98a4b0"></circle><line x1="530" y1="172" x2="530" y2="198" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><text x="530" y="214" text-anchor="middle" font-size="11.5" font-weight="700" fill="#98a4b0">net Y</text><text x="530" y="248" text-anchor="middle" font-size="10" fill="#5c6b7a">both devices off —</text><text x="530" y="262" text-anchor="middle" font-size="10" fill="#5c6b7a">leakage and feedthrough remain</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — Transmission gate, closed and open.</strong> EN goes to the NMOS gate,
+      its complement to the PMOS gate, so both switch together. Closed: the two nets are joined
+      (either device path conducts, both levels pass well). Open: no intended DC conduction path; leakage, junctions and capacitive feedthrough still couple the nets.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-3">3. The tristate inverter: 1, 0, or disconnected</h2>
+  <p>
+    Add enable transistors inside an inverter's stacks and you get a gate that can also
+    <em>let go</em> of its output: a <strong>tristate</strong>. With EN&nbsp;=&nbsp;1 it inverts
+    normally; with EN&nbsp;=&nbsp;0 both networks are cut and the output floats —
+    <strong>high-impedance, "Z"</strong>. That third state is what lets several drivers share one
+    net (a bus or a mux node): exactly one is enabled at a time, the rest go quiet.
+    <em>Click A and EN:</em>
+  </p>
+
+  
+  <figure style="margin-top:4px"><div class="duo">
+    <div class="figwrap" id="figtri"><svg viewBox="0 0 460 345" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Interactive tristate inverter. With EN = 0, the ideal pull-up and pull-down paths are disabled, so the output is high impedance (Z). An otherwise isolated output can float; another bus driver or pull resistor can still determine its voltage. Leakage and stored charge are omitted from the switch coloring."><line x1="130" y1="30" x2="310" y2="30" stroke="#d9534f" stroke-width="4" stroke-linecap="round"></line><text x="122" y="34" text-anchor="end" font-size="11" font-weight="700" fill="#d9534f">VDD</text><line x1="130" y1="310" x2="310" y2="310" stroke="#3b6fb0" stroke-width="4" stroke-linecap="round"></line><text x="122" y="314" text-anchor="end" font-size="11" font-weight="700" fill="#3b6fb0">VSS</text><line x1="220" y1="30" x2="220" y2="65" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="220" y1="65" x2="220" y2="89" stroke="#1e9e50" stroke-width="5" stroke-linecap="round"></line><line x1="212" y1="65" x2="212" y2="89" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="206.5" cy="77" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="202.5" y1="77" x2="194" y2="77" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="232" y="71" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">P1</text><text x="232" y="86" text-anchor="start" font-size="9.5" font-weight="700" fill="#1e9e50">ON</text><line x1="220" y1="89" x2="220" y2="120" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="220" y1="120" x2="220" y2="144" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="228" y1="120" x2="228" y2="144" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="233.5" cy="132" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="237.5" y1="132" x2="246" y2="132" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="208" y="126" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">P2</text><text x="208" y="141" text-anchor="end" font-size="9.5" font-weight="700" fill="#8a95a1">OFF</text><line x1="220" y1="144" x2="220" y2="200" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="220" y1="172" x2="310" y2="172" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><circle cx="220" cy="172" r="3" fill="#98a4b0"></circle><text x="265" y="162" text-anchor="middle" font-size="12.5" font-weight="700" fill="#98a4b0">OUT = Z</text><text x="265" y="188" text-anchor="middle" font-size="9.5" fill="#98a4b0">(high-Z)</text><line x1="220" y1="200" x2="220" y2="224" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="228" y1="200" x2="228" y2="224" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="228" y1="212" x2="246" y2="212" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="208" y="206" text-anchor="end" font-size="10.5" font-weight="700" fill="#33414f">N1</text><text x="208" y="221" text-anchor="end" font-size="9.5" font-weight="700" fill="#8a95a1">OFF</text><line x1="220" y1="224" x2="220" y2="255" stroke="#98a4b0" stroke-width="2" stroke-linecap="round"></line><line x1="220" y1="255" x2="220" y2="279" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><line x1="212" y1="255" x2="212" y2="279" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="212" y1="267" x2="194" y2="267" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="232" y="261" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">N2</text><text x="232" y="276" text-anchor="start" font-size="9.5" font-weight="700" fill="#8a95a1">OFF</text><line x1="220" y1="279" x2="220" y2="310" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="118" y1="77" x2="118" y2="267" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="118" y1="77" x2="194" y2="77" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="118" y1="267" x2="194" y2="267" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="82" y1="172" x2="118" y2="172" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><circle cx="118" cy="172" r="3" fill="#3b6fb0"></circle><g data-input="A" style="cursor:pointer" role="button" tabindex="0" aria-label="Toggle A = 0"><rect x="22" y="157" width="60" height="30" rx="7" fill="#e3ecf7" stroke="#3b6fb0" stroke-width="1.5"></rect><text x="52" y="176.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#3b6fb0">A = 0</text></g><text x="52" y="203" text-anchor="middle" font-size="10" font-style="italic" fill="#7a8794">click to toggle</text><line x1="330" y1="132" x2="330" y2="212" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="330" y1="212" x2="246" y2="212" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="358" y1="172" x2="330" y2="172" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><circle cx="330" cy="172" r="3" fill="#3b6fb0"></circle><circle cx="330" cy="132" r="3" fill="#3b6fb0"></circle><polygon points="316,124 316,140 302,132" fill="#f2f5f9" stroke="#33414f" stroke-width="1.4"></polygon><circle cx="297.5" cy="132" r="4" fill="#fff" stroke="#33414f" stroke-width="1.4"></circle><line x1="330" y1="132" x2="316" y2="132" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="293.5" y1="132" x2="246" y2="132" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="276" y="122" text-anchor="middle" font-size="10" font-weight="700" fill="#d9534f">EN̄</text><g data-input="EN" style="cursor:pointer" role="button" tabindex="0" aria-label="Toggle EN = 0"><rect x="358" y="157" width="60" height="30" rx="7" fill="#e3ecf7" stroke="#3b6fb0" stroke-width="1.5"></rect><text x="388" y="176.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#3b6fb0">EN = 0</text></g><text x="388" y="203" text-anchor="middle" font-size="10" font-style="italic" fill="#7a8794">click to toggle</text></svg></div>
+    <div class="side">
+      <table id="tt-tri">
+        <tbody><tr><th>EN</th><th>A</th><th>OUT</th><th>state</th></tr>
+        <tr data-row="0"><td>0</td><td>0</td><td>Z</td><td>disabled — high impedance</td></tr>
+        <tr data-row="1"><td>0</td><td>1</td><td>Z</td><td>disabled — high impedance</td></tr>
+        <tr data-row="2"><td>1</td><td>0</td><td>1</td><td>enabled — inverts A</td></tr>
+        <tr data-row="3"><td>1</td><td>1</td><td>0</td><td>enabled — inverts A</td></tr>
+      </tbody></table>
+      <p style="font-size:0.85rem;color:#5c6b7a;max-width:270px">
+        Netlist signature: series stacks like a NAND's, but one gate in each stack is an
+        enable — and the enables are complementary (via the small inverter).
+      </p>
+    </div>
+  </div><figcaption><strong>Figure 3 — Interactive tristate inverter.</strong> With EN = 0, the ideal pull-up and pull-down paths are disabled, so the output is high impedance (Z). An otherwise isolated output can float; another bus driver or pull resistor can still determine its voltage. Leakage and stored charge are omitted from the switch coloring.</figcaption></figure>
+
+  <h2 id="section-4">4. Storing a bit: the latch</h2>
+  <p>Storage comes from <strong>positive feedback</strong>: two inverters in a loop reinforce one of two stable states while the supply, gain and noise margins remain adequate. A gated-feedback D latch uses an input transmission gate and a feedback transmission gate to choose between accepting data and holding it. Supply loss, excessive noise or metastability can defeat storage; “forever” is an idealization.</p>
+  <ul>
+    <li><strong>CLK = 1 (transparent):</strong> the input t-gate is closed, the feedback t-gate is open — D flows straight through to Q.</li>
+    <li><strong>CLK = 0 (opaque):</strong> the input t-gate opens, the feedback t-gate closes the loop — the last value circulates and D is ignored.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap wide" id="figlatch"><svg viewBox="0 0 760 275" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" role="img" aria-label="Figure 4 — Correct noninverting gated-feedback latch. In the latch drawn here the feedback switch opens during writing, so the input does not need to overpower a continuously enabled keeper. Other latch styles use a weak keeper and require a write-strength ratio. Finite clock skew and transistor switching time require timing checks in either style."><title>Noninverting D latch in transparent and hold states</title><text x="180" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">CLK = 1: transparent</text><text x="21" y="109" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">D</text><line x1="33" y1="105" x2="70" y2="105" stroke="#1e9e50" stroke-width="2"></line><rect x="70" y="91" width="42" height="28" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect><text x="91" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#1e9e50">TG</text><text x="91" y="76" text-anchor="middle" font-size="11" fill="#1e9e50">ON</text><line x1="112" y1="105" x2="148" y2="105" stroke="#1e9e50" stroke-width="2"></line><polygon points="148,89 148,121 176,105" fill="#f2f5f9" stroke="#33414f" stroke-width="2"></polygon><circle cx="181" cy="105" r="5" fill="#fff" stroke="#33414f" stroke-width="2"></circle><polygon points="235,89 235,121 263,105" fill="#f2f5f9" stroke="#33414f" stroke-width="2"></polygon><circle cx="268" cy="105" r="5" fill="#fff" stroke="#33414f" stroke-width="2"></circle><line x1="186" y1="105" x2="235" y2="105" stroke="#1e9e50" stroke-width="2"></line><line x1="273" y1="105" x2="335" y2="105" stroke="#1e9e50" stroke-width="2"></line><text x="347" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">Q</text><text x="210" y="90" text-anchor="middle" font-size="12" fill="#33414f">Q̅</text><text x="141" y="136" text-anchor="start" font-size="10" fill="#33414f">storage</text><line x1="303" y1="105" x2="303" y2="194" stroke="#9aa5b1" stroke-width="2"></line><line x1="303" y1="194" x2="228" y2="194" stroke="#9aa5b1" stroke-width="2"></line><rect x="186" y="180" width="42" height="28" fill="#fff" stroke="#9aa5b1" stroke-width="2"></rect><text x="207" y="199" text-anchor="middle" font-size="11" font-weight="700" fill="#9aa5b1">TG</text><line x1="186" y1="194" x2="135" y2="194" stroke="#9aa5b1" stroke-width="2"></line><line x1="135" y1="194" x2="135" y2="105" stroke="#9aa5b1" stroke-width="2"></line><text x="207" y="232" text-anchor="middle" font-size="11" fill="#9aa5b1">feedback OFF</text><circle cx="135" cy="105" r="3" fill="#33414f"></circle><circle cx="303" cy="105" r="3" fill="#33414f"></circle><text x="570" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">CLK = 0: holding</text><text x="411" y="109" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">D</text><line x1="423" y1="105" x2="460" y2="105" stroke="#9aa5b1" stroke-width="2"></line><rect x="460" y="91" width="42" height="28" fill="#fff" stroke="#9aa5b1" stroke-width="2"></rect><text x="481" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#9aa5b1">TG</text><text x="481" y="76" text-anchor="middle" font-size="11" fill="#9aa5b1">OFF</text><line x1="502" y1="105" x2="538" y2="105" stroke="#9aa5b1" stroke-width="2"></line><polygon points="538,89 538,121 566,105" fill="#f2f5f9" stroke="#33414f" stroke-width="2"></polygon><circle cx="571" cy="105" r="5" fill="#fff" stroke="#33414f" stroke-width="2"></circle><polygon points="625,89 625,121 653,105" fill="#f2f5f9" stroke="#33414f" stroke-width="2"></polygon><circle cx="658" cy="105" r="5" fill="#fff" stroke="#33414f" stroke-width="2"></circle><line x1="576" y1="105" x2="625" y2="105" stroke="#1e9e50" stroke-width="2"></line><line x1="663" y1="105" x2="725" y2="105" stroke="#1e9e50" stroke-width="2"></line><text x="737" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">Q</text><text x="600" y="90" text-anchor="middle" font-size="12" fill="#33414f">Q̅</text><text x="531" y="136" text-anchor="start" font-size="10" fill="#33414f">storage</text><line x1="693" y1="105" x2="693" y2="194" stroke="#1e9e50" stroke-width="2"></line><line x1="693" y1="194" x2="618" y2="194" stroke="#1e9e50" stroke-width="2"></line><rect x="576" y="180" width="42" height="28" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect><text x="597" y="199" text-anchor="middle" font-size="11" font-weight="700" fill="#1e9e50">TG</text><line x1="576" y1="194" x2="525" y2="194" stroke="#1e9e50" stroke-width="2"></line><line x1="525" y1="194" x2="525" y2="105" stroke="#1e9e50" stroke-width="2"></line><text x="597" y="232" text-anchor="middle" font-size="11" fill="#1e9e50">feedback ON</text><circle cx="525" cy="105" r="3" fill="#33414f"></circle><circle cx="693" cy="105" r="3" fill="#33414f"></circle></svg></div>
+    <figcaption><strong>Figure 4 — Correct noninverting gated-feedback latch.</strong> In the latch drawn here the feedback switch opens during writing, so the input does not need to overpower a continuously enabled keeper. Other latch styles use a weak keeper and require a write-strength ratio. Finite clock skew and transistor switching time require timing checks in either style.</figcaption>
+  </figure>
+
+  <h2 id="section-5">5. The flip-flop: two latches, opposite phases</h2>
+  <p>A common positive-edge D flip-flop combines a low-transparent master with a high-transparent slave. The master stops accepting data around the rising edge, and the slave transfers the stored state. Q changes <em>after a clock-to-Q delay</em>, provided D meets setup and hold and the clock meets pulse-width requirements. The edge is not an infinitely narrow analog sampling event; violations can cause metastability.</p>
+
+  <figure>
+    <div class="figwrap wide" id="figff"><svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 5 — A conceptual master–slave flip-flop. The waveform now shows a short clock-to-Q delay after the sampling edge. D must remain stable through the required setup/hold interval. The diagram has no calibrated time scale and does not model metastability, internal clock overlap or pulse-width violations. Device count depends on topology and buffering."><text x="96" y="74" text-anchor="end" font-size="13" font-weight="700" fill="#33414f">D</text><line x1="104" y1="70" x2="150" y2="70" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><rect x="150" y="40" width="120" height="60" rx="8" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></rect><text x="210" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">master latch</text><text x="210" y="80" text-anchor="middle" font-size="9.5" fill="#7a8794">transparent while</text><text x="210" y="92" text-anchor="middle" font-size="9.5" fill="#7a8794">CLK = 0</text><line x1="270" y1="70" x2="330" y2="70" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="300" y="60" text-anchor="middle" font-size="9.5" fill="#7a8794">QM</text><rect x="330" y="40" width="120" height="60" rx="8" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></rect><text x="390" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">slave latch</text><text x="390" y="80" text-anchor="middle" font-size="9.5" fill="#7a8794">transparent while</text><text x="390" y="92" text-anchor="middle" font-size="9.5" fill="#7a8794">CLK = 1</text><line x1="450" y1="70" x2="500" y2="70" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="510" y="74" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">Q</text><line x1="210" y1="120" x2="210" y2="100" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="390" y1="120" x2="390" y2="100" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="210" y1="120" x2="390" y2="120" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="300" y1="120" x2="300" y2="134" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="300" y="148" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">CLK</text><circle cx="210" cy="105" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.5"></circle><text x="560" y="56" text-anchor="start" font-size="10.5" font-weight="700" fill="#33414f">rising edge:</text><text x="560" y="71" text-anchor="start" font-size="10.5" fill="#33414f">master locks D,</text><text x="560" y="86" text-anchor="start" font-size="10.5" fill="#33414f">slave passes it to Q</text><text x="88" y="188" text-anchor="end" font-size="11" font-weight="700" fill="#5c6b7a">CLK</text><text x="88" y="233" text-anchor="end" font-size="11" font-weight="700" fill="#5c6b7a">D</text><text x="88" y="278" text-anchor="end" font-size="11" font-weight="700" fill="#5c6b7a">Q</text><polyline points="100,190 200,190 200,168 280,168 280,190 360,190 360,168 440,168 440,190 520,190 520,168 600,168 600,190 640,190" fill="none" stroke="#33414f" stroke-width="2"></polyline><polyline points="100,235 160,235 160,213 400,213 400,235 580,235 580,213 640,213" fill="none" stroke="#b0308a" stroke-width="2"></polyline><polyline points="100,280 212,280 212,258 532,258 532,280 640,280" fill="none" stroke="#2b6cb0" stroke-width="2"></polyline><line x1="200" y1="196" x2="200" y2="250" stroke="#98a4b0" stroke-width="1" stroke-dasharray="3 3"></line><polygon points="196,248 204,248 200,256" fill="#98a4b0"></polygon><line x1="360" y1="196" x2="360" y2="250" stroke="#98a4b0" stroke-width="1" stroke-dasharray="3 3"></line><polygon points="356,248 364,248 360,256" fill="#98a4b0"></polygon><line x1="520" y1="196" x2="520" y2="250" stroke="#98a4b0" stroke-width="1" stroke-dasharray="3 3"></line><polygon points="516,248 524,248 520,256" fill="#98a4b0"></polygon><text x="370" y="310" text-anchor="middle" font-size="10.5" fill="#5c6b7a">Sampled D appears at Q after clock-to-Q delay; setup and hold must be met</text></svg></div>
+    <figcaption><strong>Figure 5 — A conceptual master–slave flip-flop.</strong> The waveform now shows a short clock-to-Q delay after the sampling edge. D must remain stable through the required setup/hold interval. The diagram has no calibrated time scale and does not model metastability, internal clock overlap or pulse-width violations. Device count depends on topology and buffering.</figcaption>
+  </figure>
+
+  <h2 id="section-6">6. Netlist signatures, summarized</h2>
+  <table>
+    <tbody><tr><th>You see…</th><th>It's a…</th></tr>
+    <tr><td>1P + 1N, shared gate, drains meet</td><td>inverter</td></tr>
+    <tr><td>series N stack + parallel P (or vice versa)</td><td>NAND / NOR</td></tr>
+    <tr><td>mixed series/parallel networks, 6+ devices, one output</td><td>AOI / OAI complex gate</td></tr>
+    <tr><td>P + N sharing <em>both</em> nets, neither net a supply, complementary gates</td><td>transmission gate</td></tr>
+    <tr><td>inverter stacks with extra series devices gated by EN / ENB</td><td>tristate driver</td></tr>
+    <tr><td>two inverters gate-to-drain in a ring (+ t-gates on a clock)</td><td>latch / storage node</td></tr>
+    <tr><td>two such loops on opposite clock phases</td><td>flip-flop</td></tr>
+  </tbody></table>
+
+  <h3>Practice</h3>
+  <p>Six devices, shuffled. What is this circuit? (Hint: start by finding devices <em>not</em> touching a supply.)</p>
+  <table class="netlist">
+    <tbody><tr><th>device</th><th>drain</th><th>gate</th><th>source</th><th>body</th><th>model</th></tr>
+    <tr><td>M4</td><td>zo</td><td>s</td><td>b</td><td>VDD</td><td>pfet</td></tr>
+    <tr><td>M6</td><td>sb</td><td>s</td><td>VSS</td><td>VSS</td><td>nfet</td></tr>
+    <tr><td>M1</td><td>zo</td><td>s</td><td>a</td><td>VSS</td><td>nfet</td></tr>
+    <tr><td>M5</td><td>sb</td><td>s</td><td>VDD</td><td>VDD</td><td>pfet</td></tr>
+    <tr><td>M2</td><td>zo</td><td>sb</td><td>a</td><td>VDD</td><td>pfet</td></tr>
+    <tr><td>M3</td><td>zo</td><td>sb</td><td>b</td><td>VSS</td><td>nfet</td></tr>
+  </tbody></table>
+  <details>
+    <summary>Show the answer</summary>
+    <p>
+      M5/M6 are a plain inverter making <code>sb&nbsp;=&nbsp;!s</code>. The other four never touch
+      a supply → t-gates. M1 (NMOS, gate&nbsp;s) + M2 (PMOS, gate&nbsp;sb) both span
+      <code>a&nbsp;↔&nbsp;zo</code>: a t-gate closed when <code>s&nbsp;=&nbsp;1</code>.
+      M3 (gate&nbsp;sb) + M4 (gate&nbsp;s) span <code>b&nbsp;↔&nbsp;zo</code>: closed when
+      <code>s&nbsp;=&nbsp;0</code>. Exactly one t-gate is closed at a time — this is a
+      <strong>2:1 multiplexer</strong>: <code>zo = s ? a : b</code>.
+    </p>
+  </details>
+
+    <h2 id="section-7">7. A wide NAND stays cheaper than a wide NOR, in the textbook count</h2>
+  <p>
+    The same catalog, for a gate with <code>n</code> inputs, gives a NAND logical effort <code>(n+2)/3</code> and a NOR <code>(2n+1)/3</code>. Two inputs: 4/3 and 5/3. Four inputs: 2 and 3. The series transistors sit on the NMOS side in a NAND, and on the PMOS side in a NOR. The NOR number climbs faster because the wide devices are the ones in series.
+  </p>
+  <p>
+    That is the textbook PMOS-twice-NMOS count from <a href="drive_strength.html">lesson 11</a>. It is the reason a wide function is usually written as a NAND with inversions around it, when the library delay tables agree. When they disagree, the table wins.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 6 — Textbook g for NAND2, NOR2, NAND4, and NOR4. Taller is more effort per unit of fanout.">
+<text x="370" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Textbook logical effort as the gate gets wider</text>
+<rect x="80" y="114.66666666666667" width="100" height="61.33333333333333" rx="2" fill="#1e9e50" stroke="#1e9e50" stroke-width="0"></rect>
+<text x="130" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">NAND2</text>
+<text x="130" y="104.66666666666667" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">g = 4/3</text>
+<rect x="230" y="99.33333333333333" width="100" height="76.66666666666667" rx="2" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<text x="280" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">NOR2</text>
+<text x="280" y="89.33333333333333" text-anchor="middle" font-size="13" font-weight="700" fill="#c0564a">g = 5/3</text>
+<rect x="400" y="84" width="100" height="92" rx="2" fill="#1e9e50" stroke="#1e9e50" stroke-width="0"></rect>
+<text x="450" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">NAND4</text>
+<text x="450" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">g = 2</text>
+<rect x="550" y="38" width="100" height="138" rx="2" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<text x="600" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">NOR4</text>
+<text x="600" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">g = 3</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 6 — Textbook <code>g</code> for NAND2, NOR2, NAND4, and NOR4. Taller is more effort per unit of fanout.</strong></figcaption>
+  </figure>
+
+<details><summary>Analog bridge — Why does a switched node jump when its switch turns off?</summary><p>The switch has channel charge and parasitic gate-to-channel capacitance. Changing its enable injects charge and couples a clock edge onto the held node. A transmission gate reduces some errors but does not make them vanish; source resistance, signal level, switch size, complementary-clock mismatch and hold capacitance all matter. For an assumed injected charge of 1 fC on 100 fF, ΔV = ΔQ/C = 10 mV. This is an illustrative charge budget, not a SKY130 device measurement.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — Why can an AOI21 be cheaper than an AND2 followed by a NOR2?</summary><p>The AND-then-NOR cascade builds a complete AND2 (4 transistors) and a complete NOR2 (4 transistors), then wires them together — 8 transistors, plus the intermediate node. An AOI21 merges the AND into the NOR’s pull-down (two series NMOS) and the complementary pull-up, for 6 transistors and no intermediate output. Section 1 is that count. The Boolean function is the same; the complementary recipe is applied once, to the whole expression.</p></details>
+<details class="checkpoint"><summary>Check your understanding — A transmission gate can pass a 1 or a 0. Why is it still “a switch, not a driver”?</summary><p>It has no path from a supply to the output that is turned on by the data. It connects two nodes when enabled, and those nodes then share charge and follow each other through the switch resistance. A heavy load is charged through that resistance, so the edge is slow and the driving gate on the other side of the switch is doing the work. A static CMOS inverter, by contrast, pulls Y to VDD or VSS with its own transistors. Section 2 is the distinction; the analog-bridge note below is what happens at the instant the switch opens.</p></details>
+<details class="checkpoint"><summary>Check your understanding — How many latches are in a flip-flop, and what must be true of their clocks?</summary><p>Two, in series, on opposite clock phases (a master and a slave). Section 5: the master is open while the clock is low (or high, depending on polarity) and the slave is closed; they swap at the edge. That is why a flop captures on an edge rather than remaining transparent for a whole level. If both latches were open on the same phase, a path would exist from D to Q for that whole phase and the cell would be a latch, not a flop.</p></details>
+<div class="takeaways">
+    <h2 id="section-8">Key takeaways</h2>
+    <ul>
+      <li>AOI/OAI can reduce transistor count and logic stages; actual delay depends on input arc, load and implementation.</li>
+      <li>A transmission gate is a bidirectional switch with finite, signal-dependent ON resistance and OFF leakage/feedthrough.</li>
+      <li>A tristate adds enable devices in series inside the stacks; EN = 0 cuts both networks → output Z; that's how buses and mux nodes share a wire.</li>
+      <li>Storage = two inverters in a feedback ring; a latch adds t-gates so the loop either listens (transparent) or holds (opaque).</li>
+      <li>A common positive-edge flip-flop uses master/slave latches of opposite phases. Q updates after clock-to-Q delay when setup, hold and clock requirements are met.</li>
+      <li>Many sequential cells combine these building blocks; other topologies require their own connectivity, timing and state analysis.</li>
+          <li>In the textbook count a NAND4 has <code>g = 2</code> and a NOR4 has <code>g = 3</code>. The series stack wants to be the NMOS stack.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-9">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html">SKY130 device models</a></li><li><a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/cells/dfxtp/README.html">SKY130 DFXTP functional library entry</a></li><li><a href="https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf">Harris: logical effort</a></li><li><a href="https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect4.pdf">Harris: nonideal devices</a></li></ul></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html" aria-current="page">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="drive_strength.html"><small>← Previous</small>Drive Strength &amp; Transistor Sizing</a><a href="site_rows.html"><small>Next →</small>Site Rows &amp; Standard Cell Placement</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const HI = '#d9534f', LO = '#3b6fb0', IDLE = '#98a4b0',
+      ONC = '#1e9e50', OFFC = '#9aa5b1', DK = '#33414f';
+const lvl = v => v ? HI : LO;
+
+const wr = (x1, y1, x2, y2, c, w) =>
+  `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || DK}" stroke-width="${w || 2}" stroke-linecap="round"/>`;
+const dt = (x, y, c) => `<circle cx="${x}" cy="${y}" r="3" fill="${c || DK}"/>`;
+const railH = (x0, x1, y, net) =>
+  wr(x0, y, x1, y, net === 'VDD' ? HI : LO, 4) +
+  `<text x="${x0 - 8}" y="${y + 4}" text-anchor="end" font-size="11" font-weight="700" fill="${net === 'VDD' ? HI : LO}">${net}</text>`;
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 11}" ${o.b ? 'font-weight="700"' : ''} ${o.i ? 'font-style="italic"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+function mos(x, y, type, side, on, o = {}) {
+  const g = side === 'R' ? 1 : -1;
+  const gc = o.gateColor || IDLE;
+  let s = wr(x, y + 10, x, y + 34, on ? ONC : OFFC, 5);
+  s += wr(x + g * 8, y + 10, x + g * 8, y + 34, DK, 2);
+  if (type === 'p') {
+    s += `<circle cx="${x + g * 13.5}" cy="${y + 22}" r="4" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+    s += wr(x + g * 17.5, y + 22, x + g * 26, y + 22, gc, 2);
+  } else {
+    s += wr(x + g * 8, y + 22, x + g * 26, y + 22, gc, 2);
+  }
+  if (o.name)
+    s += `<text x="${x - g * 12}" y="${y + 16}" text-anchor="${g > 0 ? 'end' : 'start'}" font-size="10.5" font-weight="700" fill="${DK}">${o.name}</text>`;
+  if (o.tag)
+    s += `<text x="${x - g * 12}" y="${y + 31}" text-anchor="${g > 0 ? 'end' : 'start'}" font-size="9.5" font-weight="700" fill="${on ? ONC : '#8a95a1'}">${on ? 'ON' : 'OFF'}</text>`;
+  if (o.gname)
+    s += `<text x="${x + g * 32}" y="${y + 26}" text-anchor="${g > 0 ? 'start' : 'end'}" font-size="11" font-weight="700" fill="${o.gnameColor || DK}">${o.gname}</text>`;
+  return s;
+}
+function inBtn(cx, cy, name, val) {
+  return `<g data-input="${name}" style="cursor:pointer">` +
+    `<rect x="${cx - 30}" y="${cy - 15}" width="60" height="30" rx="7" fill="${val ? '#fbe3e1' : '#e3ecf7'}" stroke="${lvl(val)}" stroke-width="1.5"/>` +
+    `<text x="${cx}" y="${cy + 4.5}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${lvl(val)}">${name} = ${val}</text></g>`;
+}
+const hint = (x, y) => txt(x, y, 'click to toggle', { s: 10, i: 1, c: '#7a8794' });
+function bindToggle(id, state, render) {
+  document.getElementById(id).addEventListener('click', e => {
+    const g = e.target.closest('[data-input]');
+    if (!g) return;
+    state[g.getAttribute('data-input')] ^= 1;
+    render();
+  });
+}
+function markRow(sel, idx) {
+  document.querySelectorAll(`${sel} tr[data-row]`).forEach(tr =>
+    tr.classList.toggle('active', tr.getAttribute('data-row') == idx));
+}
+
+// ---------- Figure 1: AOI21 ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += railH(100, 360, 30, 'VDD') + railH(100, 360, 350, 'VSS');
+  // pull-up: Pa || Pb, in series with Pc
+  s += wr(170, 30, 170, 65, HI) + wr(270, 30, 270, 65, HI);
+  s += mos(170, 55, 'p', 'L', false, { name: 'Pa', gateColor: DK, gname: 'A' });
+  s += mos(270, 55, 'p', 'R', false, { name: 'Pb', gateColor: DK, gname: 'B' });
+  s += wr(170, 89, 170, 118) + wr(270, 89, 270, 118) + wr(170, 118, 270, 118) + dt(220, 118);
+  s += wr(220, 118, 220, 135);
+  s += mos(220, 125, 'p', 'L', false, { name: 'Pc', gateColor: DK, gname: 'C' });
+  s += wr(220, 159, 220, 195) + dt(220, 195);
+  // output node
+  s += wr(150, 195, 300, 195);
+  s += wr(300, 195, 330, 195) + txt(362, 199, 'OUT', { b: 1, s: 12 });
+  // pull-down: Na-Nb series, Nc parallel
+  s += wr(150, 195, 150, 215);
+  s += mos(150, 205, 'n', 'L', false, { name: 'Na', gateColor: DK, gname: 'A' });
+  s += wr(150, 239, 150, 275);
+  s += mos(150, 265, 'n', 'L', false, { name: 'Nb', gateColor: DK, gname: 'B' });
+  s += wr(150, 299, 150, 350, LO);
+  s += wr(300, 195, 300, 245) + dt(300, 195);
+  s += mos(300, 235, 'n', 'R', false, { name: 'Nc', gateColor: DK, gname: 'C' });
+  s += wr(300, 269, 300, 350, LO);
+  s += txt(128, 248, 'series', { s: 10, i: 1, c: '#7a8794', a: 'end' });
+  s += txt(128, 261, '= AND', { s: 10, i: 1, c: '#7a8794', a: 'end' });
+  s += txt(345, 250, 'parallel', { s: 10, i: 1, c: '#7a8794', a: 'start' });
+  s += txt(345, 264, '= OR', { s: 10, i: 1, c: '#7a8794', a: 'start' });
+
+  // right: gate equivalent
+  const gx = 470;
+  s += txt(gx + 105, 60, 'replaces:', { s: 11, c: '#7a8794', i: 1 });
+  // AND symbol
+  s += `<path d="M${gx},90 h28 a24,24 0 0 1 0,48 h-28 z" fill="#f2f5f9" stroke="${DK}" stroke-width="1.6"/>`;
+  s += wr(gx - 22, 100, gx, 100) + txt(gx - 28, 104, 'A', { a: 'end', b: 1 });
+  s += wr(gx - 22, 128, gx, 128) + txt(gx - 28, 132, 'B', { a: 'end', b: 1 });
+  s += wr(gx + 52, 114, gx + 90, 114) + wr(gx + 90, 114, gx + 90, 152) + wr(gx + 90, 152, gx + 108, 152);
+  // NOR symbol
+  s += `<path d="M${gx + 108},140 q14,22 0,44 q30,-2 46,-22 q-16,-20 -46,-22 z" fill="#f2f5f9" stroke="${DK}" stroke-width="1.6"/>`;
+  s += `<circle cx="${gx + 160}" cy="162" r="5" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+  s += wr(gx - 22, 172, gx + 112, 172) + txt(gx - 28, 176, 'C', { a: 'end', b: 1 });
+  s += wr(gx + 165, 162, gx + 195, 162) + txt(gx + 202, 166, 'OUT', { a: 'start', b: 1, s: 11 });
+  s += txt(gx + 105, 230, 'out = !((A·B) + C)', { b: 1, s: 13 });
+  s += txt(gx + 105, 258, '2 stages, ~10 transistors', { s: 10.5, c: '#a83232' });
+  s += txt(gx + 105, 274, 'vs AOI21: 1 stage, 6', { s: 10.5, c: '#1e7e3e' });
+  s += `</svg>`;
+  document.getElementById('figaoi').innerHTML = s;
+})();
+
+// ---------- Figure 2: transmission gate, two states ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function panel(ox, en) {
+    const cc = en ? ONC : IDLE;
+    let t = txt(ox + 150, 28, en ? 'EN = 1 → closed (nets joined)' : 'EN = 0 → open (high impedance)',
+                { b: 1, s: 12.5, c: en ? '#1e7e3e' : '#a83232' });
+    t += txt(ox + 150, 56, 'net X', { b: 1, s: 11.5, c: cc });
+    t += wr(ox + 150, 62, ox + 150, 88, cc) ;
+    t += wr(ox + 110, 88, ox + 190, 88, cc) + dt(ox + 150, 88, cc);
+    t += wr(ox + 110, 88, ox + 110, 118, cc) + wr(ox + 190, 88, ox + 190, 118, cc);
+    t += mos(ox + 110, 108, 'n', 'L', !!en, { name: 'N', tag: true, gateColor: lvl(en), gname: 'EN', gnameColor: lvl(en) });
+    t += mos(ox + 190, 108, 'p', 'R', !!en, { name: 'P', tag: true, gateColor: lvl(1 - en), gname: 'EN&#772;', gnameColor: lvl(1 - en) });
+    t += wr(ox + 110, 142, ox + 110, 172, cc) + wr(ox + 190, 142, ox + 190, 172, cc);
+    t += wr(ox + 110, 172, ox + 190, 172, cc) + dt(ox + 150, 172, cc);
+    t += wr(ox + 150, 172, ox + 150, 198, cc);
+    t += txt(ox + 150, 214, 'net Y', { b: 1, s: 11.5, c: cc });
+    t += txt(ox + 150, 248, en ? 'NMOS passes the 0s well, PMOS the 1s —' : 'both devices off —', { s: 10, c: '#5c6b7a' });
+    t += txt(ox + 150, 262, en ? 'finite, signal-dependent ON resistance' : 'leakage and feedthrough remain', { s: 10, c: '#5c6b7a' });
+    return t;
+  }
+  s += panel(20, 1);
+  s += `<line x1="360" y1="20" x2="360" y2="280" stroke="#e3e9ef" stroke-width="1.5"/>`;
+  s += panel(380, 0);
+  s += `</svg>`;
+  document.getElementById('figtg').innerHTML = s;
+})();
+
+// ---------- Figure 3: interactive tristate inverter ----------
+const triState = { A: 0, EN: 0 };
+function renderTri() {
+  const { A, EN } = triState;
+  const z = !EN;
+  const out = EN ? (A ? 0 : 1) : null;
+  const oc = z ? IDLE : lvl(out);
+  const ac = lvl(A), ec = lvl(EN), ebc = lvl(1 - EN);
+  const topMid = !A ? HI : IDLE;      // between P1 and P2
+  const botMid = A ? LO : IDLE;       // between N1 and N2
+  let s = `<svg viewBox="0 0 460 345" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += railH(130, 310, 30, 'VDD') + railH(130, 310, 310, 'VSS');
+  s += wr(220, 30, 220, 65, HI);
+  s += mos(220, 55, 'p', 'L', !A, { gateColor: ac, name: 'P1', tag: true });
+  s += wr(220, 89, 220, 120, topMid);
+  s += mos(220, 110, 'p', 'R', !!EN, { gateColor: ebc, name: 'P2', tag: true });
+  s += wr(220, 144, 220, 200, oc);
+  s += wr(220, 172, 310, 172, oc) + dt(220, 172, oc);
+  s += `<text x="265" y="162" text-anchor="middle" font-size="12.5" font-weight="700" fill="${oc}">OUT = ${z ? 'Z' : out}</text>`;
+  if (z) s += txt(265, 188, '(high-Z)', { s: 9.5, c: IDLE, a: 'middle' });
+  s += mos(220, 190, 'n', 'R', !!EN, { gateColor: ec, name: 'N1', tag: true });
+  s += wr(220, 224, 220, 255, botMid);
+  s += mos(220, 245, 'n', 'L', !!A, { gateColor: ac, name: 'N2', tag: true });
+  s += wr(220, 279, 220, 310, LO);
+  // A: left column to P1 (194,77) and N2 (194,267)
+  s += wr(118, 77, 118, 267, ac) + wr(118, 77, 194, 77, ac) + wr(118, 267, 194, 267, ac);
+  s += wr(82, 172, 118, 172, ac) + dt(118, 172, ac);
+  s += inBtn(52, 172, 'A', A) + hint(52, 203);
+  // EN: right column to N1 (246,212) directly, to P2 (246,132) via inverter
+  s += wr(330, 132, 330, 212, ec) + wr(330, 212, 246, 212, ec);
+  s += wr(358, 172, 330, 172, ec) + dt(330, 172, ec) + dt(330, 132, ec);
+  // small inverter EN -> ENB feeding P2
+  s += `<polygon points="316,124 316,140 302,132" fill="#f2f5f9" stroke="${DK}" stroke-width="1.4"/>`;
+  s += `<circle cx="297.5" cy="132" r="4" fill="#fff" stroke="${DK}" stroke-width="1.4"/>`;
+  s += wr(330, 132, 316, 132, ec);
+  s += wr(293.5, 132, 246, 132, ebc);
+  s += txt(276, 122, 'EN&#772;', { s: 10, c: ebc, b: 1 });
+  s += inBtn(388, 172, 'EN', EN) + hint(388, 203);
+  s += `</svg>`;
+  document.getElementById('figtri').innerHTML = s;
+  markRow('#tt-tri', EN * 2 + A);
+}
+bindToggle('figtri', triState, renderTri);
+renderTri();
+
+// ---------- Figure 4: correct noninverting static D-latch ----------
+(function () {
+ let s = `<svg viewBox="0 0 760 275" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" role="img"><title>Noninverting D latch in transparent and hold states</title>`;
+ const wire=(x1,y1,x2,y2,c)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2"/>`;
+ function panel(o,clk){
+  const ic=clk?ONC:OFFC,fc=clk?OFFC:ONC;
+  s+=txt(o+175,28,clk?'CLK = 1: transparent':'CLK = 0: holding',{s:14,b:1});
+  s+=txt(o+16,109,'D',{b:1})+wire(o+28,105,o+65,105,ic);
+  s+=`<rect x="${o+65}" y="91" width="42" height="28" fill="#fff" stroke="${ic}" stroke-width="2"/>`+txt(o+86,110,'TG',{c:ic,b:1});
+  s+=txt(o+86,76,clk?'ON':'OFF',{c:ic})+wire(o+107,105,o+143,105,ic);
+  for(const x of [143,230]){s+=`<polygon points="${o+x},89 ${o+x},121 ${o+x+28},105" fill="#f2f5f9" stroke="${DK}" stroke-width="2"/><circle cx="${o+x+33}" cy="105" r="5" fill="#fff" stroke="${DK}" stroke-width="2"/>`;}
+  s+=wire(o+181,105,o+230,105,ONC)+wire(o+268,105,o+330,105,ONC)+txt(o+342,110,'Q',{b:1});
+  s+=txt(o+205,90,'Q̅',{s:12})+txt(o+136,136,'storage',{s:10,a:'start'});
+  s+=wire(o+298,105,o+298,194,fc)+wire(o+298,194,o+223,194,fc);
+  s+=`<rect x="${o+181}" y="180" width="42" height="28" fill="#fff" stroke="${fc}" stroke-width="2"/>`+txt(o+202,199,'TG',{c:fc,b:1});
+  s+=wire(o+181,194,o+130,194,fc)+wire(o+130,194,o+130,105,fc);
+  s+=txt(o+202,232,clk?'feedback OFF':'feedback ON',{c:fc});
+  s+=`<circle cx="${o+130}" cy="105" r="3" fill="${DK}"/><circle cx="${o+298}" cy="105" r="3" fill="${DK}"/>`;
+ }
+ panel(5,1);panel(395,0);s+='</svg>';document.getElementById('figlatch').innerHTML=s;
+})();
+
+// ---------- Figure 5: master-slave FF + waveform ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // block diagram
+  function latchBox(x, name, phase) {
+    let t = `<rect x="${x}" y="40" width="120" height="60" rx="8" fill="#f2f5f9" stroke="${DK}" stroke-width="1.6"/>`;
+    t += txt(x + 60, 63, name, { b: 1, s: 12 });
+    t += txt(x + 60, 80, 'transparent while', { s: 9.5, c: '#7a8794' });
+    t += txt(x + 60, 92, phase, { s: 9.5, c: '#7a8794' });
+    return t;
+  }
+  s += txt(96, 74, 'D', { b: 1, s: 13, a: 'end' });
+  s += wr(104, 70, 150, 70);
+  s += latchBox(150, 'master latch', 'CLK = 0');
+  s += wr(270, 70, 330, 70) + txt(300, 60, 'QM', { s: 9.5, c: '#7a8794' });
+  s += latchBox(330, 'slave latch', 'CLK = 1');
+  s += wr(450, 70, 500, 70) + txt(510, 74, 'Q', { b: 1, s: 13, a: 'start' });
+  s += wr(210, 120, 210, 100) + wr(390, 120, 390, 100) + wr(210, 120, 390, 120);
+  s += wr(300, 120, 300, 134);
+  s += txt(300, 148, 'CLK', { b: 1, s: 11 });
+  s += `<circle cx="210" cy="105" r="4.5" fill="#fff" stroke="${DK}" stroke-width="1.5"/>`;
+  s += txt(560, 56, 'rising edge:', { s: 10.5, b: 1, a: 'start' });
+  s += txt(560, 71, 'master locks D,', { s: 10.5, a: 'start' });
+  s += txt(560, 86, 'slave passes it to Q', { s: 10.5, a: 'start' });
+
+  // waveforms
+  const X0 = 100, XW = 540, HGT = 22;
+  const rows = { CLK: 190, D: 235, Q: 280 };
+  for (const [name, y] of Object.entries(rows))
+    s += txt(X0 - 12, y - 2, name, { a: 'end', s: 11, b: 1, c: '#5c6b7a' });
+  // clk: rises at 100,260,420 (relative px), period 160, high 80
+  const rises = [100, 260, 420];
+  let clkPts = `${X0},${rows.CLK}`;
+  for (const r of rises) {
+    clkPts += ` ${X0 + r},${rows.CLK} ${X0 + r},${rows.CLK - HGT} ${X0 + r + 80},${rows.CLK - HGT} ${X0 + r + 80},${rows.CLK}`;
+  }
+  clkPts += ` ${X0 + XW},${rows.CLK}`;
+  s += `<polyline points="${clkPts}" fill="none" stroke="${DK}" stroke-width="2"/>`;
+  // D: 0 ->1 at 60, ->0 at 300, ->1 at 480
+  const dPts = `${X0},${rows.D} ${X0 + 60},${rows.D} ${X0 + 60},${rows.D - HGT} ${X0 + 300},${rows.D - HGT} ${X0 + 300},${rows.D} ${X0 + 480},${rows.D} ${X0 + 480},${rows.D - HGT} ${X0 + XW},${rows.D - HGT}`;
+  s += `<polyline points="${dPts}" fill="none" stroke="#b0308a" stroke-width="2"/>`;
+  // Q: samples D at rises: at 100 -> 1; at 260 -> 1 (no change); at 420 -> 0
+  const qPts = `${X0},${rows.Q} ${X0 + 112},${rows.Q} ${X0 + 112},${rows.Q - HGT} ${X0 + 432},${rows.Q - HGT} ${X0 + 432},${rows.Q} ${X0 + XW},${rows.Q}`;
+  s += `<polyline points="${qPts}" fill="none" stroke="#2b6cb0" stroke-width="2"/>`;
+  // edge arrows
+  for (const r of rises) {
+    s += `<line x1="${X0 + r}" y1="${rows.CLK + 6}" x2="${X0 + r}" y2="${rows.Q - HGT - 8}" stroke="#98a4b0" stroke-width="1" stroke-dasharray="3 3"/>`;
+    s += `<polygon points="${X0 + r - 4},${rows.Q - HGT - 10} ${X0 + r + 4},${rows.Q - HGT - 10} ${X0 + r},${rows.Q - HGT - 2}" fill="#98a4b0"/>`;
+  }
+  s += txt(X0 + 270, 310, 'Sampled D appears at Q after clock-to-Q delay; setup and hold must be met', { s: 10.5, c: '#5c6b7a' });
+  s += `</svg>`;
+  document.getElementById('figff').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

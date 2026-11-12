@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+<testsuite timestamp="2026-11-11T16:26:45" hostname="grok-bot-vm-513224384" package="gray4_prove" id="0" name="default" tests="5" errors="0" failures="0" time="0" skipped="1">
+<properties>
+<property name="os" value="Linux"/>
+<property name="expect" value="PASS"/>
+<property name="status" value="PASS"/>
+</properties>
+<testcase classname="default" name="build execution" time="0">
+</testcase>
+<testcase classname="default" name="Property ASSERT in gray4 at gray4_formal.v:31.13-31.37" time="0" type="ASSERT" location="gray4_formal.v:31.13-31.37" id="_witness_.check_assert_gray4_formal_v_31_24">
+</testcase>
+<testcase classname="default" name="Property ASSERT in gray4 at gray4_formal.v:36.13-36.60" time="0" type="ASSERT" location="gray4_formal.v:36.13-36.60" id="_witness_.check_assert_gray4_formal_v_36_33">
+</testcase>
+<testcase classname="default" name="Property ASSERT in gray4 at gray4_formal.v:41.13-41.41" time="0" type="ASSERT" location="gray4_formal.v:41.13-41.41" id="_witness_.check_assert_gray4_formal_v_41_63">
+</testcase>
+<testcase classname="default" name="Property ASSERT in gray4 at gray4_formal.v:45.9-45.44" time="0" type="ASSERT" location="gray4_formal.v:45.9-45.44" id="_witness_.check_assert_gray4_formal_v_45_66">
+</testcase>
+<testcase classname="default" name="Property COVER in gray4 at gray4_formal.v:60.9-60.88" time="0" type="COVER" location="gray4_formal.v:60.9-60.88" id="_witness_.check_cover_gray4_formal_v_60_75">
+<skipped />
+</testcase>
+<system-out>SBY 16:26:44 [gray4_prove] Removing directory '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_prove'.
+SBY 16:26:44 [gray4_prove] Copy '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_formal.v' to '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_prove/src/gray4_formal.v'.
+SBY 16:26:44 [gray4_prove] engine_0: smtbmc z3
+SBY 16:26:44 [gray4_prove] base: starting process &quot;cd gray4_prove/src; yosys -ql ../model/design.log ../model/design.ys&quot;
+SBY 16:26:44 [gray4_prove] base: finished (returncode=0)
+SBY 16:26:44 [gray4_prove] prep: starting process &quot;cd gray4_prove/model; yosys -ql design_prep.log design_prep.ys&quot;
+SBY 16:26:45 [gray4_prove] prep: finished (returncode=0)
+SBY 16:26:45 [gray4_prove] smt2: starting process &quot;cd gray4_prove/model; yosys -ql design_smt2.log design_smt2.ys&quot;
+SBY 16:26:45 [gray4_prove] smt2: finished (returncode=0)
+SBY 16:26:45 [gray4_prove] engine_0.basecase: starting process &quot;cd gray4_prove; yosys-smtbmc -s z3 --presat --noprogress -t 16  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2&quot;
+SBY 16:26:45 [gray4_prove] engine_0.induction: starting process &quot;cd gray4_prove; yosys-smtbmc -s z3 --presat -i --noprogress -t 16  --append 0 --dump-vcd engine_0/trace_induct.vcd --dump-yw engine_0/trace_induct.yw --dump-vlogtb engine_0/trace_induct_tb.v --dump-smtc engine_0/trace_induct.smtc model/design_smt2.smt2&quot;
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Solver: z3
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Trying induction in step 16..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Solver: z3
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 0..
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Trying induction in step 15..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 0..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 1..
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Trying induction in step 14..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 1..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 2..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 2..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 3..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 3..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 4..
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Temporal induction successful.
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 4..
+SBY 16:26:45 [gray4_prove] engine_0.induction: ##   0:00:00  Status: passed
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 5..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 5..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 6..
+SBY 16:26:45 [gray4_prove] engine_0.induction: finished (returncode=0)
+SBY 16:26:45 [gray4_prove] engine_0.induction: Status returned by engine for induction: pass
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 6..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 7..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 7..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 8..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 8..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 9..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 9..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 10..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 10..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 11..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 11..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 12..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 12..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 13..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 13..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 14..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 14..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 15..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 15..
+SBY 16:26:45 [gray4_prove] engine_0.basecase: ##   0:00:00  Status: passed
+SBY 16:26:45 [gray4_prove] engine_0.basecase: finished (returncode=0)
+SBY 16:26:45 [gray4_prove] engine_0.basecase: Status returned by engine for basecase: pass
+SBY 16:26:45 [gray4_prove] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:45 [gray4_prove] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:45 [gray4_prove] summary: engine_0 (smtbmc z3) returned pass for basecase
+SBY 16:26:45 [gray4_prove] summary: engine_0 (smtbmc z3) returned pass for induction
+SBY 16:26:45 [gray4_prove] summary: engine_0 did not produce any traces
+SBY 16:26:45 [gray4_prove] summary: successful proof by k-induction.
+SBY 16:26:45 [gray4_prove] DONE (PASS, rc=0)
+</system-out>
+<system-err>
+</system-err>
+</testsuite>
+</testsuites>

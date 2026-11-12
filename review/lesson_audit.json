@@ -1,0 +1,1275 @@
+{
+  "review_date": "2026-11-06",
+  "scope": "Initial review of34original lessons plus two expansions:50lessons,5actual runnable labs. Each result is scoped by model level; no silicon, qualified physical verification or full-chip signoff claim.",
+  "lessons": [
+    {
+      "number": 1,
+      "file": "site_rows.html",
+      "title": "Site Rows & Standard Cell Placement",
+      "status": "reviewed and revised",
+      "changes": [
+        "Removed duplicate paragraph; distinguished native LEF origin from DEF placement reference; added row offsets and PDN/tap requirements; scoped alternating and multiheight rail rules.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Corrected the one-site/two-site contradiction, separated orientation from coordinate arithmetic, scoped row alternation/multiheight claims, and added a verified footprint table and 24-site width checkpoint."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef",
+        "https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 2,
+      "file": "fill_cells.html",
+      "title": "Fill Cells",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected no-pins/no-netlist absolutes, mandatory well continuity and every-layer density claims; clarified fillers versus electrical decap/antenna instances and flow-dependent insertion.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Scoped cell-only rail/well cartoons, corrected filler/netlist recap, and added a verified-width exact-cover checkpoint."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/dpl/README.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 3,
+      "file": "power_grid.html",
+      "title": "Power Grid & Routing Grids",
+      "status": "reviewed and revised",
+      "changes": [
+        "Separated routing-track convention from manufacturing-grid legality.",
+        "Removed universal claims about M2 ownership, exactly two blocked tracks, compulsory ring/order, and automatic DRC cleanliness.",
+        "Added distributed versus far-end current example, local ground significance, and static/dynamic IR distinction."
+      ],
+      "verified_facts": [
+        "HD manufacturing grid 0.005 um; met1 pitch 0.34 um; met2 pitch 0.46 um; met4 sheet resistance 0.047 ohm/square."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://openroad.readthedocs.io/en/latest/main/src/pdn/README.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/drt/README.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/psm/README.html"
+      ],
+      "limitations": [
+        "PDN geometry and current example are illustrative; no extracted network or EM signoff."
+      ]
+    },
+    {
+      "number": 4,
+      "file": "metal_layers.html",
+      "title": "Metal Layers, Vias & Stackup",
+      "status": "reviewed and revised",
+      "changes": [
+        "Replaced generic six-metal stack with SKY130 li1 plus met1–met5 throughout the main figure and role table.",
+        "Corrected licon/li1/mcon path and overbroad always/every-stackup/preferred-direction claims.",
+        "Added an ideal-via-array calculation, limitations, and solved checkpoint."
+      ],
+      "verified_facts": [
+        "HD LEF li1/met1–met5 widths and pitches agree with source.",
+        "Routing LEF does not enumerate every process/package layer."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/assumptions.html"
+      ],
+      "limitations": [
+        "Technology values are pinned to HD revision ac7fb61f. Cross-sections are original teaching diagrams, not fabrication drawings. The worked via resistance is assumed."
+      ]
+    },
+    {
+      "number": 5,
+      "file": "logic_gates.html",
+      "title": "Logic Gates at Transistor Level",
+      "status": "reviewed and revised",
+      "changes": [
+        "Replaced exact-rail and zero-static-current claims with receiver thresholds, VGS/VSG, leakage and crossover current. Scoped CMOS duality. Fixed interactive NAND/NOR internal nodes incorrectly labeled floating despite a conducting pass device.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Aligned settled-current takeaway and leakage SVG label with analog-input/DC-load caveats; corrected NAND internal-node caption and scoped supply/body-pin claim to inv_1."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice",
+        "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect4.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 6,
+      "file": "cell_layout.html",
+      "title": "Inside a Standard Cell Layout",
+      "status": "reviewed and revised",
+      "changes": [
+        "Removed false node-name-equals-gate-length claim; corrected drawn versus effective L, SKY130 contact stack, and shared-diffusion interpretation. Marked conceptual polygons separately from checked LEF rectangles.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Scoped every teaching-layout caption, removed zero-leakage and unverified DRC implications, qualified HD tap strategy and output-capacitance wording, and added view-comparison table plus pin-area/gate-area checkpoint."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/layers.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 7,
+      "file": "drive_strength.html",
+      "title": "Drive Strength & Transistor Sizing",
+      "status": "reviewed and revised",
+      "changes": [
+        "Scoped X-strength/width/current and PMOS mobility approximations, corrected own-input versus upstream-load explanation, verified interpolated delay table and max-capacitance interpretation.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Removed universal resistor/width and widening claims from takeaways; added a checkpoint comparing measured strength-family delay and input-capacitance ratios."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8__tt_025C_1v80.lib.json",
+        "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 8,
+      "file": "gate_topologies.html",
+      "title": "More Gate Topologies",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected latch SVG that shorted storage to its inverter output and reversed feedback connectivity. Added finite switch R/leakage/feedthrough, scoped AOI benefits, removed forever/instant-edge claims, and added charge-injection example.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Qualified transmission-gate labels and AOI/storage takeaways; moved the tri-state OUT label above its wire, widened separation from EN, and changed floating to high-Z. Generated default SVG is to be refreshed by root."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/cells/dfxtp/README.html",
+        "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf",
+        "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect4.pdf"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 9,
+      "file": "cell_template.html",
+      "title": "Cell Template: Tracks, Sites & Edges",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected universal 9T=9 pitches, site=CPP, regular shared-poly and arbitrary-abutment assertions. Preserved verified 0.46×2.72 µm dimensions, manufacturing grid and offset routing example with clear counting scope.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Scoped shared-dummy/half-rule architecture and pair-checking claims; distinguished nominal grid centers from usable routing capacity; added three-grid table and solved track-count checkpoint.",
+        "Matched remaining SVG-generator labels to scoped captions, including local M2 effects, illustrative track conventions and DFF zone heading."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 10,
+      "file": "pin_access.html",
+      "title": "Pin Access & Porosity",
+      "status": "reviewed and revised",
+      "changes": [
+        "Resolved off-track-is-unreachable contradiction; corrected obstruction extent and all-M2-free assertions; verified actual li1 pins and DFXTP obstruction layer list.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Replaced full-track blockage and compulsory-on-track claims in captions/SVG labels/takeaways; added a route-legality checklist table and solved joint-access assignment."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://openroad.readthedocs.io/en/latest/main/src/drt/README.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef",
+        "https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 11,
+      "file": "bigger_cells.html",
+      "title": "Anatomy of a Bigger Cell",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected Euler-trail discussion: parallel PMOS can share continuous diffusion, and verified NAND NMOS order is B then A from ground. Removed false inference from missing LEF OBS to contact-free silicon and universal M2/off-grid claims.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Removed DRC-clean/right-wrong and exact-track-loss claims; scoped contact-free series geometry to the teaching implementation; corrected Euler-trail takeaway; added verified NAND table and topology-tracing checkpoint.",
+        "Matched remaining SVG-generator labels to scoped captions, including local M2 effects, illustrative track conventions and DFF zone heading."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1__tt_025C_1v80.lib.json",
+        "https://openroad.readthedocs.io/en/latest/main/src/drt/README.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 12,
+      "file": "dff_inside.html",
+      "title": "A Flip-Flop from the Inside",
+      "status": "reviewed and revised",
+      "changes": [
+        "Fixed generic DFF forward-path polarity by replacing extra inverter with a 4T noninverting buffer and updating 24T budget. Corrected master-keeper clock phases in polygon figure. Scoped generic zone map/clock/keeper/size claims to topology and verified real 24-device DFXTP data.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Made the chosen teaching budget exactly24T, removed universal scan/reset skeleton claims, included the output buffer in the traced path, aligned conceptual zone labels, and added verified-cell table plus clock-bank loading checkpoint.",
+        "Matched remaining SVG-generator labels to scoped captions, including local M2 effects, illustrative track conventions and DFF zone heading."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/cells/dfxtp/README.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 13,
+      "file": "loads.html",
+      "title": "Loads",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected external-load double counting, input transition capacitance interpretation, SPICE wrapper unit explanation and max-capacitance semantics; verified nominal caps/delay interpolation and added solved fanout+wire example.",
+        "Added the shared sources class and completed a final caption/takeaway consistency sweep.",
+        "Aligned recap with distributed/coupled STA models and the corner-specific, non-timing-guarantee interpretation of max_capacitance."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://vlsida.github.io/chip-tutorials/klayout-lvs.html"
+      ],
+      "limitations": [
+        "Educational circuit/geometry illustrations and first-order calculations. No SPICE PVT sweep, transistor-level LVS, GDS DRC or signoff performed. Exact listed HD values apply only to the cited revision and stated corner."
+      ]
+    },
+    {
+      "number": 14,
+      "file": "liberty.html",
+      "title": "Liberty Files",
+      "status": "reviewed and revised",
+      "changes": [
+        "Distinguished schematic SPICE from characterization/extracted views.",
+        "Corrected default_arc_mode as user-defined metadata, not portable STA switch.",
+        "Restricted 7x7/four-table claims to this inverter.",
+        "Clarified slew spans the crossing and is not added after delay.",
+        "Added source provenance and analog/digital checkpoint."
+      ],
+      "verified_facts": [
+        "inv_1 cap 0.002302 pF; delay/slew tables and axes; 50% delay,20–80% slew; units; interpolation values"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json",
+        "https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf",
+        "https://opensta.readthedocs.io/en/latest/"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 15,
+      "file": "timing.html",
+      "title": "Timing",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected reversed negative-hold internal delay explanation.",
+        "Corrected stable-window polarity pairing and diagram.",
+        "Removed false 0.5 slew derate implies 0–100 claim.",
+        "Separated capture constraint from propagation path delay.",
+        "Qualified fast/slow corner generalizations."
+      ],
+      "verified_facts": [
+        "inv_1 delay/slew and dfxtp_1 constraints confirmed against JSON; second-inverter delay 0.074372 ns confirmed"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf",
+        "https://opensta.readthedocs.io/en/latest/"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 16,
+      "file": "parasitics.html",
+      "title": "Routing Resistance & Parasitics",
+      "status": "reviewed and revised",
+      "changes": [
+        "Separated per-length R/C from total R/C and added table units.",
+        "Corrected RC/2 as Elmore first moment, not exact 50% delay.",
+        "Added driver/wire/end-load formula and double-counting warning.",
+        "Qualified upper-metal and lumped-load claims; added DC analog error example and extraction/probe-name scope."
+      ],
+      "verified_facts": [
+        "All six routing-layer R/C/width/pitch/thickness values cross-checked with official HD technology LEF."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://digicoll.lib.berkeley.edu/record/134469/files/EECS-2006-126.pdf"
+      ],
+      "limitations": [
+        "No parasitic extraction, transistor simulation, or temperature coefficient inferred from this LEF."
+      ]
+    },
+    {
+      "number": 17,
+      "file": "electromigration.html",
+      "title": "Electromigration",
+      "status": "reviewed and revised",
+      "changes": [
+        "Qualified current-per-width limits as a routing-LEF abstraction of cross-sectional current density.",
+        "Removed implication that clock duty or zero signed average proves EM safety.",
+        "Qualified ideal via-count scaling and short-wire/Blech claims.",
+        "Added explicit average/RMS pulse calculation and unresolved peak/temperature checks."
+      ],
+      "verified_facts": [
+        "90°C met1/met2 DC 2.8 and RMS 6.1 mA/µm verified.",
+        "All listed via and upper-metal values verified against pinned HD technology LEF.",
+        "0.48 µm rail yields 1.344 mA average and 2.928 mA RMS under those entries."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef",
+        "https://www.itl.nist.gov/div898/handbook/apr/section1/apr153.htm",
+        "https://doi.org/10.1109/T-ED.1969.16754"
+      ],
+      "limitations": [
+        "The source is HD revision ac7fb61f, not a complete foundry EM signoff deck. Numeric current limits are quoted at 90°C; no higher-temperature derating or lifetime certification is inferred."
+      ]
+    },
+    {
+      "number": 18,
+      "file": "well_taps.html",
+      "title": "Well Taps & Latch-up",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected tap spacing from arbitrary floorplan choice to process-constrained distance and coverage.",
+        "Qualified latch-up prevention, holding current and body-isolation claims.",
+        "Verified all five tap SPICE port lists including two originally not opened.",
+        "Clarified VNB/VPB from actual device connectivity and corrected cross-section implant placement.",
+        "Added body-resistance injection example and checkpoint."
+      ],
+      "verified_facts": [
+        "tapvpwrvgnd_1 is 0.46×2.72 µm CORE WELLTAP and two-port empty SPICE.",
+        "tap_1/tap_2 have VGND VNB VPB VPWR; tapvgnd_1/tapvgnd2_1 omit VNB."
+      ],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.spice",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://openroad.readthedocs.io/en/latest/main/src/tap/README.html",
+        "https://www.analog.com/en/resources/analog-dialogue/articles/winning-the-battle-against-latchup.html"
+      ],
+      "limitations": [
+        "Cell data are from HD revision ac7fb61f and flow names from open-pdks c6df28c1. No universal SKY130 tap pitch or safe injected-current limit is inferred; the body-network calculation is illustrative."
+      ]
+    },
+    {
+      "number": 19,
+      "file": "endcaps.html",
+      "title": "Endcaps",
+      "status": "reviewed and revised",
+      "changes": [
+        "Scoped decap_3 as the selected endcap in the cited flow, not a universal process rule.",
+        "Updated historical/current config terminology.",
+        "Added macro row-fragment coverage, physical-cell comparison and site-area example."
+      ],
+      "verified_facts": [
+        "decap_3 is 1.38×2.72 µm, three sites.",
+        "SPICE has PMOS W/L=0.87/0.59 and NMOS W/L=0.55/0.59 µm used as MOS capacitors."
+      ],
+      "sources": [
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.spice",
+        "https://openroad.readthedocs.io/en/latest/main/src/tap/README.html"
+      ],
+      "limitations": [
+        "HD revision ac7fb61f and open-pdks c6df28c1 are the examples. The lesson does not certify every GDS boundary orientation or derive a universal endcap requirement."
+      ]
+    },
+    {
+      "number": 20,
+      "file": "tie_cells.html",
+      "title": "Tie Cells",
+      "status": "reviewed and revised",
+      "changes": [
+        "Removed unsupported proof-of-diffusion and active-protection inference from antenna metadata.",
+        "Separated raw short-model syntax from physical device and model units.",
+        "Qualified max-capacitance/fanout claims; added 100-load calculation and local-tie diagram.",
+        "Added power-domain/off-state discussion and current/historical config names.",
+        "Made fanout drawing an explicit branched tie net rather than a line through multiple gate blocks."
+      ],
+      "verified_facts": [
+        "conb_1 size, HI/LO functions, TT max_capacitance and leakage metadata verified from pinned source.",
+        "Upstream schematic has two short instances; no combinational timing arcs in the cited JSON."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk/issues/276",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://openroad.readthedocs.io/en/latest/main/src/rsz/README.html"
+      ],
+      "limitations": [
+        "HD revision ac7fb61f supplies the numerical example. The raw source has a known representation discrepancy documented upstream; no tie-output resistance, ESD rating, or analog settling behavior is inferred."
+      ]
+    },
+    {
+      "number": 21,
+      "file": "antenna.html",
+      "title": "Antenna Diodes",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected diode insertion to shunt connection and fixed reversed/floating diode diagram.",
+        "Clarified reverse-bias polarity and analog loading/leakage implications.",
+        "Qualified jumper timing and partial/cumulative antenna checks.",
+        "Flagged missing diffusion area in upstream raw diode LEF; installed abstract must be checked.",
+        "Added explicit side-area/gate-area example and a solved checkpoint.",
+        "Rebuilt jumper-stage figure to show a short lower-metal stub, later upper-metal connection, and subsequent diffusion path without implying a later-stage waiver."
+      ],
+      "verified_facts": [
+        "Layer PWL ratio table agrees with pinned HD LEF.",
+        "diode_2 0.92×2.72 µm, zero gate area, and TT input cap 0.000878 pF verified.",
+        "diode schematic is VNB DIODE diode_pw2nd."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2__tt_025C_1v80.lib.json",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/antenna.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/grt/README.html",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl"
+      ],
+      "limitations": [
+        "Raw cell data are HD revision ac7fb61f. Installed PDKs may generate or patch LEF antenna properties. The side-area example ignores branches, vias, and additional pin geometry and is not signoff."
+      ]
+    },
+    {
+      "number": 22,
+      "file": "decap.html",
+      "title": "Decap Cells",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected capacitor-plate labels and redrew the MOS cross-section.",
+        "Removed unsupported universal leakage-versus-length claim.",
+        "Clarified SPICE suffix arithmetic versus wrapper geometry convention.",
+        "Updated moved OpenLane configuration to current LibreLane names with flow scope.",
+        "Added charge-based decap sizing, ESR/ESL, recharge, and DC limitations."
+      ],
+      "verified_facts": [
+        "All five decap widths, lengths, two-device schematics and CORE LEF classes verified.",
+        "decap_4 TT area 5.0048 and cell_leakage_power 0.003240044; no rail capacitance attribute."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4__tt_025C_1v80.lib.json",
+        "https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf"
+      ],
+      "limitations": [
+        "No cell capacitance/admittance measured; 50 pF example and 5 fF/cell assumption are explicit teaching inputs."
+      ]
+    },
+    {
+      "number": 23,
+      "file": "clock_tree.html",
+      "title": "The Clock Tree",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected clock-skew sign explanation.",
+        "Removed claim generic sketch proves generated tree.",
+        "Updated flow configuration names/wildcard branch buffer scope.",
+        "Separated library maximum load from design constraints and legal fanout.",
+        "Defined jitter more accurately, added clock-power example and glitch-free gating checkpoint."
+      ],
+      "verified_facts": [
+        "clkbuf/clkinv sizes,caps,maxcaps; dfxtp CLK1.794fF;853 count only arithmetic"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/sky130_fd_sc_hd__clkbuf_16__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://openroad.readthedocs.io/en/latest/main/src/cts/README.html"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 24,
+      "file": "scan.html",
+      "title": "Scan",
+      "status": "reviewed and revised",
+      "changes": [
+        "Qualified scan protocol and fault-diagnosis claims.",
+        "Clarified schematic unit/scaling convention.",
+        "Added scan hold,power,analog test coverage and test-time example."
+      ],
+      "verified_facts": [
+        "32MOS,21sites,muxfunction,pin caps,all quoted scan constraints"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.lef",
+        "https://openroad.readthedocs.io/en/latest/main/src/dft/README.html"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 25,
+      "file": "spare_eco.html",
+      "title": "Spare Cells & ECO",
+      "status": "reviewed and revised",
+      "changes": [
+        "Defined ECO broadly and metal-only ECO specifically.",
+        "Flagged hierarchical macro/child positional pin-order mismatch as unusable without verification.",
+        "Added mask-scope/connectivity verification, quantitative timing example,analog coupling impact."
+      ],
+      "verified_facts": [
+        "29 sites,13.34x2.72um,7-cell inventory,LO function0,quotedcap/leakage/antenna values"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2.spice",
+        "https://openroad.readthedocs.io/en/latest/main/src/rsz/README.html"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 26,
+      "file": "level_shifters.html",
+      "title": "Level Shifters",
+      "status": "reviewed and revised",
+      "changes": [
+        "Distinguished voltage metadata from characterized multi-supply combinations.",
+        "Identified TT LOWLVPWR=VPWR1.8V.",
+        "Qualified generic cross-coupled topology as low-high example.",
+        "Added isolation/CDC/stress/power-off distinction and numerical threshold example."
+      ],
+      "verified_facts": [
+        "HD16 devices,6.44x5.44um,inputcap6.005fF,LHmetadata;HVL netlists and LEF geometry"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbufhv2lv/sky130_fd_sc_hvl__lsbufhv2lv_1.spice",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbuflv2hv/sky130_fd_sc_hvl__lsbuflv2hv_1.spice",
+        "https://openroad.readthedocs.io/en/latest/main/src/upf/README.html"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 27,
+      "file": "floorplan.html",
+      "title": "Floorplan",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected universal integer core-boundary assertion to site/row legality.",
+        "Updated config variable names/selectors.",
+        "Replaced arbitrary tap spacing statement with PDK requirements.",
+        "Added physical-area accounting and analog/digital floorplan table."
+      ],
+      "verified_facts": [
+        "unithd0.46x2.72um;tap/endcap defaults;PDN rail width0.48um"
+      ],
+      "sources": [
+        "https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://openroad.readthedocs.io/en/latest/main/src/ifp/README.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/tap/README.html"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 28,
+      "file": "metal_fill.html",
+      "title": "Metal Fill & Cell Fill",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected missing-LEF-keyword inference for met5/li1 and process density.",
+        "Qualified generic CMP drawing and cell-gap claims.",
+        "Added floating/grounded fill and matching discussion, RC pole example and post-fill extraction requirement."
+      ],
+      "verified_facts": [
+        "LEF MAXIMUMDENSITY 70, 700×700 µm window, 70 µm step occur on met1–met4.",
+        "Those entries do not encode all process density/slotting rules."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/fin/README.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html"
+      ],
+      "limitations": [
+        "HD routing values are pinned to ac7fb61f. The generic CMP picture and worked added-capacitance example illustrate mechanisms; they do not establish a fill recipe or extracted SKY130 result."
+      ]
+    },
+    {
+      "number": 29,
+      "file": "io_ring.html",
+      "title": "The I/O Ring",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected PAD access geometry vs bond opening distinction.",
+        "Scoped upstream masters and added ef_io extension/wrapper distinction.",
+        "Corrected side-ring drawing to pair power and ground pads as its own text requires.",
+        "Explained multi-supply interfaces, OBS limitations and perimeter arithmetic."
+      ],
+      "verified_facts": [
+        "Pinned IO top_gpiov2 CLASS PAD, SIZE80×200, symmetry X Y R90 and 39 pins verified.",
+        "Listed HV/LV power and ground dimensions, corner200×203.665, and VDDIO/VSSIO access rectangles verified.",
+        "I/O guide pairing restriction and 1.71–5.5 V general I/O range verified; applicability depends on cell/mode."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/corner_bus_overlay/sky130_fd_io__corner_bus_overlay.lef",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_ef_io/config.tcl"
+      ],
+      "limitations": [
+        "I/O revision 63752cd9 is the numerical example. Figures are schematic; wrapper dimensions and legal abutments are specific to the installed kit. The general I/O range is not permission to apply 5.5 V to thin-oxide core pins."
+      ]
+    },
+    {
+      "number": 30,
+      "file": "esd_clamps.html",
+      "title": "ESD & Clamps",
+      "status": "reviewed and revised",
+      "changes": [
+        "Separated RC trigger from the main high-current clamp device.",
+        "Scoped guide3.3kV statement to clamp robustness rather than finished-chip qualification.",
+        "Distinguished normal input voltage, HBM, CDM and system-level ESD.",
+        "Rebuilt overlapping first diagram; added charge/current/energy and analog150Ω settling examples.",
+        "Rebuilt HBM discharge circuit with a charged capacitor, discharge switch, series resistor, DUT pin pair, and explicit return path."
+      ],
+      "verified_facts": [
+        "I/O guide3.3kV HBM statement,150Ω analog access,2µs trigger and2880µm driver notes verified.",
+        "All four power/ground clamp pad sizes and relevant LEF pins verified.",
+        "ESDA simplified HBM100pF1.5kΩ verified."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_hvc_wpad/sky130_fd_io__top_power_hvc_wpad.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_lvc_wpad/sky130_fd_io__top_power_lvc_wpad.lef",
+        "https://www.esda.org/esd-overview/esd-fundamentals/part-5-device-sensitivity-and-testing/"
+      ],
+      "limitations": [
+        "Guide and cell values are from IO revision63752cd9. The lesson does not establish complete-chip HBM/CDM qualification. Electrical examples use simplified networks and explicitly assumed normal-operation loads."
+      ]
+    },
+    {
+      "number": 31,
+      "file": "io_fill.html",
+      "title": "I/O Fill",
+      "status": "reviewed and revised",
+      "changes": [
+        "Replaced misleading public-library-no-filler generalization with fd_io versus ef_io distinction.",
+        "Verified real bus-slice classes and 1/5/10/20 µm widths and 197.965 µm height.",
+        "Added gap decomposition diagram, full-ring parallel-path caveat and domain-disconnect warning."
+      ],
+      "verified_facts": [
+        "All four ef_io PAD SPACER LEFs and configured PAD_FILLERS list inspected.",
+        "Upstream overlay dimensions 75×200 and75×198 µm verified."
+      ],
+      "sources": [
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_ef_io/config.tcl",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_1um.lef",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_5um.lef",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_10um.lef",
+        "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_20um.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst"
+      ],
+      "limitations": [
+        "Dimensions are from open-pdks c6df28c1. This is a compatible-kit example, not permission to mix arbitrary raw I/O masters, wrappers, or domains. The 37 µm gap is assumed."
+      ]
+    },
+    {
+      "number": 32,
+      "file": "rdl.html",
+      "title": "RDL Routing",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected false inference that RDL absence in HD LEF means absence from the broader SKY130 process.",
+        "Replaced bond-opening claim with LEF electrical-access distinction and fixed x/y-scale error.",
+        "Added actual scoped WLCSP examples (400/500 µm pitch,10/10 µm RDL width/space).",
+        "Corrected assumption of direct core-pin-to-pad metal and single-layer-only RDL.",
+        "Added package connection diagram, corridor-width calculation and R/L nonideality examples."
+      ],
+      "verified_facts": [
+        "GPIO PAD met5 rectangle 21.540×21.545 µm and 52.985 µm top offset verified.",
+        "Published Amkor WLCSP table contains 400/500 µm pitches and 10 µm minimum RDL width/spacing."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html#rdl",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/wlcsp.html",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst"
+      ],
+      "limitations": [
+        "I/O geometry uses revision63752cd9; HD LEF uses ac7fb61f. Package-table values are option-specific documentation, not a promise of shuttle/package availability. R/L examples are assumed electrical models."
+      ]
+    },
+    {
+      "number": 33,
+      "file": "io_power.html",
+      "title": "I/O Power & IR Drop",
+      "status": "reviewed and revised",
+      "changes": [
+        "Removed unjustified exact resistance-per-cell inference from LEF edge rectangles.",
+        "Removed transfer of AMUX1mA note into supply-current recommendation.",
+        "Separated VDDIO from core and analog supplies.",
+        "Added distributed-load network calculation, return-path error, inductive transient example and static-analysis limitations.",
+        "Replaced misleading constant-current diagram and added geometry/assumption tables."
+      ],
+      "verified_facts": [
+        "GPIO VDDIO edge rectangle1.27×24.965µm and met4 sheet0.047Ω/sq verified.",
+        "0.151Ω is valid only for assumed full80µm uniform strip of that width.",
+        "Guide1mA statement concerns AMUX."
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst",
+        "https://openroad.readthedocs.io/en/latest/main/src/psm/README.html"
+      ],
+      "limitations": [
+        "Source revisions are IO63752cd9 and HDac7fb61f. All full-width pad-bus and package R/L models are explicitly assumed; the actual I/O network was not extracted. EM entries are not a resistance-temperature specification."
+      ]
+    },
+    {
+      "number": 34,
+      "file": "setup_hold.html",
+      "title": "Setup & Hold",
+      "status": "reviewed and revised",
+      "changes": [
+        "Corrected negative-hold explanation and valid-window transition polarities.",
+        "Rebuilt setup/hold numerical path with propagated slew and physically consistent total loads.",
+        "Evaluated both data polarities.",
+        "Clarified early/late launch/capture clock signs and corner requirements.",
+        "Corrected hold slack sign in takeaways; TNS per endpoint.",
+        "Explained high/low minimum pulse-width constraints."
+      ],
+      "verified_facts": [
+        "All 36 setup/hold TT entries checked; interpolated setup0.141871 ns checked; slew-propagated worst shown nominal setup budget0.5289887ns"
+      ],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+        "https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf",
+        "https://opensta.readthedocs.io/en/latest/",
+        "https://github.com/parallaxsw/OpenSTA/blob/master/include/sta/Liberty.hh"
+      ],
+      "limitations": [
+        "Educational models and archived characterization data; no PDK qualification, silicon validation, or project signoff."
+      ]
+    },
+    {
+      "number": 35,
+      "file": "analog_bias.html",
+      "title": "MOSFET Bias, Gain & Headroom",
+      "status": "new lesson",
+      "changes": [
+        "MOS operating regions, overdrive, transconductance, output resistance and voltage headroom.",
+        "Assumed 1.8 V common-source stage, finite-output-resistance mirror error, startup and a practical interface handoff."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec10/",
+        "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec19/",
+        "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec25/",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect4.pdf"
+      ],
+      "limitations": [
+        "No analog transistor schematic was simulated or sized in the SKY130 PDK. The examples teach approximations, model checks and required analyses, not a characterized circuit."
+      ]
+    },
+    {
+      "number": 36,
+      "file": "feedback_stability.html",
+      "title": "Feedback & Stability",
+      "status": "new lesson",
+      "changes": [
+        "Loop gain, closed-loop gain, phase margin and the effect of a load pole.",
+        "Analytical Bode plots and an interactive pole calculator; injection assumptions, slew and settling limits."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://www.ti.com/lit/pdf/sbaa767",
+        "https://wiki.analog.com/university/courses/electronics/electronics-lab-loop-gain",
+        "https://www.analog.com/en/resources/analog-dialogue/articles/techniques-to-avoid-instability-capacitive-loading.html",
+        "https://www.analog.com/en/resources/analog-dialogue/articles/ask-the-applications-engineer-25.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ],
+      "limitations": [
+        "Bode plots and slider calculate an explicit pedagogical rational transfer function, not a SKY130 amplifier. No real circuit stability, startup or PVT validation is claimed."
+      ]
+    },
+    {
+      "number": 37,
+      "file": "cdc_reset.html",
+      "title": "Clock-Domain Crossings & Reset",
+      "status": "new lesson",
+      "changes": [
+        "Metastability, missed pulses, multi-bit coherency and request/acknowledge or FIFO choices.",
+        "Asynchronous assertion, synchronized reset release, recovery/removal and analog comparator interfaces.",
+        "New lesson37: analog metastability, reliability versus information delivery, event and word crossings, reset timing and comparator interface."
+      ],
+      "verified_facts": [
+        "SKY130 dfrtp_1 clear=!RESET_B, clocked_on CLK, recovery_rising/removal_rising/min_pulse_width arcs confirmed from pinned JSON.",
+        "Illustrative exp(200ps/20ps)=22026.5 sensitivity; 2ns pulse can miss10ns destination edges."
+      ],
+      "sources": [
+        "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+        "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+        "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfrtp/sky130_fd_sc_hd__dfrtp_1__tt_025C_1v80.lib.json"
+      ],
+      "limitations": [
+        "No SKY130 metastability parameters or MTBF claimed; protocols and reset architectures require design-specific verification."
+      ]
+    },
+    {
+      "number": 38,
+      "file": "converters.html",
+      "title": "ADC & DAC Interfaces",
+      "status": "new lesson",
+      "changes": [
+        "ADC/DAC code conventions, ideal quantization, SNR, SINAD/ENOB, INL/DNL and architecture tradeoffs.",
+        "Acquisition, reference charge, a settling calculator and coherent delivery of digital results.",
+        "New lesson38: quantization conventions, SNR/SINAD/ENOB, acquisition, reference charge, DNL/INL, error accounting, architecture and CDC interfaces."
+      ],
+      "verified_facts": [
+        "10bit/1.8V LSB1.7578125mV,q/sqrt12=.5074mV; SNR61.96dB; SINAD56dB→ENOB9.01.",
+        "Assumed RC10ns: half-LSB settling >76.246ns;50ns gives6.89966LSB.",
+        "10pC/22nF=.4545mV; independent .20/.15LSB noise=.25LSB, plus ideal quantization RMS=.38188LSB."
+      ],
+      "sources": [
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-001.pdf",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf",
+        "https://www.ti.com/lit/an/sbaa173/sbaa173.pdf",
+        "https://www.analog.com/en/resources/app-notes/an-835.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ],
+      "limitations": [
+        "All converter-specific numbers assumed; no SKY130 ADC/DAC or ENOB specification asserted."
+      ]
+    },
+    {
+      "number": 39,
+      "file": "noise_mismatch.html",
+      "title": "Noise, Mismatch & Variation",
+      "status": "new lesson",
+      "changes": [
+        "Thermal/flicker noise, noise bandwidth, kT/C, fixed mismatch, process variation and statistical assumptions.",
+        "Worked noise and capacitor-area budgets, common-centroid limitations and an interactive kT/C calculator."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-047.pdf",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/11/45/managing-noise-in-the-signal-chain-part-2-noise-and-distortion-in-data-converters.html",
+        "https://docenti.ing.unipi.it/~a008309/mat_stud/PSM/Archive/2017/Optional_Material/Pelgrom_JSSC_1989_Original_paper_on_Matching.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://github.com/google/skywater-pdk/issues/309"
+      ],
+      "limitations": [
+        "Original analytical examples, not transistor-level simulation or silicon measurements."
+      ]
+    },
+    {
+      "number": 40,
+      "file": "sampling_aliasing.html",
+      "title": "Sampling, Aliasing & Settling",
+      "status": "new lesson",
+      "changes": [
+        "Aliasing, analog anti-alias filtering, acquisition time, charge injection, leakage and clock jitter.",
+        "Analytical alias and settling plots, a frequency calculator, and explicitly assumed switch-error examples."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-002.pdf",
+        "https://www.analog.com/en/resources/technical-articles/high-speed-adc-sampling-transients.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-007.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ],
+      "limitations": [
+        "Original analytical examples, not transistor-level simulation or silicon measurements."
+      ]
+    },
+    {
+      "number": 41,
+      "file": "crosstalk_return_paths.html",
+      "title": "Crosstalk, Return Paths & Isolation",
+      "status": "new lesson",
+      "changes": [
+        "Finite-edge capacitive coupling, victim impedance, shared return voltage and substrate paths.",
+        "Calculated transient plots and an interactive coupling estimate; shielding and isolation tradeoffs."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://www.analog.com/en/resources/technical-articles/effects-of-digital-crosstalk-in-data-converters-part-one.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-031.pdf",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html"
+      ],
+      "limitations": [
+        "Original analytical examples, not transistor-level simulation or silicon measurements."
+      ]
+    },
+    {
+      "number": 42,
+      "file": "mixed_signal_verification.html",
+      "title": "Mixed-Signal Verification & Bring-Up",
+      "status": "new lesson",
+      "changes": [
+        "Which properties are checked by RTL, STA, SPICE, extraction, DRC/LVS and mixed-signal tests.",
+        "A concrete interface contract, power/reset/ready sequence, reference-settling budget and bring-up scenarios."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/contents/file_types.html",
+        "https://skywater-pdk.readthedocs.io/en/main/verification.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/sta/README.html",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf"
+      ],
+      "limitations": [
+        "Original analytical examples, not transistor-level simulation or silicon measurements."
+      ]
+    },
+    {
+      "number": 43,
+      "file": "differential_pairs.html",
+      "title": "Differential Pairs, Common Mode & CMFB",
+      "status": "new in lab edition",
+      "changes": [
+        "Differential and common-mode signals, current steering, gain, headroom, and CMFB.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+        "https://www.ti.com/lit/pdf/sloa054",
+        "https://www.ti.com/lit/pdf/snoa506"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 44,
+      "file": "references_startup.html",
+      "title": "References, Temperature & Startup",
+      "status": "new in lab edition",
+      "changes": [
+        "PTAT/CTAT references, temperature compensation, multiple equilibria, startup and brownout.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html#bipolar-pnp-transistor",
+        "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 45,
+      "file": "rtl_synthesis_constraints.html",
+      "title": "RTL, Synthesis & Timing Constraints",
+      "status": "new in lab edition",
+      "changes": [
+        "Translate RTL into library cells; understand real timing constraints and inference.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+        "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/xor2/sky130_fd_sc_hd__xor2_1.lef",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 46,
+      "file": "clock_gating_power_states.html",
+      "title": "Clock Gating & Power States",
+      "status": "new in lab edition",
+      "changes": [
+        "Clock gating, enables, reset, retention, isolation, and restart contracts.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 47,
+      "file": "matching_layout_extraction.html",
+      "title": "Matching, Layout & Extracted Netlists",
+      "status": "new in lab edition",
+      "changes": [
+        "Common-centroid limits, device surroundings, parasitics, and reliable post-layout probes.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.opencircuitdesign.com/magic/commandref/extresist.html"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 48,
+      "file": "power_package_thermal.html",
+      "title": "Power, Package & Thermal Coupling",
+      "status": "new in lab edition",
+      "changes": [
+        "Supply impedance, package inductance, decoupling resonance, and temperature coupling.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+        "https://www.ti.com/lit/an/spra953d/spra953d.pdf"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 49,
+      "file": "calibration_trim.html",
+      "title": "Calibration, Trimming & Testability",
+      "status": "new in lab edition",
+      "changes": [
+        "Trim range and resolution, offset/gain correction, temperature curvature, and testability.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/en/resources/technical-articles/methods-for-calibrating-gain-error-in-dataconverter-systems.html",
+        "https://www.ti.com/lit/an/spraad8a/spraad8a.pdf"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    },
+    {
+      "number": 50,
+      "file": "spectral_measurements.html",
+      "title": "FFT, Noise & Distortion Measurements",
+      "status": "new in lab edition",
+      "changes": [
+        "Coherent captures, FFT scaling, windows, SNR, SINAD, harmonics, and noise bandwidth.",
+        "Original diagrams, tables, worked examples and solved checks."
+      ],
+      "verified_facts": [],
+      "sources": [
+        "https://docs.scipy.org/doc/scipy-1.17.0/reference/generated/scipy.signal.periodogram.html",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://numpy.org/doc/2.3/reference/routines.fft.html",
+        "https://www.analog.com/en/resources/app-notes/an-835.html",
+        "https://www.analog.com/en/resources/technical-articles/coherent-sampling-vs-window-sampling.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf"
+      ],
+      "limitations": [
+        "Illustrative equations and examples are labeled; actual simulation evidence is in linked labs with specific models and conditions."
+      ]
+    }
+  ],
+  "labs": [
+    {
+      "number": 1,
+      "file": "lab_inverter_characterization.html",
+      "title": "Characterize a SKY130 Inverter",
+      "folder": "L01_inverter",
+      "run": "run.py",
+      "readme": "README.txt",
+      "prereqs": [
+        5,
+        13,
+        14,
+        15
+      ],
+      "scope": "18 actual SKY130 transistor benches, each with DC and transient analysis.",
+      "tools": "Python, NumPy, Matplotlib, ngspice",
+      "outputs": "DC transfer, delay/slew, supply current/energy; comparison with archived Liberty."
+    },
+    {
+      "number": 2,
+      "file": "lab_bias_amplifier.html",
+      "title": "Bias, Gain & Startup",
+      "folder": "L02_bias_amplifier",
+      "run": "run_lab.py",
+      "readme": "README.md",
+      "prereqs": [
+        35,
+        36,
+        43,
+        44
+      ],
+      "scope": "35 nominal SKY130 MOS benches plus six explicitly behavioral startup benches.",
+      "tools": "Python and ngspice",
+      "outputs": "Mirror compliance, gm/gds, amplifier AC/transient response, ramps and brownout."
+    },
+    {
+      "number": 3,
+      "file": "lab_sampling_interface.html",
+      "title": "Sampling Switches & Reference Loading",
+      "folder": "L03_sampling_interface",
+      "run": "run.py",
+      "readme": "README.txt",
+      "prereqs": [
+        38,
+        39,
+        40
+      ],
+      "scope": "57 ideal/MOS acquisition benches and three assumed reference-load RLC benches.",
+      "tools": "Python, NumPy, Matplotlib, ngspice",
+      "outputs": "Pre/post-opening errors, hold change, source impedance, reference ripple and recovery."
+    },
+    {
+      "number": 4,
+      "file": "lab_layout_extraction.html",
+      "title": "Geometry, Parasitics & Probe Mapping",
+      "folder": "L04_layout_extraction",
+      "run": "run_lab.py",
+      "readme": "README.md",
+      "prereqs": [
+        16,
+        28,
+        41,
+        47,
+        48
+      ],
+      "scope": "Four teaching geometries, eight actual RC-network SPICE transients, refinement and independent solver checks.",
+      "tools": "Python; ngspice or built-in numerical solver",
+      "outputs": "RC networks, geometry images, coordinate/probe maps, delay, coupling, and mismatch."
+    },
+    {
+      "number": 5,
+      "file": "lab_mixed_signal_integration.html",
+      "title": "Mixed-Signal Integration Across Clocks & Power Events",
+      "folder": "L05_mixed_signal_integration",
+      "run": "run.py",
+      "readme": "README.md",
+      "prereqs": [
+        34,
+        37,
+        42,
+        45,
+        46
+      ],
+      "scope": "Three digital clock configurations, a deliberate failing negative control, and a separate mapped/equivalent RTL example.",
+      "tools": "Python and Icarus Verilog; optional Yosys/ABC",
+      "outputs": "Self-checking transactions, accepted/delivered/aborted counts, restart tests, and synthesis evidence."
+    }
+  ]
+}

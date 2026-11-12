@@ -1,0 +1,132 @@
+{
+  "status": "actually_executed",
+  "corner": "tt",
+  "temperature_c": 25,
+  "supply_v": 1.8,
+  "reference_current_a": 2e-05,
+  "geometry_scope": "W/L are supported model-bin values in micrometres. Source/drain rectangles assume0.29um extension; no layout extraction.",
+  "startup_scope": "Separate phenomenological ODE; no SKY130 transistor or bandgap performance is inferred.",
+  "mirror": {
+    "long": {
+      "width_um": 5,
+      "length_um": 1.0,
+      "gate_bias_v": 0.759158630107024,
+      "output_current_at_0p9v_a": 2.019208843460262e-05,
+      "ratio_at_0p9v": 1.009604421730131,
+      "within_5pct_of_20uA_intervals_v": [
+        [
+          0.2850000000000001,
+          1.569999999999989
+        ]
+      ],
+      "rout_near_0p9v_ohm": 758919.2746829172,
+      "sweep_step_v": 0.005
+    },
+    "short": {
+      "width_um": 5,
+      "length_um": 0.15,
+      "gate_bias_v": 0.7059935322187053,
+      "output_current_at_0p9v_a": 2.338555337630392e-05,
+      "ratio_at_0p9v": 1.169277668815196,
+      "within_5pct_of_20uA_intervals_v": [
+        [
+          0.6500000000000005,
+          0.7600000000000006
+        ]
+      ],
+      "rout_near_0p9v_ohm": 57644.16679381468,
+      "sweep_step_v": 0.005
+    }
+  },
+  "amplifier": {
+    "bias_input_v": 0.7570107936859132,
+    "bias_mode": "calibrated_to_0p9v_output_at_this_corner",
+    "operating_point": {
+      "scale": 1.8,
+      "vin_value": 0.757010793686,
+      "vout": 0.9000002587003693,
+      "vbiasp": 0.4400801702102544,
+      "id_n": 1.973897517497533e-05,
+      "id_p": 1.973897517497532e-05,
+      "supply_current": 3.973897517492442e-05
+    },
+    "perturbation_v": 0.0001,
+    "gm_n_s": 0.00020962066742355478,
+    "gds_n_s": 1.2959248586994789e-06,
+    "gds_p_s": 6.92891696607936e-07,
+    "ro_n_ohm": 771649.6780558301,
+    "ro_p_ohm": 1443226.9933317404,
+    "predicted_low_frequency_gain_v_per_v": -105.39969956713949,
+    "ac_1pF": {
+      "gain_at_10hz_v_per_v": -105.3997011810606,
+      "magnitude_at_10hz": 105.3997012344719,
+      "bandwidth_3db_hz": 314155.84120215074
+    },
+    "ac_10pF": {
+      "gain_at_10hz_v_per_v": -105.3996907519383,
+      "magnitude_at_10hz": 105.3996960199565,
+      "bandwidth_3db_hz": 31629.032377436743
+    },
+    "ac_vs_dc_derivative_relative_error": 1.5312388246258024e-08,
+    "transient_small": {
+      "input_amplitude_v": 0.0005,
+      "frequency_hz": 10000,
+      "output_min_last_two_cycles_v": 0.8472926752782611,
+      "output_max_last_two_cycles_v": 0.9525495469492401,
+      "amplitude_ratio_last_two_cycles": 105.25687167097897,
+      "ratio_scope": "Peak-to-peak amplitude ratio, not a distortion or linear-gain measurement for the large case."
+    },
+    "transient_large": {
+      "input_amplitude_v": 0.05,
+      "frequency_hz": 10000,
+      "output_min_last_two_cycles_v": 0.09683983257845538,
+      "output_max_last_two_cycles_v": 1.702541264867945,
+      "amplitude_ratio_last_two_cycles": 16.057014322894894,
+      "ratio_scope": "Peak-to-peak amplitude ratio, not a distortion or linear-gain measurement for the large case."
+    }
+  },
+  "behavioral_startup": {
+    "no_startup": {
+      "initial_normalized_state": 0,
+      "final_reference_v": 0.0,
+      "first_99pct_crossing_s": null,
+      "after_brownout_99pct_crossing_s": null,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    },
+    "forced_initial": {
+      "initial_normalized_state": 0.8,
+      "final_reference_v": 1.199999999999993,
+      "first_99pct_crossing_s": 0.0002569839999999995,
+      "after_brownout_99pct_crossing_s": null,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    },
+    "fast_ramp": {
+      "initial_normalized_state": 0,
+      "final_reference_v": 1.199999999999993,
+      "first_99pct_crossing_s": 0.0004918457848614314,
+      "after_brownout_99pct_crossing_s": null,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    },
+    "slow_ramp": {
+      "initial_normalized_state": 0,
+      "final_reference_v": 1.199999999999993,
+      "first_99pct_crossing_s": 0.0009364008933747569,
+      "after_brownout_99pct_crossing_s": null,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    },
+    "brownout_rearmed": {
+      "initial_normalized_state": 0,
+      "final_reference_v": 1.199999999999994,
+      "first_99pct_crossing_s": 0.0004918457848614314,
+      "after_brownout_99pct_crossing_s": 0.002992224593216775,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    },
+    "brownout_timed_kick": {
+      "initial_normalized_state": 0,
+      "final_reference_v": 1.782845192076357e-11,
+      "first_99pct_crossing_s": 0.0004918457848613786,
+      "after_brownout_99pct_crossing_s": null,
+      "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+    }
+  }
+}

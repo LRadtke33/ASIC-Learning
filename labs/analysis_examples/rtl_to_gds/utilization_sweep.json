@@ -1,0 +1,204 @@
+{
+  "design": "spm (LibreLane bundled 32-bit sequential multiplier)",
+  "librelane": "3.0.17",
+  "pdk": "sky130A ciel 8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+  "library": "sky130_fd_sc_hd",
+  "clock_period_ns": 10,
+  "runs": {
+    "30": {
+      "tag": "util30",
+      "FP_CORE_UTIL": 30,
+      "to": "Odb.ReportWireLength",
+      "die_um": [
+        115.83,
+        126.55
+      ],
+      "die_area_um2": 14658.3,
+      "core_area_um2": 10792.9,
+      "gpl_utilization_pct": 34.54,
+      "gpl_target_density": 0.42147,
+      "gpl_min_feasible": 0.35,
+      "gpl_overflow_start": 0.8487,
+      "gpl_overflow_end": 0.0999,
+      "gpl_hpwl_um": [
+        1910.026,
+        4197.748
+      ],
+      "gpl_iter": 397,
+      "grt_usage_pct": 11.71,
+      "grt_met2_pct": 23.27,
+      "grt_overflow": [
+        0,
+        0,
+        0
+      ],
+      "grt_wl_um": 10791,
+      "drt_drc_iters": [
+        43,
+        16,
+        0
+      ],
+      "drt_wl_um": 6613,
+      "drt_wl_layers_um": {
+        "li1": 0,
+        "met1": 2526,
+        "met2": 4007,
+        "met3": 30,
+        "met4": 48,
+        "met5": 0
+      },
+      "drt_vias": 1980,
+      "longest_net_um": 185.66,
+      "final_inst_util": 0.424646,
+      "route_drc_final": 0,
+      "gds_signoff": false
+    },
+    "45": {
+      "tag": "RUN_2026-11-11_16-09-06",
+      "FP_CORE_UTIL": 45,
+      "to": "full flow including Magic/KLayout/Netgen signoff",
+      "die_um": [
+        96.6,
+        107.32
+      ],
+      "die_area_um2": 10367.1,
+      "core_area_um2": 7214.42,
+      "core_bbox": [
+        5.52,
+        10.88,
+        91.08,
+        95.2
+      ],
+      "rows": 31,
+      "gpl_utilization_pct": 52.04,
+      "gpl_target_density": 0.573812,
+      "gpl_min_feasible": 0.53,
+      "gpl_overflow_start": 0.8623,
+      "gpl_overflow_end": 0.099,
+      "gpl_hpwl_um": [
+        1778.559,
+        3827.5
+      ],
+      "gpl_iter": 397,
+      "gpl_bins": [
+        16,
+        16
+      ],
+      "gpl_bin_um": [
+        5.348,
+        5.27
+      ],
+      "grt_usage_pct": 15.6,
+      "grt_met2_pct": 31.54,
+      "grt_layer": {
+        "li1": [
+          0,
+          0,
+          0
+        ],
+        "met1": [
+          1881,
+          352,
+          18.71
+        ],
+        "met2": [
+          1687,
+          532,
+          31.54
+        ],
+        "met3": "0.38%",
+        "met4": "2.44%",
+        "met5": "0%"
+      },
+      "grt_overflow": [
+        0,
+        0,
+        0
+      ],
+      "grt_wl_um": 10695,
+      "grt_vias": 2057,
+      "drt_drc_iters": [
+        19,
+        4,
+        0
+      ],
+      "drt_wl_um": 6508,
+      "drt_wl_layers_um": {
+        "li1": 0,
+        "met1": 2524,
+        "met2": 3846,
+        "met3": 29,
+        "met4": 108,
+        "met5": 0
+      },
+      "drt_vias": 1991,
+      "longest_net_um": 173.355,
+      "final_inst_util": 0.630246,
+      "fill_cells": 803,
+      "stdcell_count": 423,
+      "stdcell_area": 4546.86,
+      "route_drc_final": 0,
+      "magic_drc": 0,
+      "klayout_drc": 0,
+      "xor": 0,
+      "lvs": "Circuits match uniquely. 328 devices, 361 nets.",
+      "antenna_nets": 0,
+      "setup_ws_ns_max_ss": 3.590931,
+      "hold_ws_ns_min_ff": 0.253127,
+      "gds_signoff": true,
+      "gds_magic_bytes": 702348,
+      "gds_klayout_bytes": 386238
+    },
+    "60": {
+      "tag": "util60",
+      "FP_CORE_UTIL": 60,
+      "to": "Odb.ReportWireLength",
+      "die_um": [
+        85.14,
+        95.86
+      ],
+      "die_area_um2": 8161.52,
+      "core_area_um2": 5438.97,
+      "gpl_utilization_pct": 69.349,
+      "gpl_target_density": 0.722268,
+      "gpl_min_feasible": 0.7,
+      "gpl_overflow_start": 0.7354,
+      "gpl_overflow_end": 0.0996,
+      "gpl_hpwl_um": [
+        1751.797,
+        3038.424
+      ],
+      "gpl_iter": 307,
+      "gpl_overflowed_tiles_routability": "1 (0.64%) mid-routability; final GRT overflow 0",
+      "grt_usage_pct": 24.7,
+      "grt_met2_pct": 43.28,
+      "grt_overflow": [
+        0,
+        0,
+        0
+      ],
+      "grt_wl_um": 12323,
+      "grt_vias": 2313,
+      "drt_drc_iters": [
+        95,
+        15,
+        21,
+        0
+      ],
+      "drt_wl_um": 7613,
+      "drt_wl_layers_um": {
+        "li1": 0,
+        "met1": 2886,
+        "met2": 4025,
+        "met3": 286,
+        "met4": 414,
+        "met5": 0
+      },
+      "drt_vias": 2136,
+      "longest_net_um": 139.72,
+      "final_inst_util": 0.825627,
+      "route_drc_final": 0,
+      "gds_signoff": false
+    }
+  }
+}

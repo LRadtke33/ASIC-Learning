@@ -1,0 +1,179 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level Shifters</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 54 / 84 · Part VI, Physical cells and the floorplan</p><h1>Level Shifters</h1>
+  <p class="subtitle">A signal crossing supply domains needs a verified interface: compatible logic thresholds and device stress limits, or an appropriate level shifter. This library has two different shifters. They are not the same voltage.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The HD cell is <code>lpflow_lsbuf_lh_isowell_tap_1</code>: LEF, schematic spice, and <code>tt_025C_1v80</code>. The high-voltage cells are <code>sky130_fd_sc_hvl__lsbufhv2lv_1</code> and <code>lsbuflv2hv_1</code>: LEF and schematic spice. HVL delays are not quoted here; they come from the HVL library’s own Liberty files. The 5&nbsp;V note is the foundry library page.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Decide when a signal crossing supply domains needs a level shifter.</li><li>Compare the SKY130 HD shifter with the HVL cells that cross between 5 V and 1.8 V devices.</li><li>Keep voltage translation, isolation and clock-domain crossing as separate checks.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Planned in <a href="design_flow.html#step-1">step 1, specification</a>, instantiated in <a href="design_flow.html#step-2">step 2, RTL and simulation</a> or <a href="design_flow.html#step-3">step 3, synthesis</a>, and placed between supply domains in <a href="design_flow.html#step-4">step 4, floorplan and power grid</a> and <a href="design_flow.html#step-5">step 5, placement</a>.</dd><dt>Tools</dt><dd>Commercial flows insert and check them from a UPF power-intent file; in LibreLane’s default flow they are instantiated in the RTL.</dd><dt>Why it matters</dt><dd>A signal crossing between supply voltages can be misread, or can overstress the receiving transistors.</dd></dl></aside><h2 id="section-1">1. Two supplies, one buffer</h2>
+  <p>A source output swing may not satisfy the destination’s input-high threshold, or may exceed its allowed terminal voltage. A level shifter is designed for a specified pair of supply domains. Device connections vary by architecture; not every input device is simply powered by the source rail. The cells discussed here preserve the logic value while changing the output voltage domain.</p>
+  <p>
+    The foundry note says the HD library provides multi-voltage cells, and
+    that the high-voltage library, <code>sky130_fd_sc_hvl</code>, is the one
+    with 5&nbsp;V devices. Keep those apart. The HD shifter below stays inside
+    the 1.8&nbsp;V device family. The HVL shifters are the ones that use the
+    5&nbsp;V transistors.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Two shifters, two libraries. Left: the HD
+      cell, 6.44 × 5.44&nbsp;µm, recorded voltage-range metadata of 1.2–2.1&nbsp;V (the cited TT file has both rails at 1.8&nbsp;V), 1.8&nbsp;V devices. Right: the HVL pair. High side uses
+      g5v0d10v5 transistors. Low side uses the 1.8&nbsp;V devices
+      on LVPWR."><rect x="30" y="24" width="320" height="160" rx="8" fill="#f7f9fb" stroke="#4a72c4" stroke-width="2"></rect><text x="190" y="52" text-anchor="middle" font-size="15" font-weight="700" fill="#4a72c4">HD, 1.8 V family</text><text x="190" y="84" text-anchor="middle" font-size="13" fill="#33414f">6.44 × 5.44 µm</text><text x="190" y="108" text-anchor="middle" font-size="13" fill="#33414f">LOWLVPWR and VPWR</text><text x="190" y="132" text-anchor="middle" font-size="13" fill="#33414f">also a well tap</text><rect x="390" y="24" width="320" height="160" rx="8" fill="#f7f9fb" stroke="#c0564a" stroke-width="2"></rect><text x="550" y="52" text-anchor="middle" font-size="15" font-weight="700" fill="#c0564a">HVL, 5 V devices</text><text x="550" y="84" text-anchor="middle" font-size="13" fill="#33414f">8.16 or 10.56 × 8.14 µm</text><text x="550" y="108" text-anchor="middle" font-size="13" fill="#33414f">g5v0 side and LVPWR side</text><text x="550" y="132" text-anchor="middle" font-size="13" fill="#33414f">no delay quoted</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Two shifters, two libraries.</strong> Left: the HD
+      cell, 6.44 × 5.44&nbsp;µm, recorded voltage-range metadata of 1.2–2.1&nbsp;V (the cited TT file has both rails at 1.8&nbsp;V), 1.8&nbsp;V devices. Right: the HVL pair. High side uses
+      <code>g5v0d10v5</code> transistors. Low side uses the 1.8&nbsp;V devices
+      on <code>LVPWR</code>.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The HD shifter is also a well tap</h2>
+  <p>
+    <code>sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1</code> is class
+    <code>CORE WELLTAP</code>, site name <code>unithd</code>,
+    <code>SIZE 6.440 BY 5.440</code>. Width is 14 sites of 0.46&nbsp;µm.
+    Height is 5.44&nbsp;µm, exactly two row heights, even though the site
+    name in the LEF is the single-height site. Area 35.0336&nbsp;µm².
+    Leakage 0.008449956&nbsp;nW.
+  </p>
+  <p>Liberty marks <code>is_level_shifter</code> true and <code>level_shifter_type</code> LH. The recorded input and output voltage ranges are each 1.2–2.1 V. <strong>Those metadata ranges do not validate every input/output rail combination or power-off sequence.</strong> In the particular TT file used here, the voltage map sets both <code>LOWLVPWR</code> and <code>VPWR</code> to 1.8 V. A real low-to-high operating point needs matching multi-supply characterization and voltage-stress checks. Pin A is 6.005 fF; X has function <code>(A)</code> and a 128.184 fF maximum load in that file. LEF pins are A, X, LOWLVPWR, VGND and VPWR; the schematic also exposes VPB.</p>
+  <p>
+    Every device is <code>nfet_01v8</code> or <code>pfet_01v8_hvt</code>,
+    length 0.15&nbsp;µm. Eleven NMOS, five PMOS. The output pull-up is a
+    high-Vt PMOS, 0.79&nbsp;µm wide, sitting on <code>VPWR</code>. The input
+    PMOS whose gate is A is 1.0&nbsp;µm wide and sits on <code>LOWLVPWR</code>.
+    This cell shifts between two supplies inside the HD voltage family. It
+    is not a 5&nbsp;V shifter. It is also a well tap
+    (<a href="well_taps.html">lesson 48</a>), which is why the class says so.
+  </p>
+
+  <h2 id="section-3">3. The HVL cells cross between the 5 V devices and the 1.8 V devices</h2>
+  <p>
+    The foundry page gives the HVL single-row site as 0.48 × 4.07&nbsp;µm,
+    14 met1 tracks, and says the library's timing models are valid from
+    1.65&nbsp;V to 5.5&nbsp;V. The low-to-high level shifter is described as
+    functional from 1.2&nbsp;V to 5.5&nbsp;V. The two cells below are drawn
+    on <code>unithvdbl</code>, which the LEF defines as 0.480 by 8.140&nbsp;µm:
+    two of those 4.07&nbsp;µm rows. 4.07 × 2 = 8.14.
+  </p>
+  <table>
+    <tbody><tr><th>Cell</th><th>Size</th><th>Sites of 0.48</th><th>Input devices</th><th>Output devices</th></tr>
+    <tr>
+      <td class="n">lsbufhv2lv_1</td><td>8.16 × 8.14</td><td>17</td>
+      <td class="n">g5v0, 0.42 / 0.50 µm, on VPWR</td>
+      <td class="n">1.8 V, PMOS 1.12 and NMOS 0.74, on LVPWR</td>
+    </tr>
+    <tr>
+      <td class="n">lsbuflv2hv_1</td><td>10.56 × 8.14</td><td>22</td>
+      <td class="n">1.8 V, 0.84 / 0.15 µm, on LVPWR</td>
+      <td class="n">g5v0, PMOS 1.5 / 0.50 and NMOS 0.75 / 0.50, on VPWR</td>
+    </tr>
+  </tbody></table>
+  <p>
+    <code>lsbufhv2lv_1</code> is high to low: pin A is on the
+    <code>g5v0d10v5</code> pair that connects to <code>VPWR</code> and
+    <code>VGND</code>, and pin X is on the 1.8&nbsp;V devices powered from
+    <code>LVPWR</code>. <code>lsbuflv2hv_1</code> is the other direction.
+    Both LEFs list A, X, <code>LVPWR</code>, <code>VGND</code>,
+    <code>VNB</code>, <code>VPB</code>, and <code>VPWR</code>. Their timing is in the HVL
+    Liberty data for each supply pair. At <code>tt_025C_3v30_lv1v80</code> (3.3&nbsp;V on
+    <code>VPWR</code>, 1.8&nbsp;V on <code>LVPWR</code>), interpolated at a 0.1&nbsp;ns input
+    slew and a 10&nbsp;fF load:
+  </p>
+  <div class="table-scroll"><table>
+    <caption>HVL level-shifter timing at tt, 25&nbsp;°C, VPWR&nbsp;=&nbsp;3.3&nbsp;V, LVPWR&nbsp;=&nbsp;1.8&nbsp;V (per-cell Liberty JSON, sky130_fd_sc_hvl).</caption>
+    <thead><tr><th>Cell</th><th>Liberty type</th><th>A capacitance</th><th>Rise delay</th><th>Fall delay</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>lsbuflv2hv_1</code></td><td>LH</td><td>2.493&nbsp;fF</td><td>1.364&nbsp;ns</td><td>0.506&nbsp;ns</td><td>The rising output is the slower edge at this corner.</td></tr>
+      <tr><td><code>lsbufhv2lv_1</code></td><td>HL</td><td>2.047&nbsp;fF</td><td>0.529&nbsp;ns</td><td>0.559&nbsp;ns</td><td>Marked <code>dont_use</code> in this Liberty data, so synthesis will not pick it by itself.</td></tr>
+    </tbody></table></div>
+  <p>
+    Compare these with about 0.1&nbsp;ns for an HD buffer (<a href="clock_tree.html">lesson 35</a>):
+    one crossing onto the 5&nbsp;V devices costs about five to fourteen HD buffer delays, depending on the edge. The two
+    numbers above are one corner. The low-to-high cell is slowest when
+    <code>LVPWR</code> is low and <code>VPWR</code> is high, so read the corner that
+    matches your supplies.
+  </p>
+
+  <p>
+      Antenna on the HD input is gate area 0.603&nbsp;µm². The HVL high-to-low
+      input is gate area 0.420&nbsp;µm², and the low-to-high input is
+      0.252&nbsp;µm². Output diffusion area is 0.4025, 0.4929, and
+      0.59625&nbsp;µm² on the HD cell, the high-to-low cell, and the
+      low-to-high cell. The library also lists <code>_2</code> and <code>_4</code> variants of the HD shifter.
+    </p>
+    <p>
+      A floorplan that places the HD shifter has to give it two rows of
+      height (<a href="floorplan.html">lesson 55</a>). A floorplan that places
+      the HVL cell is on a different site, 0.48&nbsp;µm wide and 8.14&nbsp;µm
+      tall for the double-height cell, and it does not drop onto an HD row.
+    </p>
+  
+
+
+    <h2 id="section-4">4. A common low-to-high circuit uses a cross-coupled pair</h2>
+  <p>A common <em>low-to-high</em> topology uses a cross-coupled PMOS pair on the high rail and lower-side controlled pull-downs. Regeneration restores a full swing, but contention, input overdrive, device stress and sizing determine whether it switches correctly. This concept does not describe every high-to-low shifter, and figure 2 is not a transistor trace of either referenced cell.</p>
+  <p>
+    The HD cell's Liberty range is 1.2&nbsp;V to 2.1&nbsp;V on both sides, and its transistors are the 1.8&nbsp;V devices. The HVL cells are the ones that use the 5&nbsp;V devices. The drawing is the usual circuit. It is not a trace of either SPICE netlist, and it has no delay.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 330" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — A common low-to-high level shifter: an inverter on the low supply drives two NMOS pull-downs; a cross-coupled PMOS pair on the high supply regenerates a full high-supply swing."><rect x="18" y="28" width="216" height="276" rx="6" fill="#eef3fa" stroke="#3b6fb0" stroke-width="1.5"></rect><rect x="244" y="28" width="480" height="276" rx="6" fill="#fdf1ef" stroke="#c0564a" stroke-width="1.5"></rect><text x="126" y="20" text-anchor="middle" font-size="13" fill="#3b6fb0" font-weight="700">low supply domain (VDDL)</text><text x="484" y="20" text-anchor="middle" font-size="13" fill="#c0564a" font-weight="700">high supply domain (VDDH)</text><text x="126" y="96" text-anchor="middle" font-size="10.5" fill="#5c6b7a">IN and INB swing</text><text x="126" y="110" text-anchor="middle" font-size="10.5" fill="#5c6b7a">0 to VDDL</text><line x1="380" y1="50" x2="600" y2="50" stroke="#c0564a" stroke-width="4" stroke-linecap="round"></line><text x="490" y="43" text-anchor="middle" font-size="11" fill="#c0564a" font-weight="700">VDDH</text><line x1="60" y1="270" x2="620" y2="270" stroke="#33414f" stroke-width="4" stroke-linecap="round"></line><text x="56" y="274" text-anchor="end" font-size="11" fill="#33414f" font-weight="700">VGND</text><line x1="404" y1="80" x2="420" y2="80" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="404" y1="110" x2="420" y2="110" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="420" y1="76" x2="420" y2="114" stroke="#c0564a" stroke-width="3" stroke-linecap="round"></line><line x1="428" y1="80" x2="428" y2="110" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><circle cx="433" cy="95.0" r="4" fill="#fff" stroke="#c0564a" stroke-width="1.8"></circle><line x1="576" y1="80" x2="560" y2="80" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="110" x2="560" y2="110" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="560" y1="76" x2="560" y2="114" stroke="#c0564a" stroke-width="3" stroke-linecap="round"></line><line x1="552" y1="80" x2="552" y2="110" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><circle cx="547" cy="95.0" r="4" fill="#fff" stroke="#c0564a" stroke-width="1.8"></circle><line x1="404" y1="50" x2="404" y2="80" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="50" x2="576" y2="80" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="404" y1="110" x2="404" y2="150" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="110" x2="576" y2="150" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><line x1="437" y1="95.0" x2="540" y2="150" stroke="#c0564a" stroke-width="1.8" stroke-linecap="round"></line><line x1="540" y1="150" x2="576" y2="150" stroke="#c0564a" stroke-width="1.8" stroke-linecap="round"></line><line x1="543" y1="95.0" x2="440" y2="150" stroke="#c0564a" stroke-width="1.8" stroke-linecap="round"></line><line x1="440" y1="150" x2="404" y2="150" stroke="#c0564a" stroke-width="1.8" stroke-linecap="round"></line><circle cx="404" cy="150" r="3.2" fill="#c0564a"></circle><circle cx="576" cy="150" r="3.2" fill="#c0564a"></circle><text x="446" y="78" text-anchor="start" font-size="11" fill="#c0564a" font-weight="700">P1</text><text x="534" y="78" text-anchor="end" font-size="11" fill="#c0564a" font-weight="700">P2</text><text x="398" y="143" text-anchor="end" font-size="11" fill="#c0564a">OUTB</text><line x1="404" y1="180" x2="388" y2="180" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="404" y1="210" x2="388" y2="210" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="388" y1="176" x2="388" y2="214" stroke="#33414f" stroke-width="3" stroke-linecap="round"></line><line x1="380" y1="180" x2="380" y2="210" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="180" x2="592" y2="180" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="210" x2="592" y2="210" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="592" y1="176" x2="592" y2="214" stroke="#33414f" stroke-width="3" stroke-linecap="round"></line><line x1="600" y1="180" x2="600" y2="210" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="404" y1="150" x2="404" y2="180" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="404" y1="210" x2="404" y2="270" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="150" x2="576" y2="180" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="576" y1="210" x2="576" y2="270" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="374" y="226" text-anchor="end" font-size="11" fill="#33414f" font-weight="700">N1</text><text x="606" y="226" text-anchor="start" font-size="11" fill="#33414f" font-weight="700">N2</text><line x1="576" y1="150" x2="676" y2="150" stroke="#c0564a" stroke-width="2" stroke-linecap="round"></line><text x="682" y="154" text-anchor="start" font-size="12" fill="#c0564a" font-weight="700">OUT</text><text x="682" y="168" text-anchor="start" font-size="10" fill="#5c6b7a">full VDDH</text><text x="682" y="180" text-anchor="start" font-size="10" fill="#5c6b7a">swing</text><text x="36" y="199" text-anchor="end" font-size="12" fill="#3b6fb0" font-weight="700">IN</text><line x1="40" y1="195" x2="380" y2="195.0" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><circle cx="90" cy="195" r="3.2" fill="#3b6fb0"></circle><line x1="90" y1="195" x2="90" y2="240" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="90" y1="240" x2="110" y2="240" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><path d="M110,226 L110,254 L138,240 Z" fill="#fff" stroke="#3b6fb0" stroke-width="2"></path><circle cx="142" cy="240" r="4" fill="#fff" stroke="#3b6fb0" stroke-width="1.8"></circle><line x1="122" y1="232" x2="122" y2="222" stroke="#3b6fb0" stroke-width="1.5" stroke-linecap="round"></line><line x1="116" y1="222" x2="128" y2="222" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="122" y="215" text-anchor="middle" font-size="10" fill="#3b6fb0" font-weight="700">VDDL</text><line x1="122" y1="248" x2="122" y2="270" stroke="#3b6fb0" stroke-width="1.5" stroke-linecap="round"></line><text x="124" y="222" text-anchor="start" font-size="12" fill="#33414f"></text><line x1="146" y1="240" x2="200" y2="240" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="172" y="233" text-anchor="middle" font-size="11" fill="#3b6fb0">INB</text><line x1="200" y1="240" x2="200" y2="290" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="200" y1="290" x2="640" y2="290" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="640" y1="290" x2="640" y2="195" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="640" y1="195" x2="600" y2="195.0" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="490" y="206" text-anchor="middle" font-size="10.5" fill="#5c6b7a">IN = 1:</text><text x="490" y="219" text-anchor="middle" font-size="10.5" fill="#5c6b7a">N1 pulls OUTB low,</text><text x="490" y="232" text-anchor="middle" font-size="10.5" fill="#5c6b7a">P2 turns on,</text><text x="490" y="245" text-anchor="middle" font-size="10.5" fill="#5c6b7a">OUT rises to VDDH,</text><text x="490" y="258" text-anchor="middle" font-size="10.5" fill="#5c6b7a">P1 turns off</text><text x="370" y="322" text-anchor="middle" font-size="11" fill="#5c6b7a" font-style="italic">Generic textbook circuit; not a transistor trace of the SKY130 HD or HVL level-shifter cells.</text></svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Cross-coupled pair on the high supply, pulled by the low side.</strong> IN and its inverted copy INB (made on VDDL) drive NMOS pull-downs N1 and N2. Whichever side is pulled low turns on the opposite PMOS, which pulls the other node to VDDH and turns its own partner off, so OUT swings the full high supply with no DC path (only leakage) once it settles. The pull-downs must overpower the PMOS still on during the transition, which is why sizing matters. Generic circuit: the HD voltage range and the HVL devices stay the ones in sections 2 and 3.</figcaption>
+  </figure>
+
+<h2 id="section-5">5. Voltage translation, isolation and CDC are separate checks</h2><table><tbody><tr><th>Problem</th><th>Required function</th><th>What it does not guarantee</th></tr><tr><td>1.2 V source cannot meet destination VIH</td><td>Level translation</td><td>Safe behavior with either rail off</td></tr><tr><td>Powered-down block drives an active block</td><td>Isolation and defined clamp sequencing</td><td>Voltage stress safety unless explicitly designed for it</td></tr><tr><td>Unrelated source and destination clocks</td><td>CDC protocol/synchronization</td><td>Level shifting or metastability-free sampling</td></tr></tbody></table><p><strong>Worked example (assumed thresholds).</strong> If a 1.8 V receiver requires <code>VIH ≥ 0.7×VDD = 1.26 V</code> and the source guarantees only 1.10 V high, the margin is <code>1.10−1.26 = −0.16 V</code>. Translation is needed unless a different qualified receiver is selected. The 0.7 ratio and 1.10 V source are teaching assumptions, not published SKY130 input limits.</p><p>Check supply ramps, rail order, isolation enable timing, body connections, leakage/back-powering, and every <code>VGS</code>, <code>VGD</code>, <code>VDS</code> limit in the selected PDK. A translator with valid logic function at nominal supply is not automatically power-off tolerant.</p><details class="checkpoint"><summary>Checkpoint: does a level shifter replace a synchronizer?</summary><p>No. It changes the voltage domain. A signal with an unrelated timing domain still needs an appropriate <a href="cdc_reset.html">CDC scheme</a>. A powered-down source may also require isolation.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a 1.8 V output drives an input in a 3.3 V domain directly. What can go wrong?</summary><p>A 1.8 V high can sit below the receiver’s input-high threshold, so it is not a valid 1. The receiving PMOS may not turn fully off, letting current flow through both transistors. A low-to-high level shifter restores a full 3.3 V swing.</p></details><aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> Commercial flows describe supply domains, level shifters and isolation in a power-intent file (UPF), which synthesis and place-and-route use to insert the cells and which dedicated checkers verify. LibreLane’s default flow takes no power-intent file: shifters are instantiated in the RTL or netlist, and each domain’s supplies are connected explicitly.</p></aside><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li>A level shifter must be characterized for its source/destination rails and device limits. The function of these examples is a buffer.</li>
+      <li>The HD cell is 6.44 × 5.44&nbsp;µm, class <code>WELLTAP</code>, Liberty range 1.2–2.1&nbsp;V, all 1.8&nbsp;V transistors.</li>
+      <li>It has pins <code>LOWLVPWR</code> and <code>VPWR</code>. A is 6.005&nbsp;fF. X max is 128.184&nbsp;fF.</li>
+      <li><code>lsbufhv2lv_1</code> is 8.16 × 8.14&nbsp;µm, high side in, 1.8&nbsp;V side out. <code>lsbuflv2hv_1</code> is 10.56 × 8.14&nbsp;µm, the other way.</li>
+      <li>The 5&nbsp;V devices are <code>g5v0d10v5</code>. The HD shifter does not use them.</li>
+          <li>A cross-coupled pair is a common low-to-high topology, not a universal model for every direction or cell. HD metadata records 1.2–2.1&nbsp;V; each operating combination still needs validation. HVL uses a different device family.</li>
+    </ul>
+  </div>
+
+<section class="sources"><h2 id="section-7">Sources &amp; scope</h2><p>Technical review: 6 November 2026. HD is pinned to <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. Published voltage-range metadata is not an independent qualification of all supply combinations; no HVL delay or power-off guarantee is asserted.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1__tt_025C_1v80.lib.json">HD level-shifter TT metadata and pin data</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json">HD typical voltage map</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1.spice">HD level-shifter schematic</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbufhv2lv/sky130_fd_sc_hvl__lsbufhv2lv_1.spice">HVL high-to-low schematic</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbuflv2hv/sky130_fd_sc_hvl__lsbuflv2hv_1.spice">HVL low-to-high schematic</a></li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/upf/README.html">OpenROAD power intent and isolation</a></li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html" aria-current="page">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="spare_eco.html"><small>← Previous</small>Spare Cells and ECO</a><a href="floorplan.html"><small>Next →</small>Floorplan</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function card(x, title, lines, color) {
+    s += `<rect x="${x}" y="24" width="320" height="160" rx="8" fill="#f7f9fb" stroke="${color}" stroke-width="2"/>`;
+    s += txt(x + 160, 52, title, {b: true, s: 15, c: color});
+    lines.forEach((ln, i) => s += txt(x + 160, 84 + i * 24, ln, {s: 13}));
+  }
+  card(30, 'HD, 1.8 V family', ['6.44 × 5.44 µm', 'LOWLVPWR and VPWR', 'also a well tap'], MET);
+  card(390, 'HVL, 5 V devices', ['8.16 or 10.56 × 8.14 µm', 'g5v0 side and LVPWR side', 'no delay quoted'], PW);
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

@@ -1,0 +1,7 @@
+{
+  "cell": "sky130_fd_sc_hd__dfxtp_1",
+  "source": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.spice",
+  "revision": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+  "sha256": "39049c3c6a74ac24fdc0d93528dd5b0e15f7ef51729008913bdeeee0d8ead2df",
+  "license": "Apache-2.0"
+}

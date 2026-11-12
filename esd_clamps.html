@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESD and Clamps</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 65 / 84 · Part VII, The chip boundary</p><h1>ESD and Clamps</h1>
+  <p class="subtitle">A discharge on a pin has to be caught at the ring. This library puts the clamp in the power and ground pads, and it rates that clamp at 3.3 kV in a human-body test. That rating is not the supply voltage.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The scheme, the 150&nbsp;ohm resistor, the 3.3&nbsp;kV note, and the outer-guard table are the <code>sky130_fd_io</code> user guide. Pin names and sizes are the LEF files. Availability statements refer to the pinned upstream fd_io release, not every later wrapper or extension package.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Follow an ESD current path from a pin through the pad ring to a supply clamp.</li><li>Read a human-body-model rating and keep it separate from operating voltages.</li><li>Identify which SKY130 pad cells contain the clamps.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Planned with the pad ring in <a href="design_flow.html#step-4">step 4, floorplan and power grid</a> and reviewed at signoff.</dd><dt>Tools</dt><dd>Mostly commercial: reliability checkers such as Calibre PERC trace discharge paths. The SKY130 I/O cells carry their own protection.</dd><dt>Why it matters</dt><dd>One static discharge during handling can destroy an unprotected chip.</dd></dl></aside><h2 id="section-1">1. The clamp sits on the supply, not on every signal pin</h2>
+  <p>
+    ESD is electrostatic discharge: a short, large current into a pin.
+    The user guide calls this library's scheme rail-based and grouped.
+    Grouped means the clamp is not repeated as its own device on every
+    signal pad. The power and ground pads contain an RC-triggered clamp: the RC network
+    detects the transient and turns on a large discharge device. The small trigger
+    capacitor is not itself the main current path. The guide specifies a clamp for each external power domain, together with
+    the prescribed steering and inter-domain connections. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst">[I/O ESD scheme]</a> Diodes go from
+    each derived supply to the source supply. The guide names two clamp
+    kinds, HV and LV. The guide does not state a supply voltage for either
+    name.
+  </p>
+  <p>
+    The same guide says the HV and LV clamps are robust up to 3.3&nbsp;kV
+    HBM. HBM is a human-body-model discharge test. The 3.3&nbsp;kV number is the guide’s stated clamp robustness in that test.
+    It is not a guaranteed HBM qualification of every finished chip assembled from
+    the cells: the entire discharge path, pad combinations, rail resistance, and
+    integration conditions matter. The I/O operating range in the same document is
+    1.71&nbsp;V to 5.5&nbsp;V. Read those as two different sentences.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" role="img" aria-label="Direct and resistor-protected analog pad access paths; a separate RC-triggered rail clamp"><text x="225" y="27" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Analog access paths</text><rect x="20" y="40" width="425" height="215" rx="7" fill="#f7f9fb" stroke="#33414f"></rect><rect x="36" y="120" width="64" height="38" fill="white" stroke="#33414f"></rect><path d="M100 139 H122 V75 H250 M122 139 V205 H160 M122 139 H160 M215 139 H250 M215 205 H250" fill="none" stroke="#33414f" stroke-width="2"></path><text x="68" y="144" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">PAD</text><rect x="160" y="127" width="55" height="24" fill="white" stroke="#c0564a" stroke-width="2"></rect><text x="187.5" y="143" text-anchor="middle" font-size="11" fill="#c0564a">150 Ω</text><rect x="160" y="193" width="55" height="24" fill="white" stroke="#c0564a" stroke-width="2"></rect><text x="187.5" y="209" text-anchor="middle" font-size="11" fill="#c0564a">150 Ω</text><text x="255" y="79" text-anchor="start" font-size="12" fill="#33414f">PAD_A_NOESD_H</text><text x="255" y="143" text-anchor="start" font-size="12" fill="#33414f">PAD_A_ESD_0_H</text><text x="255" y="209" text-anchor="start" font-size="12" fill="#33414f">PAD_A_ESD_1_H</text><text x="590" y="27" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Inside a supply-pad clamp</text><rect x="465" y="40" width="255" height="215" rx="7" fill="#f2f5f9" stroke="#4a72c4"></rect><path d="M490 83 H690 M490 216 H690 M635 83 V120 M635 169 V216" fill="none" stroke="#33414f" stroke-width="2"></path><rect x="482" y="117" width="83" height="55" rx="4" fill="white" stroke="#4a72c4"></rect><rect x="593" y="120" width="84" height="49" rx="4" fill="white" stroke="#c0564a"></rect><path d="M565 145 H593" stroke="#4a72c4" stroke-width="2"></path><text x="590" y="70" text-anchor="middle" font-size="12" fill="#33414f">protected supply</text><text x="523" y="141" text-anchor="middle" font-size="12" fill="#33414f">RC trigger</text><text x="523" y="158" text-anchor="middle" font-size="10" fill="#33414f">and control</text><text x="635" y="141" text-anchor="middle" font-size="12" fill="#33414f">large</text><text x="635" y="158" text-anchor="middle" font-size="10" fill="#33414f">clamp device</text><text x="590" y="238" text-anchor="middle" font-size="12" fill="#33414f">return rail</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — What the guide connects to the signal pad.</strong>
+      <code>PAD_A_NOESD_H</code> is tied straight to the pad.
+      <code>PAD_A_ESD_0_H</code> and <code>PAD_A_ESD_1_H</code> go through
+      150&nbsp;ohm. The RC clamp is inside the power and ground pad, on the
+      rails, not drawn as a separate public cell.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Which clamp cells are public, and where the clamps sit</h2>
+  <p>
+    The guide says an HV pad holds one HV clamp under the pad, with
+    terminals that can be tied without disturbing the power connection.
+    An LV pad holds two LV clamps and a back-to-back diode. The diode's
+    ground pin in the guide is <code>bdy_b2b</code>. The LEF name on the
+    opened LV cells is <code>BDY2_B2B</code>.
+  </p>
+  <table>
+    <tbody><tr><th>Opened cell</th><th>Size</th><th>Clamp pins in the LEF</th></tr>
+    <tr><td class="n">top_power_hvc_wpad</td><td>75 × 200</td><td class="n">DRN_HVC, OGC_HVC, SRC_BDY_HVC, P_CORE</td></tr>
+    <tr><td class="n">top_ground_hvc_wpad</td><td>75 × 200</td><td class="n">DRN_HVC, OGC_HVC, SRC_BDY_HVC, G_CORE</td></tr>
+    <tr><td class="n">top_power_lvc_wpad</td><td>75 × 198</td><td class="n">DRN_LVC1, DRN_LVC2, BDY2_B2B, OGC_LVC</td></tr>
+    <tr><td class="n">top_ground_lvc_wpad</td><td>75 × 198</td><td class="n">DRN_LVC1, DRN_LVC2, BDY2_B2B, OGC_LVC</td></tr>
+  </tbody></table>
+  <p>
+    The guide's design notes for the HV clamp are a single trigger with a
+    2&nbsp;µs time constant, a driver width of 2880&nbsp;µm, and a cell
+    height the same as the gpio. Those notes describe a clamp drawn without
+    its own pad. The guide marks that cell, and the pad-only metal cells,
+    as not publicly available. They are not in the 26-cell directory. The four pad cells above are public, and they are the ones with the clamps inside.
+  </p>
+
+  <p>
+      On <code>top_gpiov2</code> the three core-side pad pins are
+      <code>PAD_A_NOESD_H</code>, <code>PAD_A_ESD_0_H</code>, and
+      <code>PAD_A_ESD_1_H</code>. The guide's lowercase names are
+      <code>pad_no_esd_h</code>, <code>pad_a_esd_0_h</code>, and
+      <code>pad_a_esd_1_h</code>. It says the first is connected directly
+      to the pad, and the other two go through a 150&nbsp;ohm ESD resistor.
+      That 150&nbsp;ohm is the guide's number. It was not re-measured as a
+      drawn resistor.
+    </p>
+    <p>
+      <code>OGC</code> is the outer guard ring connection. The guide says it
+      ties the deep n-well, the buried n-type region under the pad, so that
+      region can be isolated from the rest of the chip. The recommended tie
+      is an HV supply that is present most of the time. For the four opened
+      power and ground pads, the guide's table says <code>OGC</code> is
+      already connected inside the cell to <code>VDDIO</code>, and the end
+      user does not need to connect it. The rows of that table for the
+      clamp-without-a-pad are the cells marked not public.
+    </p>
+  
+
+
+    <h2 id="section-3">3. The human-body test is a capacitor and a resistor</h2>
+  <p>
+    The simplified human-body-model network used to explain ANSI/ESDA/JEDEC JS-001 charges 100&nbsp;pF and discharges it through 1.5&nbsp;kΩ. Real standardized testing also specifies the waveform, pin combinations, and acceptance checks. This 1.5&nbsp;kΩ belongs to the tester; it is not the 150&nbsp;Ω resistor inside the pad path. <a href="https://www.esda.org/esd-overview/esd-fundamentals/part-5-device-sensitivity-and-testing/">[EOS/ESD Association]</a>
+  </p>
+  <p>
+    On the part, diodes steer a high pin into the rails and a low pin into the rails, and the clamp between the rails takes the current. The guide’s 3.3&nbsp;kV statement concerns the clamps; the 150&nbsp;Ω entries concern the analog access paths. These are different parts of the protection network. The charged-device model is a different test, in which the part itself holds the charge. A CDM rating, if a design needs one, must come from the I/O library documentation or qualification data.
+  </p>
+  <figure><div class="figwrap"><svg viewBox="0 0 740 262" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Simplified HBM discharge circuit: a previously charged 100-picofarad capacitor discharges through a switch and 1.5-kilohm resistor into the device under test, with an explicit return path.">
+<text x="120" y="30" text-anchor="middle" font-size="13" fill="#33414f">Initially charged</text>
+<text x="120" y="49" text-anchor="middle" font-size="12" fill="#5c6b7a">capacitor</text>
+<path d="M120 108 V70 H190 M235 70 H300 M420 70 H520 M600 150 V188 H120 V124" fill="none" stroke="#33414f" stroke-width="2"></path>
+<path d="M90 108 H150 M90 124 H150" stroke="#33414f" stroke-width="3"></path>
+<text x="70" y="102" text-anchor="middle" font-size="13" fill="#33414f">+</text><text x="70" y="140" text-anchor="middle" font-size="13" fill="#33414f">−</text>
+<text x="190" y="124" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">100 pF</text>
+<circle cx="190" cy="70" r="3" fill="#33414f"></circle><circle cx="235" cy="70" r="3" fill="#33414f"></circle><path d="M190 70 L235 70" stroke="#33414f" stroke-width="2"></path>
+<text x="221" y="47" text-anchor="middle" font-size="11" fill="#5c6b7a">discharge switch</text>
+<rect x="300" y="52" width="120" height="36" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="360" y="75" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">1.5 kΩ</text>
+<rect x="520" y="50" width="160" height="100" rx="4" fill="#fdf1ef" stroke="#c0564a" stroke-width="2"></rect>
+<text x="600" y="91" text-anchor="middle" font-size="14" font-weight="700" fill="#c0564a">device under test</text><text x="600" y="113" text-anchor="middle" font-size="11" fill="#5c6b7a">specified pin pair</text>
+<text x="370" y="178" text-anchor="middle" font-size="12" fill="#5c6b7a">return connection</text>
+<text x="370" y="222" text-anchor="middle" font-size="12" fill="#33414f">Charging circuit and tester parasitics omitted. Shown after the discharge switch closes.</text>
+<text x="370" y="245" text-anchor="middle" font-size="12" fill="#5c6b7a">HBM qualification requires the prescribed waveform, pin combinations, and acceptance tests.</text>
+</svg></div><figcaption><strong>Figure 2 — Simplified human-body-model discharge network.</strong> The tester's 1.5&nbsp;kΩ series element is distinct from the 150&nbsp;Ω analog-path resistor in Figure 1. The guide's 3.3&nbsp;kV statement describes the cited clamp robustness, not every possible chip and package.</figcaption></figure>
+
+<h2 id="section-4">4. Test voltage, clamp voltage, and normal signal range differ</h2>
+<table><thead><tr><th>Quantity/test</th><th>Meaning</th><th>Do not infer</th></tr></thead><tbody><tr><td>Normal operating voltage</td><td class="n">Allowed powered signal/supply conditions for a specified cell and mode</td><td class="n">That a core pin tolerates the maximum I/O voltage</td></tr><tr><td>HBM</td><td class="n">Component handling-discharge test using a charged source network</td><td class="n">That the pad node itself remains at the source’s kilovolts</td></tr><tr><td>CDM</td><td class="n">Discharge of charge stored on the device</td><td class="n">A CDM rating from an HBM rating</td></tr><tr><td>IEC 61000-4-2 system test</td><td class="n">System-level discharge conditions with a different waveform</td><td class="n">System qualification from the bare chip’s HBM result</td></tr></tbody></table>
+<p><strong>Worked HBM scale estimate:</strong> with a 3.3&nbsp;kV initial charge, the ideal 1.5&nbsp;kΩ discharge resistor suggests <code>I ≈ V/R = 2.2&nbsp;A</code>. The 100&nbsp;pF capacitor initially stores <code>E = ½CV² = 0.545&nbsp;mJ</code>. Actual peak current and device voltage depend on the standardized waveform, parasitics, and clamp behavior. The source energy is not all dissipated inside the chip. The important lesson is the ampere-scale transient through a path whose normal current may be tiny.</p>
+<p><strong>Analog ↔ digital:</strong> the pad protection path also loads ordinary signals. If an analog path contains 150&nbsp;Ω and a downstream load is an assumed 2&nbsp;pF, its simple RC time constant is 0.30&nbsp;ns; ideal first-order settling to 0.1% takes <code>ln(1000)τ ≈ 2.07&nbsp;ns</code>. At an assumed 1&nbsp;mA DC load the same resistor drops 150&nbsp;mV. Actual pin capacitance, switch resistance, leakage, and voltage dependence must be included. Bypassing the resistor to improve settling changes the protection path and needs an approved circuit, not merely a faster schematic.</p>
+<p>An RC clamp also has a normal-operation requirement: it must release after a discharge and avoid unintended conduction on valid supply ramps. Review the intended ramp range and powered/unpowered pin cases with the library guidance. A surge, sustained overvoltage, and a standardized ESD pulse are different stresses.</p><details class="checkpoint"><summary>Check your understanding — Does a 3.3 kV HBM clamp rating allow a 3.3 kV input in normal operation?</summary><p>No. It describes a short standardized source discharge under specified conditions. The normal input limits remain those of the selected I/O cell, supply state, and mode; it does not imply CDM or system-level ESD qualification.</p></details>
+<details class="checkpoint"><summary>Check your understanding — what peak current does a 2 kV human-body-model discharge push into a pin?</summary><p>The test network is 100 pF through 1.5 kΩ, so the peak is about 2000 V / 1500 Ω ≈ 1.3 A, decaying with a 150 ns time constant (1.5 kΩ × 100 pF). The protection path must carry that current while keeping thin oxides below breakdown.</p></details><div class="takeaways">
+    <h2 id="section-5">Key takeaways</h2>
+    <ul>
+      <li>The scheme is rail-based and grouped. The RC clamp is inside the power and ground pads. Each external domain gets its own.</li>
+      <li>3.3&nbsp;kV HBM is a discharge-test rating. The operating range in the same guide is 1.71&nbsp;V to 5.5&nbsp;V.</li>
+      <li><code>PAD_A_NOESD_H</code> is direct. The two <code>PAD_A_ESD</code> pins go through 150&nbsp;ohm, per the guide.</li>
+      <li>HV pads list one clamp's pins. LV pads list two drains, <code>BDY2_B2B</code>, and <code>OGC_LVC</code>.</li>
+      <li>The clamp-without-a-pad is not in the public cell list. The public cells are the pads that contain the clamps.</li>
+          <li>The usual human-body network is 100&nbsp;pF through 1.5&nbsp;kΩ. This library's guide rating is 3.3&nbsp;kV. No CDM voltage is on this page.</li>
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-6">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. Guide and cell values are from IO revision63752cd9. The lesson does not establish complete-chip HBM/CDM qualification. Electrical examples use simplified networks and explicitly assumed normal-operation loads.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst">Pinned SKY130 I/O guide — protection scheme and available cells.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef">GPIO analog-access pin names.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_hvc_wpad/sky130_fd_io__top_power_hvc_wpad.lef">HV power-pad clamp pins.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_lvc_wpad/sky130_fd_io__top_power_lvc_wpad.lef">LV power-pad clamp pins.</a></li>
+<li><a href="https://www.esda.org/esd-overview/esd-fundamentals/part-5-device-sensitivity-and-testing/">EOS/ESD Association — HBM/CDM and system-test distinctions.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html" aria-current="page">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="io_ring.html"><small>← Previous</small>The I/O Ring</a><a href="io_fill.html"><small>Next →</small>I/O Fill</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK='#33414f',MET='#4a72c4',PW='#c0564a';
+const txt=(x,y,t,o={})=>`<text x="${x}" y="${y}" text-anchor="${o.a||'middle'}" font-size="${o.s||12}" ${o.b?'font-weight="700"':''} fill="${o.c||DK}">${t}</text>`;
+(function(){let s=`<svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" role="img" aria-label="Direct and resistor-protected analog pad access paths; a separate RC-triggered rail clamp">`;
+s+=txt(225,27,'Analog access paths',{b:true,s:14});s+=`<rect x="20" y="40" width="425" height="215" rx="7" fill="#f7f9fb" stroke="${DK}"/><rect x="36" y="120" width="64" height="38" fill="white" stroke="${DK}"/><path d="M100 139 H122 V75 H250 M122 139 V205 H160 M122 139 H160 M215 139 H250 M215 205 H250" fill="none" stroke="${DK}" stroke-width="2"/>`;s+=txt(68,144,'PAD',{b:true});
+for(const y of [139,205]){s+=`<rect x="160" y="${y-12}" width="55" height="24" fill="white" stroke="${PW}" stroke-width="2"/>`;s+=txt(187.5,y+4,'150 Ω',{s:11,c:PW});}
+s+=txt(255,79,'PAD_A_NOESD_H',{a:'start',s:12});s+=txt(255,143,'PAD_A_ESD_0_H',{a:'start',s:12});s+=txt(255,209,'PAD_A_ESD_1_H',{a:'start',s:12});
+s+=txt(590,27,'Inside a supply-pad clamp',{b:true,s:14});s+=`<rect x="465" y="40" width="255" height="215" rx="7" fill="#f2f5f9" stroke="${MET}"/><path d="M490 83 H690 M490 216 H690 M635 83 V120 M635 169 V216" fill="none" stroke="${DK}" stroke-width="2"/><rect x="482" y="117" width="83" height="55" rx="4" fill="white" stroke="${MET}"/><rect x="593" y="120" width="84" height="49" rx="4" fill="white" stroke="${PW}"/><path d="M565 145 H593" stroke="${MET}" stroke-width="2"/>`;s+=txt(590,70,'protected supply',{s:12});s+=txt(523,141,'RC trigger',{s:12});s+=txt(523,158,'and control',{s:10});s+=txt(635,141,'large',{s:12});s+=txt(635,158,'clamp device',{s:10});s+=txt(590,238,'return rail',{s:12});s+='</svg>';document.getElementById('fig1').innerHTML=s;})();
+</script>
+
+
+
+</body></html>

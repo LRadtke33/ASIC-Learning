@@ -1,0 +1,127 @@
+* delay physics
+.lib "../../../../common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-5 abstol=1e-14 vntol=1e-8
+.subckt inv1 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv2 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv4 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv8 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN4 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP4 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN5 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP5 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN6 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP6 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN7 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP7 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv16 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN4 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP4 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN5 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP5 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN6 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP6 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN7 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP7 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN8 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP8 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN9 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP9 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN10 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP10 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN11 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP11 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN12 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP12 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN13 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP13 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN14 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP14 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN15 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP15 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+VDD vdd 0 1.0
+VDUT vdut 0 1.0
+VIN in 0 PULSE(0 1.0 0.3n 20p 20p 20.0n 40.0n)
+XS0 in 0 0 vdd vdd s0 inv1
+XS1 s0 0 0 vdd vdd n0 inv1
+X1 n0 0 0 vdd vdd n1 inv1
+XD1_0 n1 0 0 vdd vdd d1_0 inv1
+CD1_0 d1_0 0 9.208f
+XD1_1 n1 0 0 vdd vdd d1_1 inv1
+CD1_1 d1_1 0 9.208f
+XD1_2 n1 0 0 vdd vdd d1_2 inv1
+CD1_2 d1_2 0 9.208f
+X2 n1 0 0 vdd vdd n2 inv1
+XD2_0 n2 0 0 vdd vdd d2_0 inv1
+CD2_0 d2_0 0 9.208f
+XD2_1 n2 0 0 vdd vdd d2_1 inv1
+CD2_1 d2_1 0 9.208f
+XD2_2 n2 0 0 vdd vdd d2_2 inv1
+CD2_2 d2_2 0 9.208f
+X3 n2 0 0 vdut vdut n3 inv1
+XD3_0 n3 0 0 vdd vdd d3_0 inv1
+CD3_0 d3_0 0 9.208f
+XD3_1 n3 0 0 vdd vdd d3_1 inv1
+CD3_1 d3_1 0 9.208f
+XD3_2 n3 0 0 vdd vdd d3_2 inv1
+CD3_2 d3_2 0 9.208f
+X4 n3 0 0 vdd vdd n4 inv1
+XD4_0 n4 0 0 vdd vdd d4_0 inv1
+CD4_0 d4_0 0 9.208f
+XD4_1 n4 0 0 vdd vdd d4_1 inv1
+CD4_1 d4_1 0 9.208f
+XD4_2 n4 0 0 vdd vdd d4_2 inv1
+CD4_2 d4_2 0 9.208f
+X5 n4 0 0 vdd vdd n5 inv1
+XD5_0 n5 0 0 vdd vdd d5_0 inv1
+CD5_0 d5_0 0 9.208f
+XD5_1 n5 0 0 vdd vdd d5_1 inv1
+CD5_1 d5_1 0 9.208f
+XD5_2 n5 0 0 vdd vdd d5_2 inv1
+CD5_2 d5_2 0 9.208f
+CEND n5 0 9.208f
+
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=10
+tran 0.5p 40.3n 0 0.5p
+wrdata tran.dat v(n2) v(n3) i(VDUT)
+quit
+.endc
+.end

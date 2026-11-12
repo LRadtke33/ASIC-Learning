@@ -1,0 +1,237 @@
+{
+  "checked_date": "2026-11-06",
+  "scope": "Numerical and implementation checks of an analytical geometry-to-RC estimator; not foundry-qualified PEX validation.",
+  "reference_engine": "ngspice-44.2 : Circuit level simulation program",
+  "reference_segment_um": 20,
+  "reference_maximum_time_step_ps": 10,
+  "reference_input_sha256": {
+    "run_lab.py": "75e82d404e100ed34017009e28c7b9071b803149eefd507c65d0bb4f17fe62f3",
+    "sky130_coefficients.json": "e2f003afed8dc27ec6172b953019b49d049583b54fc9e4c8d1b3d0575867eb33",
+    "geometry/01_compact.json": "a6a29c04c4178a916fa3495f01520f6a72059964b45c566b594c48981c51d516",
+    "geometry/02_detour.json": "c41532954d06e077a6549a2bd1a3c70c83a99be3cbb085efcbe40d43bed4e6f2",
+    "geometry/03_wide_detour.json": "ebd1dcce3af979d44369451bf72fa7d87c472ac67e86e4a2e9a1b83a7cc52b4d",
+    "geometry/04_detour_fill.json": "f16e8f0d85f0d7e696b7f0aa5510818c6b2a0848cbd30a2ed85c3d60117e4966"
+  },
+  "reference_cases": [
+    {
+      "id": "compact",
+      "label": "Compact route",
+      "length_um": 200.0,
+      "width_um": 0.4,
+      "total_R_ohm": 23.499999999999996,
+      "total_ground_C_fF": 34.88916480000001,
+      "total_mutual_C_fF": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0,
+      "node_count": 11,
+      "t50_delay_ns": 1.1789939295295573,
+      "half_LSB_settling_after_ramp_ns": 15.21129737099782,
+      "output_at_10ns_V": 1.782769996106835,
+      "coupling_peak_mV": 0.0,
+      "final_step_error_uV": 1.3000045484545808e-05
+    },
+    {
+      "id": "detour",
+      "label": "Long detour",
+      "length_um": 600.0,
+      "width_um": 0.4,
+      "total_R_ohm": 70.49999999999999,
+      "total_ground_C_fF": 104.55574080000002,
+      "total_mutual_C_fF": 16.1346432,
+      "aggressor_overlap_um2": 192.0,
+      "grounded_patch_overlap_um2": 0.0,
+      "node_count": 31,
+      "t50_delay_ns": 2.372833475414088,
+      "half_LSB_settling_after_ramp_ns": 30.714214917184183,
+      "output_at_10ns_V": 1.6212554053983024,
+      "coupling_peak_mV": 165.1007107497,
+      "final_step_error_uV": 0.07969500015470032
+    },
+    {
+      "id": "wide_detour",
+      "label": "Wider detour",
+      "length_um": 600.0,
+      "width_um": 1.2,
+      "total_R_ohm": 23.5,
+      "total_ground_C_fF": 146.0368224,
+      "total_mutual_C_fF": 48.4039296,
+      "aggressor_overlap_um2": 576.0,
+      "grounded_patch_overlap_um2": 0.0,
+      "node_count": 31,
+      "t50_delay_ns": 3.3917258511867328,
+      "half_LSB_settling_after_ramp_ns": 43.975772473159225,
+      "output_at_10ns_V": 1.441944698993553,
+      "coupling_peak_mV": 349.14463589009995,
+      "final_step_error_uV": 13.014556000001676
+    },
+    {
+      "id": "detour_fill",
+      "label": "Detour + grounded patch",
+      "length_um": 600.0,
+      "width_um": 0.4,
+      "total_R_ohm": 70.49999999999999,
+      "total_ground_C_fF": 107.91712480000002,
+      "total_mutual_C_fF": 16.1346432,
+      "aggressor_overlap_um2": 192.0,
+      "grounded_patch_overlap_um2": 40.0,
+      "node_count": 31,
+      "t50_delay_ns": 2.419522589263436,
+      "half_LSB_settling_after_ramp_ns": 31.320514700122605,
+      "output_at_10ns_V": 1.6131061566131895,
+      "coupling_peak_mV": 162.0029118184,
+      "final_step_error_uV": 0.11051100012871018
+    }
+  ],
+  "closed_form_R_C_checks": "Passed for all four cases against independent length/width/area/perimeter calculations.",
+  "default_ngspice_runs": 8,
+  "refined_ngspice_runs": 8,
+  "independent_python_transients": 8,
+  "comparisons": {
+    "finer_ngspice": {
+      "engine": "ngspice-44.2 : Circuit level simulation program",
+      "segment_um": 10.0,
+      "time_step_ps": 5.0,
+      "cases": [
+        {
+          "id": "compact",
+          "absolute_difference": {
+            "t50_delay_ns": -7.903555399702e-06,
+            "half_LSB_settling_after_ramp_ns": 0.00011817951558690254,
+            "coupling_peak_mV": 0.0,
+            "output_at_10ns_V": -5.239402431911344e-07
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.0006703643845609689,
+            "half_LSB_settling_after_ramp_ns": 0.0007769193692329367,
+            "coupling_peak_mV": null,
+            "output_at_10ns_V": 2.9389110448083655e-05
+          }
+        },
+        {
+          "id": "detour",
+          "absolute_difference": {
+            "t50_delay_ns": -7.005683837491006e-07,
+            "half_LSB_settling_after_ramp_ns": 6.549226815977249e-05,
+            "coupling_peak_mV": -0.00030148070001700944,
+            "output_at_10ns_V": -7.650337439102373e-07
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 2.9524549067938404e-05,
+            "half_LSB_settling_after_ramp_ns": 0.00021323113202262081,
+            "coupling_peak_mV": 0.00018260412002348527,
+            "output_at_10ns_V": 4.7187737438709565e-05
+          }
+        },
+        {
+          "id": "wide_detour",
+          "absolute_difference": {
+            "t50_delay_ns": 1.582627592977559e-06,
+            "half_LSB_settling_after_ramp_ns": 1.8612870391621072e-05,
+            "coupling_peak_mV": -0.0007726145999527034,
+            "output_at_10ns_V": -5.377959164665214e-07
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 4.6661424372604073e-05,
+            "half_LSB_settling_after_ramp_ns": 4.2325283547847866e-05,
+            "coupling_peak_mV": 0.00022128783333102641,
+            "output_at_10ns_V": 3.7296570169569724e-05
+          }
+        },
+        {
+          "id": "detour_fill",
+          "absolute_difference": {
+            "t50_delay_ns": 2.9266338454903007e-06,
+            "half_LSB_settling_after_ramp_ns": 6.53047188166056e-05,
+            "coupling_peak_mV": -0.00033543990002726787,
+            "output_at_10ns_V": -7.479681478628208e-07
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.00012095914534863849,
+            "half_LSB_settling_after_ramp_ns": 0.00020850461571868728,
+            "coupling_peak_mV": 0.0002070579449851402,
+            "output_at_10ns_V": 4.6368191256130576e-05
+          }
+        }
+      ]
+    },
+    "independent_python": {
+      "engine": "Python standard-library backward Euler, fixed time step",
+      "segment_um": 20.0,
+      "time_step_ps": 10.0,
+      "cases": [
+        {
+          "id": "compact",
+          "absolute_difference": {
+            "t50_delay_ns": -0.0015459064734071326,
+            "half_LSB_settling_after_ramp_ns": 0.04016705210234228,
+            "coupling_peak_mV": 0.0,
+            "output_at_10ns_V": -0.00018589451174344518
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.13112081705322953,
+            "half_LSB_settling_after_ramp_ns": 0.2640606591448645,
+            "coupling_peak_mV": null,
+            "output_at_10ns_V": 0.010427285188184487
+          }
+        },
+        {
+          "id": "detour",
+          "absolute_difference": {
+            "t50_delay_ns": -0.0015329123576628412,
+            "half_LSB_settling_after_ramp_ns": 0.040119912275429215,
+            "coupling_peak_mV": -0.576470637807347,
+            "output_at_10ns_V": -0.0003428351661223239
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.06460261006707727,
+            "half_LSB_settling_after_ramp_ns": 0.13062327128857418,
+            "coupling_peak_mV": 0.3491630261248857,
+            "output_at_10ns_V": 0.02114627744529233
+          }
+        },
+        {
+          "id": "wide_detour",
+          "absolute_difference": {
+            "t50_delay_ns": -0.001533078402563337,
+            "half_LSB_settling_after_ramp_ns": 0.040099056244983444,
+            "coupling_peak_mV": -0.8542490827645679,
+            "output_at_10ns_V": -0.0002253768702866754
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.04520054007392512,
+            "half_LSB_settling_after_ramp_ns": 0.09118442721946056,
+            "coupling_peak_mV": 0.2446691127265261,
+            "output_at_10ns_V": 0.015630063375106112
+          }
+        },
+        {
+          "id": "detour_fill",
+          "absolute_difference": {
+            "t50_delay_ns": -0.001529128715979322,
+            "half_LSB_settling_after_ramp_ns": 0.04011818126246425,
+            "coupling_peak_mV": -0.5532030669130563,
+            "output_at_10ns_V": -0.0003395857960739601
+          },
+          "relative_difference_percent": {
+            "t50_delay_ns": 0.06319960486274392,
+            "half_LSB_settling_after_ramp_ns": 0.12808915066235232,
+            "coupling_peak_mV": 0.3414772368617541,
+            "output_at_10ns_V": 0.021051670696424614
+          }
+        }
+      ]
+    }
+  },
+  "unexecuted": [
+    "Magic extraction",
+    "DRC",
+    "LVS",
+    "SKY130 device-model simulation",
+    "package or thermal extraction"
+  ],
+  "notes": [
+    "The finer ngspice run halves both maximum segment length and maximum transient step.",
+    "The independent Python solver uses fixed-step backward Euler and retains the mutual-capacitor forcing term.",
+    "Numerical refinement does not quantify omitted-field or process-model error."
+  ]
+}

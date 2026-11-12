@@ -1,0 +1,17 @@
+cell: sky130_fd_sc_hd__inv_1
+mag: /workspace/learn/learning/labs/L07_drc_lvs/clean/sky130_fd_sc_hd__inv_1.mag
+RULE: All nwells must contain metal-connected N+ taps (nwell.4)
+----------------------------------------
+  box -0.19 1.305 1.57 2.91 um
+
+RULE: P-diff distance to N-tap must be < 15.0um (LU.3)
+----------------------------------------
+  box 0.34 1.485 0.6 2.485 um
+  box 0.75 1.485 1.01 2.485 um
+
+RULE: N-diff distance to P-tap must be < 15.0um (LU.2)
+----------------------------------------
+  box 0.34 0.235 0.6 0.885 um
+  box 0.75 0.235 1.01 0.885 um
+
+COUNT: 5

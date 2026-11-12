@@ -1,0 +1,577 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Placement: Global, Legalization &amp; Detailed</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+<p class="lesson-meta">Lesson 58 / 84 · Part VI, Physical cells and the floorplan</p>
+<h1>Placement: Global, Legalization &amp; Detailed</h1>
+<p class="subtitle">How OpenROAD spreads standard cells, legalizes them onto SKY130 unithd sites, and repairs slew and fanout — recorded on one 32-bit SPM at three utilizations.</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> Placement, legalization and the 30/45/60 utilization table are OpenROAD logs and <code>metrics.json</code> from LibreLane 3.0.17 on the bundled 32-bit SPM multiplier (<code>CLOCK_PERIOD</code> 10&nbsp;ns, sky130_fd_sc_hd, PDK sky130A). The 45% run is <code>RUN_2026-11-11_16-09-06</code>, taken through GDS. The 30% and 60% runs used <code>--override-config FP_CORE_UTIL=30</code> and <code>60</code>, tags <code>util30</code> and <code>util60</code>, and stopped after <code>Odb.ReportWireLength</code>. Density bins are counted from the 45% post-detailed-placement DEF. Recorded files live in <code>labs/analysis_examples/rtl_to_gds/</code>. The full RTL-to-GDS walk-through is <a href="lab_rtl_to_gds.html">Lab 6</a>.</p>
+
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Read a global-placement log: target density, overflow, HPWL and routability.</li>
+<li>Legalize a placement onto unithd sites (0.46&nbsp;µm × 2.72&nbsp;µm) and see what detailed placement does to HPWL.</li>
+<li>See how <code>repair_design</code> inserts buffers for slew and fanout, using the margins in the LibreLane config.</li>
+<li>Compare the same netlist at FP_CORE_UTIL 30, 45 and 60 against die area, wirelength and routing DRC.</li>
+</ul></div>
+
+<aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl>
+<dt>In the flow</dt><dd><a href="design_flow.html#step-5">step 5, placement</a>, immediately after the <a href="floorplan.html">floorplan (lesson 55)</a> and before the <a href="clock_tree.html">clock tree (lesson 35)</a> and <a href="routing_timing_closure.html">routing (lesson 59)</a>.</dd>
+<dt>Tools</dt><dd>OpenROAD <code>global_placement</code>, <code>repair_design</code>, <code>detailed_placement</code>. LibreLane steps: GlobalPlacement, RepairDesignPostGPL, DetailedPlacement. Commercial: Innovus, IC Compiler II.</dd>
+<dt>Why it matters</dt><dd>A congested or illegal placement makes routing and timing closure expensive. The utilization you pick here sizes the core and sets how hard the router will work.</dd>
+</dl></aside>
+
+<h2 id="section-1">1. After the floorplan, every cell needs a site</h2>
+<p>The floorplan has already fixed the die, the core, the <a href="site_rows.html">unithd rows (lesson 13)</a> and the pins. Placement’s job is to put every standard cell on a legal site: on a row, on the 0.46&nbsp;µm site grid, with no overlaps, and with wires that can actually be routed. LibreLane splits that into three OpenROAD steps — global placement, a design-repair pass, and detailed placement — and that is the sequence recorded below.</p>
+<figure><div class="figwrap"><svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg" style="min-width:650px" font-family="system-ui, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Four placement steps with recorded SPM numbers"><text x="400" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#33414f">Placement on the 45% SPM, as LibreLane ran it</text><rect x="20" y="80" width="150" height="80" rx="8" fill="#eef3fb" stroke="#4a72c4" stroke-width="1.5"/><text x="95.0" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Floorplan</text><text x="95.0" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">31 unithd rows</text><text x="95.0" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">die 96.6×107.32 µm</text><line x1="174" y1="120.0" x2="192" y2="120.0" stroke="#33414f" stroke-width="1.5"/><polygon points="196,115.0 196,125.0 204,120.0" fill="#33414f"/><rect x="200" y="80" width="170" height="80" rx="8" fill="#eef3fb" stroke="#4a72c4" stroke-width="1.5"/><text x="285.0" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Global placement</text><text x="285.0" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">density 0.573812</text><text x="285.0" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">overflow 0.8623 → 0.0990</text><line x1="374" y1="120.0" x2="392" y2="120.0" stroke="#33414f" stroke-width="1.5"/><polygon points="396,115.0 396,125.0 404,120.0" fill="#33414f"/><rect x="400" y="80" width="170" height="80" rx="8" fill="#eef3fb" stroke="#4a72c4" stroke-width="1.5"/><text x="485.0" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">repair_design</text><text x="485.0" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">34+1 input/output buf.</text><text x="485.0" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">25 more, 2 nets</text><line x1="574" y1="120.0" x2="592" y2="120.0" stroke="#33414f" stroke-width="1.5"/><polygon points="596,115.0 596,125.0 604,120.0" fill="#33414f"/><rect x="600" y="80" width="170" height="80" rx="8" fill="#eef3fb" stroke="#4a72c4" stroke-width="1.5"/><text x="685.0" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Detailed placement</text><text x="685.0" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">already legal (Δ=0)</text><text x="685.0" y="146" text-anchor="middle" font-size="12" fill="#5c6b7a">HPWL 5294.5 µm</text><text x="400" y="200" text-anchor="middle" font-size="13" fill="#33414f">Then CTS, routing and signoff — lessons 35, 59 and 62, and Lab 6.</text><text x="400" y="222" text-anchor="middle" font-size="12" fill="#5c6b7a">Numbers are from 28-openroad-globalplacement, 32-openroad-repairdesignpostgpl and 34-openroad-detailedplacement.</text></svg></div><figcaption><strong>Figure 1 — The placement sequence LibreLane ran on the 45% SPM. Overflow, buffer counts and HPWL are taken from the OpenROAD logs of run RUN_2026-11-11_16-09-06.</strong></figcaption></figure>
+<p>On the 45% SPM the floorplan produced a die of 96.6 × 107.32&nbsp;µm (area 10,367.1&nbsp;µm²), a core from (5.520, 10.880) to (91.080, 95.200)&nbsp;µm (area 7,214.42&nbsp;µm²), 31 unithd rows and 5,766 sites, with 38 I/O pins. Those numbers are the box global placement has to fill.</p>
+
+<h2 id="section-2">2. Global placement: density, overflow and HPWL</h2>
+<p>Global placement does not yet snap cells to sites. It spreads them continuously to shrink estimated wirelength and to keep local density under a target. OpenROAD’s GPL engine first solves a quadratic “InitialPlace” (conjugate gradient), then a Nesterov iteration that reports two figures at every step:</p>
+<ul>
+<li><strong>Overflow</strong> — how much placed area exceeds the target density, across bins. The run stops when overflow falls to about 0.1.</li>
+<li><strong>HPWL</strong> — half-perimeter wirelength, in micrometres, of a Steiner estimate. It usually rises a little as overflow is pushed down, because spreading cells to relieve density can lengthen wires.</li>
+</ul>
+<p>The 45% command was:</p>
+<pre>global_placement -density 0.573812 -routability_driven -pad_right 0 -pad_left 0</pre>
+<p><code>PL_TARGET_DENSITY_PCT</code> was left unset in the config. LibreLane derived the 0.573812 target from <code>FP_CORE_UTIL=45</code>. Routability mode was on (<code>PL_ROUTABILITY_DRIVEN=True</code>); timing-driven placement was off (<code>PL_TIMING_DRIVEN=False</code>). Cell padding was zero (<code>DPL_CELL_PADDING=0</code>).</p>
+<p>At the start of GPL the log reported 52.040% utilization and a minimum feasible density of 0.5300. The engine used 16×16 bins, each 5.348 × 5.270&nbsp;µm. Nesterov iteration 0 had overflow 0.8623 and HPWL 1,778.559&nbsp;µm; iteration 397 had overflow 0.0990 and HPWL 3,827.500&nbsp;µm. Routability mode then ran 82 iterations, reported total routing overflow 0.0000, 0 overflowed tiles, and weighted congestion 0.8653 — below the 1.0100 target — and finished successfully. Placed cell area at the end of GPL was 3,568.8119&nbsp;µm².</p>
+<p>InitialPlace, which uses a different HPWL unit, went from 7,566,590 to 3,521,926 over five conjugate-gradient iterations. Those raw counts are not micrometres; the Nesterov column is the one to quote in µm.</p>
+
+<h2 id="section-3">3. repair_design: slew, capacitance and fanout</h2>
+<p>After global placement, <code>repair_design</code> walks the netlist and inserts or resizes buffers so that slew, capacitance and fanout meet the design limits — with a margin, so later routing parasitics have room. The LibreLane limits on this run were <code>MAX_FANOUT</code> 10, <code>MAX_CAP</code> 0.2&nbsp;pF, and <code>DESIGN_REPAIR_MAX_SLEW_PCT</code> / <code>DESIGN_REPAIR_MAX_CAP_PCT</code> of 20. The log of <code>32-openroad-repairdesignpostgpl</code> reads:</p>
+<pre>+ repair_design -verbose -max_wire_length 0.0 -slew_margin 20.0 -cap_margin 20.0
+[INFO RSZ-0027] Inserted 34 sky130_fd_sc_hd__clkdlybuf4s25_1 input buffers.
+[INFO RSZ-0028] Inserted 1 sky130_fd_sc_hd__clkdlybuf4s25_1 output buffers.
+[INFO RSZ-0034] Found 2 slew violations.
+[INFO RSZ-0035] Found 2 fanout violations.
+[INFO RSZ-0038] Inserted 25 buffers in 2 nets.</pre>
+<p>At the end of that step the “Timing Repair Buffer” class had 60 cells, area 573.05&nbsp;µm². Later CTS and hold repair add more: the final 45% metrics list 93 timing-repair buffers (area 903.366&nbsp;µm²), including 33 <code>dlygate4sd3_1</code> hold cells and 52 <code>clkdlybuf4s25_1</code>, plus 9 <code>clkbuf_16</code> and 64 <code>dfrtp_2</code>. The hold-cell story is in <a href="multicorner_sta.html">lesson 45</a>; it is not repeated here.</p>
+
+<h2 id="section-4">4. Legalization and detailed placement</h2>
+<p>Detailed placement snaps every cell onto a unithd site (0.46&nbsp;µm wide, 2.72&nbsp;µm tall, the HD row pitch of <a href="site_rows.html">lesson 13</a>) and removes overlaps. The command was <code>detailed_placement -max_displacement 500 100</code>. On the 45% SPM, this step’s own displacement was already zero — the cells were legal before the optimizer ran. Legalization still moved them enough to change HPWL:</p>
+<ul>
+<li>Original HPWL 5,294.5&nbsp;µm.</li>
+<li>Legalized HPWL 5,583.9&nbsp;µm (+5%).</li>
+<li>After the detailed-placement optimize pass: 5,294.5&nbsp;µm again (delta −5.2%).</li>
+</ul>
+<p>The same pattern appeared at 30% (5,519.2 → 5,850.5 → 5,519.2&nbsp;µm, +6% then −5.7%) and at 60% (5,610.6 → 5,915.0 → 5,610.6&nbsp;µm, +5% then −5.1%). Legalization makes the placement site-legal, which costs a little HPWL; the optimizer then gives most of it back. Instance count at 45% DPL was 381, utilization 0.553243. Final displacement figures in <code>metrics.json</code> (max 23.3&nbsp;µm, mean 0.677, total 328.658) include later CTS and repair moves, and are not the DPL-step displacement of zero.</p>
+
+<h2 id="section-5">5. A utilization sweep: 30, 45 and 60%</h2>
+<p>The same SPM netlist was run at three <code>FP_CORE_UTIL</code> values. Lower utilization asks LibreLane for a larger core, so the same cells sit farther apart; higher utilization packs them into a smaller die. The 45% run is the full RTL-to-GDS path of <a href="lab_rtl_to_gds.html">Lab 6</a>. The 30% and 60% runs used <code>--override-config</code> and stopped after detailed routing and wirelength reporting.</p>
+<figure><div class="figwrap"><svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" style="min-width:650px" font-family="system-ui, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Four bar charts of die area, wirelength, congestion and initial DRC versus utilization">
+<text x="400" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#33414f">SPM utilization sweep — recorded OpenROAD metrics</text>
+<text x="100" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Die area</text>
+<line x1="50" y1="200" x2="160" y2="200" stroke="#d7dfe8" stroke-width="1.5"/>
+<rect x="60" y="90.0" width="20" height="110.0" fill="#7aa2d4"/>
+<text x="70" y="82.0" text-anchor="middle" font-size="11" fill="#33414f">14.7k</text>
+<text x="70" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">30%</text>
+<rect x="90" y="122.20236998833425" width="20" height="77.79763001166575" fill="#4a72c4"/>
+<text x="100" y="114.20236998833425" text-anchor="middle" font-size="11" fill="#33414f">10.4k</text>
+<text x="100" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">45%</text>
+<rect x="120" y="138.75366174795167" width="20" height="61.24633825204834" fill="#2c4e8c"/>
+<text x="130" y="130.75366174795167" text-anchor="middle" font-size="11" fill="#33414f">8.2k</text>
+<text x="130" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">60%</text>
+<text x="110" y="236" text-anchor="middle" font-size="11" fill="#5c6b7a">µm²</text><text x="300" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Detailed-route wirelength</text><line x1="250" y1="200" x2="360" y2="200" stroke="#d7dfe8" stroke-width="1.5"/><rect x="260" y="104.4489688690398" width="20" height="95.5510311309602" fill="#7aa2d4"/>
+<text x="270" y="96.4489688690398" text-anchor="middle" font-size="11" fill="#33414f">6613</text>
+<text x="270" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">30%</text>
+<rect x="290" y="105.96611060028899" width="20" height="94.03388939971101" fill="#4a72c4"/>
+<text x="300" y="97.96611060028899" text-anchor="middle" font-size="11" fill="#33414f">6508</text>
+<text x="300" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">45%</text>
+<rect x="320" y="90.0" width="20" height="110.0" fill="#c45c3a"/>
+<text x="330" y="82.0" text-anchor="middle" font-size="11" fill="#33414f">7613</text>
+<text x="330" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">60%</text>
+<text x="310" y="236" text-anchor="middle" font-size="11" fill="#5c6b7a">µm (45% shortest)</text><text x="500" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">GRT total usage</text><line x1="450" y1="200" x2="560" y2="200" stroke="#d7dfe8" stroke-width="1.5"/><rect x="460" y="147.8502024291498" width="20" height="52.149797570850204" fill="#7aa2d4"/>
+<text x="470" y="139.8502024291498" text-anchor="middle" font-size="11" fill="#33414f">11.7%</text>
+<text x="470" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">30%</text>
+<rect x="490" y="130.5263157894737" width="20" height="69.47368421052632" fill="#4a72c4"/>
+<text x="500" y="122.5263157894737" text-anchor="middle" font-size="11" fill="#33414f">15.6%</text>
+<text x="500" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">45%</text>
+<rect x="520" y="90.0" width="20" height="110.0" fill="#c45c3a"/>
+<text x="530" y="82.0" text-anchor="middle" font-size="11" fill="#33414f">24.7%</text>
+<text x="530" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">60%</text>
+<text x="700" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">DRT DRC, iteration 0</text><line x1="650" y1="200" x2="760" y2="200" stroke="#d7dfe8" stroke-width="1.5"/><rect x="660" y="150.21052631578948" width="20" height="49.78947368421053" fill="#7aa2d4"/>
+<text x="670" y="142.21052631578948" text-anchor="middle" font-size="11" fill="#33414f">43</text>
+<text x="670" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">30%</text>
+<rect x="690" y="178.0" width="20" height="22.0" fill="#4a72c4"/>
+<text x="700" y="170.0" text-anchor="middle" font-size="11" fill="#33414f">19</text>
+<text x="700" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">45%</text>
+<rect x="720" y="90.0" width="20" height="110.0" fill="#c45c3a"/>
+<text x="730" y="82.0" text-anchor="middle" font-size="11" fill="#33414f">95</text>
+<text x="730" y="216" text-anchor="middle" font-size="12" fill="#5c6b7a">60%</text>
+<text x="400" y="262" text-anchor="middle" font-size="12" fill="#5c6b7a">FP_CORE_UTIL. All three closed at route__drc_errors = 0.</text><text x="400" y="280" text-anchor="middle" font-size="12" fill="#5c6b7a">30% and 60% stopped after ReportWireLength; only 45% continued to GDS.</text></svg></div><figcaption><strong>Figure 2 — Utilization sweep of the same SPM netlist at FP_CORE_UTIL 30, 45 and 60, from OpenROAD global and detailed routing. Wirelength is shortest at 45%. All three closed routing DRC. The 30% and 60% runs were stopped after Odb.ReportWireLength; they were not taken through GDS signoff.</strong></figcaption></figure>
+<table>
+<thead><tr><th>FP_CORE_UTIL</th><th>30</th><th>45</th><th>60</th></tr></thead>
+<tbody>
+<tr><td>Die (µm)</td><td>115.83 × 126.55</td><td>96.6 × 107.32</td><td>85.14 × 95.86</td></tr>
+<tr><td>Die area (µm²)</td><td>14,658.3</td><td>10,367.1</td><td>8,161.52</td></tr>
+<tr><td>Core area (µm²)</td><td>10,792.9</td><td>7,214.42</td><td>5,438.97</td></tr>
+<tr><td>Rows (unithd)</td><td>38</td><td>31</td><td>27</td></tr>
+<tr><td>GPL utilization</td><td>34.540%</td><td>52.040%</td><td>69.349%</td></tr>
+<tr><td>GPL target density</td><td>0.42147</td><td>0.573812</td><td>0.722268</td></tr>
+<tr><td>Minimum feasible density</td><td>0.3500</td><td>0.5300</td><td>0.7000</td></tr>
+<tr><td>Nesterov overflow, start → end</td><td>0.8487 → 0.0999</td><td>0.8623 → 0.0990</td><td>0.7354 → 0.0996</td></tr>
+<tr><td>Nesterov HPWL (µm), start → end</td><td>1,910.026 → 4,197.748</td><td>1,778.559 → 3,827.500</td><td>1,751.797 → 3,038.424</td></tr>
+<tr><td>Nesterov iterations</td><td>397</td><td>397</td><td>307</td></tr>
+<tr><td>GRT total usage</td><td>11.71%</td><td>15.60%</td><td>24.70%</td></tr>
+<tr><td>GRT met2 usage</td><td>23.27%</td><td>31.54%</td><td>43.28%</td></tr>
+<tr><td>GRT overflow (H / V / tot.)</td><td>0 / 0 / 0</td><td>0 / 0 / 0</td><td>0 / 0 / 0</td></tr>
+<tr><td>DRT DRC by iteration</td><td>43 → 16 → 0</td><td>19 → 4 → 0</td><td>95 → 15 → 21 → 0</td></tr>
+<tr><td>Final route DRC</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>DRT wirelength (µm)</td><td>6,613</td><td>6,508</td><td>7,613</td></tr>
+<tr><td>Longest net (µm)</td><td>185.66</td><td>173.355</td><td>139.72</td></tr>
+<tr><td>DRT vias (all single-cut)</td><td>1,980</td><td>1,991</td><td>2,136</td></tr>
+<tr><td>Final instance utilization</td><td>0.424646</td><td>0.630246</td><td>0.825627</td></tr>
+<tr><td>Taken through GDS / DRC / LVS</td><td>no</td><td>yes, all Passed</td><td>no</td></tr>
+</tbody>
+</table>
+<p>Three observations, all from these runs, not from a general model:</p>
+<ul>
+<li>45% produced the <em>shortest</em> detailed-route wirelength (6,508&nbsp;µm). At 30% the larger die stretched the longest net to 185.66&nbsp;µm and total WL to 6,613&nbsp;µm. At 60% congestion forced detours: WL rose to 7,613&nbsp;µm even though the longest net shrank to 139.72&nbsp;µm on the smaller die, and the router used much more met3 (286&nbsp;µm) and met4 (414&nbsp;µm).</li>
+<li>Tighter utilization made the first routing iteration harder — 95 DRC errors at 60% versus 19 at 45% — and the 60% run went <em>up</em> from 15 to 21 errors at iteration 2 before closing. It still closed.</li>
+<li>The 60% minimum feasible density was 0.7000 against a target of 0.7223: there was little spare room. Mid-routability GPL reported 1 overflowed tile (0.64%) and weighted congestion 0.9930, still under the 1.0100 target, and routability finished successfully. Final GRT overflow was 0.</li>
+</ul>
+<p>Final instance utilization is higher than <code>FP_CORE_UTIL</code> because CTS, repair buffers and fill cells are added after the core is sized. At 45% the final metrics list 1,226 instances, of which 803 are fill (area 2,667.56&nbsp;µm²), 99 are taps, 423 are standard cells (area 4,546.86&nbsp;µm²), and utilization is 0.630246.</p>
+
+<h2 id="section-6">6. A density map of the 45% placement</h2>
+<p>OpenROAD GPL used a 16×16 bin grid on this design. Counting PLACED components in the post-detailed-placement DEF, in those same bin sizes, gives a picture of how evenly the movable cells were spread.</p>
+<figure><div class="figwrap"><svg viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg" style="min-width:650px" font-family="system-ui, -apple-system, Segoe UI, sans-serif" role="img" aria-label="Heat map of placed cell counts in 16 by 16 bins over the SPM core"><text x="400" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#33414f">Post-detailed-placement instance counts, 16×16 GPL bins</text><rect x="80" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="99" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="118" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="137" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="175" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="194" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="213" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="251" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="270" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="289" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="327" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="346" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="335" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="99" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="118" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="137" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="194" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="251" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="316" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="329.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="327" y="316" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="329.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="346" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="316" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="297" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="310.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="146.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="156" y="297" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="310.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="175" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="297" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="297" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="310.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="251" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="297" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="289" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="297" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="310.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="297" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="346" y="297" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="297" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="278" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="291.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="278" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="278" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="291.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="175" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="278" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="213" y="278" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="278" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="291.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="251" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="278" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="291.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="308" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="278" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="291.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="278" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="291.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="365" y="278" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="259" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="99" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="259" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="146.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="156" y="259" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="175" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="259" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="232" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="251" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="259" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="308" y="259" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="327" y="259" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="272.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="346" y="259" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="272.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="365" y="259" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="240" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="253.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="118" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="137" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="240" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="253.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="194" y="240" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="253.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="240" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="253.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="232" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="251" y="240" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="253.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="289" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="240" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="253.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="327" y="240" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="253.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="240" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="221" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="234.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="118" y="221" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="234.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="221" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="221" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="234.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="232" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="251" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="221" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="234.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="221" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="234.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="365" y="221" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="202" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="215.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="194" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="251" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="270" y="202" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="215.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="289" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="202" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="215.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="202" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="215.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="202" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="118" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="183" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="194" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="213" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="232" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="251" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="183" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="196.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="183" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="327" y="183" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="346" y="183" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="196.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="365" y="183" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="164" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="99" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="137" y="164" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="164" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="177.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="175" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="164" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="164" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="177.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="251" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="164" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="164" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="177.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="346" y="164" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="177.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="365" y="164" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="99" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="118" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="145" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="175" y="145" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="158.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="145" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="213" y="145" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="251" y="145" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="158.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="145" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="289" y="145" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="308" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="327" y="145" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="158.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="145" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="158.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="365" y="145" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="99" y="126" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="139.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="137" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="126" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="139.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="126" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="139.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="194" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="213" y="126" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="139.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="232" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="251" y="126" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="139.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="270" y="126" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="139.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="289" y="126" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="139.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="327" y="126" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="139.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="346" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="126" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="107" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="120.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="107" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="107" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="120.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="175" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="232" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="251" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="270" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="107" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="107" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="120.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="346" y="107" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="355.0" y="120.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="365" y="107" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="88" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="101.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="137" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="146.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="156" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="88" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="101.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="194" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="232" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="251" y="88" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="260.0" y="101.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="270" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="289" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="88" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="101.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="327" y="88" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="101.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="346" y="88" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="88" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="80" y="69" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="82.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="99" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="108.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="118" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="127.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="137" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="146.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="156" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="165.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="175" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="184.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="194" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="203.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="213" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="222.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="232" y="69" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="241.0" y="82.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="251" y="69" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="270" y="69" width="18" height="18" fill="rgb(111,135,177)" stroke="#fff" stroke-width="0.4"/>
+<text x="279.0" y="82.0" text-anchor="middle" font-size="9" fill="#fff">2</text>
+<rect x="289" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="298.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="308" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="317.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="327" y="69" width="18" height="18" fill="rgb(44,78,140)" stroke="#fff" stroke-width="0.4"/>
+<text x="336.0" y="82.0" text-anchor="middle" font-size="9" fill="#fff">3</text>
+<rect x="346" y="69" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="69" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="374.0" y="82.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="80" y="50" width="18" height="18" fill="rgb(179,192,214)" stroke="#fff" stroke-width="0.4"/>
+<text x="89.0" y="63.0" text-anchor="middle" font-size="9" fill="#33414f">1</text>
+<rect x="99" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="118" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="137" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="156" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="175" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="194" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="213" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="232" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="251" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="270" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="289" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="308" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="327" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="346" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="365" y="50" width="18" height="18" fill="rgb(247,250,252)" stroke="#fff" stroke-width="0.4"/>
+<rect x="79" y="49" width="304" height="304" fill="none" stroke="#33414f" stroke-width="1"/><text x="232.0" y="376" text-anchor="middle" font-size="12" fill="#5c6b7a">core 85.56 µm × 84.32 µm · bin 5.348 µm × 5.270 µm</text><text x="68" y="64" text-anchor="end" font-size="11" fill="#5c6b7a">N</text><text x="68" y="350" text-anchor="end" font-size="11" fill="#5c6b7a">S</text><text x="424" y="62" font-size="12" font-weight="700" fill="#33414f">Cells / bin</text><rect x="424" y="70" width="22" height="18" fill="rgb(247,250,252)" stroke="#d7dfe8"/><text x="454" y="83" font-size="12" fill="#33414f">0</text><rect x="424" y="92" width="22" height="18" fill="rgb(179,192,214)" stroke="#d7dfe8"/><text x="454" y="105" font-size="12" fill="#33414f">1</text><rect x="424" y="114" width="22" height="18" fill="rgb(111,135,177)" stroke="#d7dfe8"/><text x="454" y="127" font-size="12" fill="#33414f">2</text><rect x="424" y="136" width="22" height="18" fill="rgb(44,78,140)" stroke="#d7dfe8"/><text x="454" y="149" font-size="12" fill="#33414f">3</text><text x="424" y="176" font-size="12" fill="#5c6b7a">222 PLACED</text><text x="424" y="192" font-size="12" fill="#5c6b7a">components</text><text x="424" y="208" font-size="12" fill="#5c6b7a">in the post-DPL DEF</text><text x="400" y="400" text-anchor="middle" font-size="12" fill="#5c6b7a">FP_CORE_UTIL=45, run RUN_2026-11-11_16-09-06. Bins match OpenROAD GPL’s 16×16 grid.</text><text x="400" y="418" text-anchor="middle" font-size="12" fill="#5c6b7a">Empty edge bins are core margin, not a tool failure.</text></svg></div><figcaption><strong>Figure 3 — Instance-count heat map after detailed placement of the 45% SPM, using the same 16×16 bin size OpenROAD GPL reported (5.348 µm × 5.270 µm). 222 PLACED components were parsed from the post-DPL DEF; fill and some physical-only cells are not in this count. The maximum bin holds three cells.</strong></figcaption></figure>
+<p>The map is an instance count, not an area-weighted density, and it omits fill (fill is inserted after routing). Empty bins at the south edge are the core margin. The placement is even enough that no bin exceeds three of these cells — consistent with GPL reporting zero overflowed tiles and a comfortable gap between 52% utilization and a 0.57 target.</p>
+
+<h2 id="section-7">7. What to check before you route</h2>
+<p>Before handing the database to CTS and routing, the logs above are the checklist:</p>
+<ul>
+<li>GPL overflow at or under ~0.1, routability finished, overflowed tiles at or near zero.</li>
+<li>Utilization and target density with some margin — the 60% run’s 0.7000 feasible versus 0.7223 target is the tight end of this sweep.</li>
+<li><code>repair_design</code> has cleared slew, capacitance and fanout at the configured margins.</li>
+<li>Detailed placement is legal on the library site, and the HPWL penalty of legalization has been recovered or accepted.</li>
+</ul>
+<p>Routing congestion, layer usage and the DRC-iteration story are <a href="routing_timing_closure.html">lesson 59</a>. Multi-corner slacks after route are <a href="multicorner_sta.html">lesson 45</a>. The GDS, DRC and LVS of the 45% run are <a href="lab_rtl_to_gds.html">Lab 6</a> and <a href="physical_signoff.html">lesson 62</a>.</p>
+
+<details class="checkpoint"><summary>Why was detailed-route wirelength shortest at 45%, not at 30%?</summary><p>A larger core (30%) makes some pins farther apart, so the longest net and the total length grow even though congestion is lower (GRT usage 11.71%). A tighter core (60%) shortens the longest net but the router has to detour and climb to met3 and met4, and total length grows. On this SPM, 45% sat in between: GRT usage 15.60%, almost no met3/met4, and the shortest DRT total (6,508&nbsp;µm). That is a measured result for this netlist and this clock, not a rule that 45% is always best.</p></details>
+
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul>
+<li><a href="lab_rtl_to_gds.html">Lab 6 — RTL to GDS on the SPM</a>, including the utilization-sweep table and the 45% GDS.</li>
+</ul></section>
+<div class="lesson-footer"><a href="hierarchical_eco.html"><small>← Previous</small>Hierarchical Design, Abstracts &amp; ECO</a><a href="routing_timing_closure.html"><small>Next →</small>Routing &amp; Timing Closure</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html" aria-current="page">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</main></body></html>

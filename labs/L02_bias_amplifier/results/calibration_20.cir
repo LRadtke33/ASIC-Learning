@@ -1,0 +1,31 @@
+* L02: NMOS common-source amplifier with a PMOS mirror load.
+* Explicit body ties. VNSENSE and VPSENSE are ideal zero-volt current probes.
+* Device geometry is supported by the selected model bins. Diffusion geometry is assumed.
+.lib "../../common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-6 abstol=1e-12 vntol=1e-9
+VDD vdd 0 1.8
+IREF vbiasp 0 20u
+XMPREF vbiasp vbiasp vdd vdd sky130_fd_pr__pfet_01v8_hvt w=7 l=1 ad=2.03 as=2.03 pd=14.58 ps=14.58
+XMP pdrain vbiasp vdd vdd sky130_fd_pr__pfet_01v8_hvt w=7 l=1 ad=2.03 as=2.03 pd=14.58 ps=14.58
+VPSENSE pdrain out 0
+VNSENSE out ndrain 0
+XMN ndrain vin 0 0 sky130_fd_pr__nfet_01v8 w=5 l=1 ad=1.45 as=1.45 pd=10.58 ps=10.58
+VSIG vin 0 DC 0.757011032104 AC 1
+CLOAD out 0 1p
+VCLAMP out 0 0.9
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=15
+op
+let vin_value=v(vin)
+let vout=v(out)
+let vbiasp=v(vbiasp)
+let id_n=i(vnsense)
+let id_p=i(vpsense)
+let supply_current=-i(vdd)
+wrdata calibration_20.dat vin_value vout vbiasp id_n id_p supply_current
+quit
+.endc
+.end

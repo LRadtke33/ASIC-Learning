@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Signal Integrity: Crosstalk Delay &amp; Glitch</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 60 / 84 · Part VI, Physical cells and the floorplan</p>
+<h1>Digital Signal Integrity: Crosstalk Delay &amp; Glitch</h1>
+<p class="subtitle">Two min-width met1 wires, 100&nbsp;µm long at minimum spacing, have a teaching sidewall coupling of 8.6&nbsp;fF. With this course’s incremental <code>inv_1</code> resistance, an opposite-direction aggressor adds about 38&nbsp;ps of delay — a hand estimate, not an extracted STA delta.</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> Width, spacing, thickness and sheet resistance are from the HD nom tech LEF already used in <a href="delay_physics.html">lesson 29</a> (<code>met1</code> W=0.14&nbsp;µm, minimum spacing 0.14&nbsp;µm, thickness 0.35&nbsp;µm, R□=0.125&nbsp;Ω). The coupling used in the worked example is a parallel-plate sidewall estimate C′ = ε<sub>ox</sub> t / s with ε<sub>ox</sub> = 3.9&nbsp;ε<sub>0</sub>, labelled as such; it is not an OpenRCX extraction and it is not the LEF <code>EDGECAPACITANCE</code> (that number is a to-ground fringe for a lone wire). The driver resistance is the incremental delay of lesson 29’s <code>inv_1</code> (“about 10&nbsp;ps per <code>inv_1</code> load”) divided by the course-wide pin-A capacitance 2.302&nbsp;fF. Waveforms are teaching drawings. Analog-victim crosstalk and return paths are <a href="crosstalk_return_paths.html">lesson 83</a>; this lesson is the digital-STA companion.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Separate a timing delta (delay pushed or pulled by a switching aggressor) from a functional glitch (a quiet victim kicked through a threshold).</li>
+<li>Apply the Miller factor 0 / 1 / 2 to a hand coupling estimate.</li>
+<li>State when STA will charge a delta: the aggressor’s switching window must overlap the victim’s.</li>
+<li>Name the usual physical mitigations: spacing, shielding, layer change, and non-default rules (NDRs).</li>
+</ul></div>
+
+<h2 id="section-1">1. Two ways a neighbour can hurt you</h2>
+<p>A victim net and an aggressor net share a coupling capacitance C<sub>c</sub>. When the aggressor switches, charge flows through C<sub>c</sub>. Two consequences matter for digital logic:</p>
+<ul>
+<li><strong>Delta delay.</strong> The victim is itself transitioning. The aggressor either fights it (opposite direction — the victim slows) or helps it (same direction — the victim speeds up). Setup cares about the slowdown; hold cares about the speedup. This is what STA’s crosstalk-aware delay calculation is for.</li>
+<li><strong>Functional glitch.</strong> The victim is supposed to be quiet, held by a driver. The aggressor kicks a pulse. If that pulse crosses the receiver’s threshold and lasts long enough to be latched, the function is wrong, even if every setup and hold check on the intended transitions still passed.</li>
+</ul>
+<p>The two are not interchangeable: a small, fast glitch can be a functional fail and almost invisible to a setup check; a slow opposite-edge overlap can be a setup fail with no quiet-net glitch at all.</p>
+
+<figure class="diagram" role="img" aria-label="Aggressor switching in the opposite direction slows a victim; a quiet victim can glitch.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" width="760" height="300" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="300" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">Delta delay and a glitch — teaching waveforms, not a SPICE run</text>
+  <!-- left: delta delay -->
+  <text x="200" y="52" text-anchor="middle" font-size="13" font-weight="600" fill="#33414f">Victim is switching (delta delay)</text>
+  <line x1="50" y1="80" x2="50" y2="200" stroke="#33414f"/>
+  <line x1="50" y1="200" x2="350" y2="200" stroke="#33414f"/>
+  <path d="M60 180 L110 180 L190 100 L340 100" fill="none" stroke="#8aa2b6" stroke-width="1.6" stroke-dasharray="5 3"/>
+  <path d="M60 180 L110 180 L230 100 L340 100" fill="none" stroke="#2b6cb0" stroke-width="2"/>
+  <text x="200" y="168" font-size="12" fill="#2b6cb0">slowed (M = 2)</text>
+  <text x="145" y="118" font-size="11" fill="#8aa2b6">alone (M = 1)</text>
+  <path d="M60 90 L100 90 L150 180 L340 180" fill="none" stroke="#c0564a" stroke-width="1.6"/>
+  <text x="260" y="84" font-size="12" fill="#c0564a">aggressor, opposite</text>
+  <text x="200" y="222" text-anchor="middle" font-size="12" fill="#5c6b7a">Δt is a setup cost</text>
+  <!-- right: glitch -->
+  <text x="560" y="52" text-anchor="middle" font-size="13" font-weight="600" fill="#33414f">Victim is quiet (glitch)</text>
+  <line x1="410" y1="80" x2="410" y2="200" stroke="#33414f"/>
+  <line x1="410" y1="200" x2="720" y2="200" stroke="#33414f"/>
+  <path d="M420 180 L500 180 L530 120 L560 180 L720 180" fill="none" stroke="#2b6cb0" stroke-width="2"/>
+  <path d="M420 90 L490 90 L520 180 L720 180" fill="none" stroke="#c0564a" stroke-width="1.6"/>
+  <line x1="410" y1="140" x2="720" y2="140" stroke="#b54708" stroke-dasharray="3 3"/>
+  <text x="700" y="134" text-anchor="end" font-size="11" fill="#b54708">threshold</text>
+  <text x="560" y="222" text-anchor="middle" font-size="12" fill="#5c6b7a">a tall enough pulse is a functional fail</text>
+</svg>
+<figcaption><strong>Figure — Two pictures of the same C<sub>c</sub>.</strong> Teaching drawing. Left: both nets are transitioning, opposite directions; the victim’s edge is later (Miller 2). Right: the victim was held low; the aggressor throws a glitch at a receiver threshold.</figcaption>
+</figure>
+
+<h2 id="section-2">2. The Miller factor is 0, 1, or 2</h2>
+<p>The current through C<sub>c</sub> is C<sub>c</sub> d(V<sub>agg</sub> − V<sub>vic</sub>)/dt. For equal, aligned ramps, the effective capacitance the victim’s driver must charge is M × C<sub>c</sub>, with a textbook Miller factor:</p>
+<table>
+<thead><tr><th>Aggressor during the victim’s edge</th><th>M</th><th>Effect on the victim</th></tr></thead>
+<tbody>
+<tr><td>Quiet (held)</td><td>1</td><td>C<sub>c</sub> looks like a ground capacitor</td></tr>
+<tr><td>Switching in the same direction, aligned</td><td>0</td><td>No voltage across C<sub>c</sub> if the ramps match; the victim is faster than the quiet case</td></tr>
+<tr><td>Switching in the opposite direction, aligned</td><td>2</td><td>The voltage across C<sub>c</sub> changes by 2 V<sub>DD</sub>; the victim is slower</td></tr>
+</tbody>
+</table>
+<p>Partial overlap, unequal slew, and a weak aggressor driver produce factors between these ideals. STA’s timing windows decide which M is even possible: if the aggressor cannot switch in the victim’s window, the tool should not charge you for M = 2. Windows that are computed too loosely (or an analysis that assumes a worst aggressor always) over-predict delta delay and you “fix” a ghost; windows that are too tight miss a real one.</p>
+
+<h2 id="section-3">3. A hand estimate on parallel met1</h2>
+<p>From the HD nom tech LEF: <code>met1</code> minimum width 0.14&nbsp;µm, minimum spacing 0.14&nbsp;µm (the routing pitch is 0.34&nbsp;µm, so a default track pair is 0.20&nbsp;µm apart — looser than the manufacturing minimum). Thickness 0.35&nbsp;µm. A teaching sidewall plate at the manufacturing minimum is</p>
+<p style="text-align:center"><code>C′ = ε<sub>ox</sub> t / s = 3.9 ε<sub>0</sub> × 0.35 / 0.14 = 86.3&nbsp;fF/mm</code></p>
+<p>For a 100&nbsp;µm parallel run, C<sub>c</sub> ≈ 8.63&nbsp;fF. This ignores fringe, the real dielectric stack, and any grounded shape nearby; it is a plate, not a field solver. (At the default 0.34&nbsp;µm pitch the same plate would be 60.4&nbsp;fF/mm, because s = 0.20&nbsp;µm.)</p>
+<p>Lesson 29’s incremental delay for <code>inv_1</code> is about 10&nbsp;ps per <code>inv_1</code> load. With C<sub>in</sub>(A) = 2.302&nbsp;fF,</p>
+<p style="text-align:center"><code>R<sub>eq</sub> ≈ 10&nbsp;ps / 2.302&nbsp;fF = 4.34&nbsp;kΩ</code></p>
+<p>Treating C<sub>c</sub> as lumped at the driver (an optimistic place to put it for delay, a simple place for a hand sum), the extra delay from M = 1 to M = 2 is</p>
+<p style="text-align:center"><code>Δt ≈ R<sub>eq</sub> × C<sub>c</sub> = 4.34&nbsp;kΩ × 8.63&nbsp;fF ≈ 38&nbsp;ps</code></p>
+<p>That is about half of the course FO4 (72.15&nbsp;ps) for a short, minimum-spaced pair — large enough to take seriously, and also large enough that you should not treat 38&nbsp;ps as a signoff number. A distributed 100&nbsp;µm line has only 89&nbsp;Ω of metal (R = 0.125 × 100/0.14), so the driver, not the wire, dominates this particular estimate. Longer parallels, weaker drivers, and two-sided aggressors (a victim between two wires) all make it worse. A grounded shield in between replaces C<sub>c</sub> with a larger to-ground cap: delay becomes more predictable and usually a bit slower, and the glitch goes down.</p>
+
+<details class="checkpoint"><summary>Check your understanding — STA reports a 0&nbsp;ps crosstalk delta on a net you know runs parallel to a busy bus for 200&nbsp;µm. What might be going on?</summary><p>The windows may not overlap: the aggressors are constrained not to switch when this victim does, so M = 2 is not in the analysis. The coupling may have been filtered as a small fraction of the total cap. The net may have been routed on a quieter layer than you remember. Or the tool is not running a crosstalk-aware delay at all. Before you relax, confirm which of those it is — “0&nbsp;ps” is not the same as “no C<sub>c</sub>.”</p></details>
+
+<h2 id="section-4">4. What you change in the netlist and in the rules</h2>
+<p>Physical mitigations, in the usual order of cost:</p>
+<ul>
+<li><strong>Spacing</strong> — C<sub>c</sub> falls as s grows (the plate says 1/s; fringe falls more slowly). A non-default rule (NDR) can ask the router for extra gap on clock nets or on a sensitive bus.</li>
+<li><strong>Shielding</strong> — a grounded (or supply) wire between aggressor and victim. The NDR can require a shield. Cost is tracks; the benefit is a much smaller C<sub>c</sub> and a quieter glitch budget.</li>
+<li><strong>Layer promotion</strong> — thicker, wider upper metals have different C<sub>c</sub> and much lower R; a long victim is often happier one layer up even at the same spacing.</li>
+<li><strong>Slew and drive</strong> — a stronger victim driver reduces glitch height (it holds the quiet net more firmly) and reduces delta delay. A slower aggressor reduces both, at the cost of that aggressor’s own timing.</li>
+<li><strong>Timing windows</strong> — staggering when things switch, or tightening an aggressor’s window, can legally remove an M = 2 case. This is a constraint change, not a routing change, and it must remain true after ECO.</li>
+</ul>
+<p>Clocks are the usual first clients of an NDR: a clock that is both a victim (it can glitch into a false edge) and an aggressor (it switches every cycle, so its window is wide) is worth a shield. Lesson 35’s tree is where that budget starts; this lesson is why the router is asked for the extra space.</p>
+
+<details class="checkpoint"><summary>Check your understanding — same-direction switching makes M = 0, which speeds the victim. Can you use that as a hold fix?</summary><p>Only if the alignment is guaranteed. Hold cares about the fastest victim, which is exactly this case when it happens. Relying on a helpful aggressor as your hold margin is fragile: a different vector, a quieter neighbour after an ECO, or a slightly shifted window takes the gift away and can leave you short. STA should be allowed to assume the helpful case for hold (and the harmful case for setup) when the windows allow it; you should not take the speedup to the bank as a design technique.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — why is this not the same lesson as <a href="crosstalk_return_paths.html">lesson 83</a>?</summary><p>Lesson 83 is written from the analog-victim side: return paths, substrate, and isolation of a quiet analog node. This lesson is the digital-STA side: Miller factors, timing windows, glitch into a CMOS threshold, and router NDRs on HD met1. The physics is one capacitance; the questions and the tools differ. A shield that satisfies STA may still be a poor return path for an analog block, and the reverse.</p></details>
+
+<h2 id="key-takeaways">Key takeaways</h2>
+<ul>
+<li>Crosstalk is a delta-delay problem when both edges overlap, and a glitch problem when the victim was quiet. STA windows decide which Miller factor is possible (0, 1, or 2 in the ideal aligned case).</li>
+<li>A teaching plate on HD met1 at minimum spacing gives 86.3&nbsp;fF/mm. For 100&nbsp;µm and this course’s incremental <code>inv_1</code> resistance, M = 2 versus M = 1 is about 38&nbsp;ps. That is a hand estimate, not an OpenRCX or STA result.</li>
+<li>Mitigations: extra spacing, shields, upper layers, stronger victim drive, and honest timing windows, often as NDRs on clocks and sensitive buses.</li>
+<li>Lesson 83 is the analog-victim companion; do not collapse the two.</li>
+</ul>
+<section class="sources"><h2 id="sources">Sources &amp; scope</h2>
+<p>LEF geometry and R□ from the HD nom tech LEF, same source as lesson 29. Coupling is a labelled parallel-plate estimate (ε<sub>ox</sub> = 3.9&nbsp;ε<sub>0</sub>, t and s from that LEF). R<sub>eq</sub> from lesson 29’s “about 10&nbsp;ps per inv_1 load” and C<sub>in</sub> = 2.302&nbsp;fF. No SPEF coupling or STA delta-delay report is cited.</p>
+<ol>
+<li>HD nom tech LEF <code>sky130_fd_sc_hd__nom.tlef</code>: met1 WIDTH 0.14, SPACINGTABLE 0.14, THICKNESS 0.35, PITCH 0.34, RPERSQ 0.125, CPERSQDIST 25.7784×10<sup>−6</sup> pF/µm², EDGECAPACITANCE 40.567×10<sup>−6</sup> pF/µm.</li>
+<li><a href="delay_physics.html">Lesson 29</a> — incremental delay and FO4 72.15&nbsp;ps, same models.</li>
+<li><a href="crosstalk_return_paths.html">Lesson 83</a> — analog-victim crosstalk and return paths.</li>
+</ol>
+</section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html" aria-current="page">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+<div class="lesson-footer"><a href="routing_timing_closure.html"><small>← Previous</small>Routing &amp; Timing Closure</a><a href="metal_fill.html"><small>Next →</small>Metal Fill and Cell Fill</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main></body></html>

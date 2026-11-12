@@ -1,0 +1,181 @@
+{
+  "review_date": "2026-11-06",
+  "edition": "50 lessons +5 practical labs",
+  "review_scope": "Source and topology review plus actual schematic SKY130 simulations, explicitly behavioral/lumped models, geometry-derived RC simulation, digital protocol tests, small mapped/equivalent RTL example and numerical analysis. No silicon or qualified physical signoff.",
+  "html_pages": 59,
+  "lesson_pages": 50,
+  "lab_pages": 5,
+  "original_lesson_filenames_preserved": 34,
+  "lesson_statistics": {
+    "figures": 160,
+    "inline_svg": 144,
+    "tables": 95,
+    "solved_checks": 59,
+    "toggles_exercised": 7,
+    "truth_cases_verified": 14
+  },
+  "lab_statistics": {
+    "figures": 26,
+    "inline_svg": 8,
+    "tables": 21,
+    "solved_checks": 11,
+    "toggles_exercised": 0,
+    "truth_cases_verified": 0
+  },
+  "all_html_statistics": {
+    "figures": 186,
+    "inline_svg": 152,
+    "tables": 125,
+    "solved_checks": 71,
+    "toggles_exercised": 7,
+    "truth_cases_verified": 14
+  },
+  "structural_validation": {
+    "status": "pass",
+    "local_references_checked": 3866,
+    "errors": 0,
+    "external_rendering_dependencies": 0,
+    "default_figures_available_without_javascript": true,
+    "all_lessons_and_labs_have_figures_tables_sources_solved_checks": true
+  },
+  "script_validation": {
+    "status": "pass",
+    "html_pages_executed": 59,
+    "environment": "Isolated jsdom context, no remote resources; not a full browser.",
+    "checks": [
+      "All inline scripts and local course.js",
+      "7 circuit inputs and14 inverter/NAND/NOR/tristate truth-table cases",
+      "50-card directory;8-new-lesson filter;search andempty states",
+      "Existing numeric controls, valid and invalid inputs, alias folding and feedback/coupling calculations"
+    ]
+  },
+  "svg_validation": {
+    "status": "pass",
+    "inline_svg_rasterized": 152,
+    "unique_linked_svg_assets_rasterized": 33,
+    "visual_review": "Authors/peer reviewers inspected new diagrams; root inspected integrated page starts and all11rootplots. Source graphics contain explicit units/assumptions."
+  },
+  "static_page_rendering": {
+    "status": "pass",
+    "pages": [
+      "index.html",
+      "labs.html",
+      "review.html",
+      "differential_pairs.html",
+      "references_startup.html",
+      "rtl_synthesis_constraints.html",
+      "clock_gating_power_states.html",
+      "matching_layout_extraction.html",
+      "power_package_thermal.html",
+      "calibration_trim.html",
+      "spectral_measurements.html",
+      "lab_inverter_characterization.html",
+      "lab_bias_amplifier.html",
+      "lab_sampling_interface.html",
+      "lab_layout_extraction.html",
+      "lab_mixed_signal_integration.html"
+    ],
+    "method": "Local-resource-only HTML/CSS rendering. All13newpages plus index,labs,review rendered; selected raster pages inspected."
+  },
+  "executed_lab_cases": {
+    "L01": {
+      "spice_benches": 18,
+      "analyses_per_bench": [
+        "DC",
+        "transient"
+      ]
+    },
+    "L02": {
+      "spice_benches": 41,
+      "MOS": 35,
+      "behavioral_startup": 6,
+      "checks_passed": 8
+    },
+    "L03": {
+      "acquisition_benches": 57,
+      "generic_reference_RLC_benches": 3
+    },
+    "L04": {
+      "base_RC_benches": 8,
+      "refined_RC_benches": 8,
+      "independent_numerical_solutions": 8,
+      "qualified_PEX_executed": false
+    },
+    "L05": {
+      "digital_clock_cases": 3,
+      "intentional_negative_control": "expected assertion failed",
+      "separate_synthesis_equivalence": "passed",
+      "mapped_cells": {
+        "edfxtp_1": 2,
+        "xor2_1": 2
+      },
+      "area_sum_um2": 77.5744
+    }
+  },
+  "numerical_examples": {
+    "scope": "Synthetic/analytical trim and FFT examples, not silicon",
+    "checks": [
+      "Half-step trim bound inside covered offset span",
+      "Parseval",
+      "Known coherent sine power",
+      "Independent SciPy periodogram agreement",
+      "Periodic-Hann gain andENBW"
+    ]
+  },
+  "numerical_refinement": [
+    {
+      "case": "inverter",
+      "quantities": [
+        "tphl_ps",
+        "tplh_ps",
+        "energy_fJ"
+      ],
+      "base": [
+        35.98658288998911,
+        78.16769923956878,
+        34.969742425985956
+      ],
+      "finer": [
+        35.99250873857263,
+        78.17630499749883,
+        34.97143544900686
+      ],
+      "max_relative_change": 0.00016466827655291048,
+      "status": "pass"
+    },
+    {
+      "case": "sampling",
+      "quantity": "Vhold_at_91ns_V",
+      "base": 0.8994094250359688,
+      "finer": 0.8994094208495087,
+      "absolute_change_uV": 0.00418646006750123,
+      "status": "pass"
+    }
+  ],
+  "portability": {
+    "default_lab1_and_lab3_in_spaced_directory": "pass; exact numerical matches;265referencefiles unchanged",
+    "previously_failing_spaced_lib_path": "fixed with local directory alias; targetedLab1,Lab2,Lab3rawfiles match",
+    "wrapper_filename_whitespace": "explicitly rejected with useful guidance",
+    "master_runner": "analysis,Lab5,synthesis integration passed"
+  },
+  "source_validation": {
+    "added_sources_checked": 50,
+    "identified_bad_links_repaired": 2,
+    "method": "Bounded HEAD/GET with redirect inspection; access audit is separate from technical verification.",
+    "source_manifest": "source_manifest.json"
+  },
+  "provenance": {
+    "primitive_source_files_verified": 15,
+    "primitive_revision": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+    "synthesis_liberty_sha256_verified": true,
+    "Lab2all_case_hashes_verified": true
+  },
+  "full_interactive_browser_preview": "Unavailable; no complete interactive-browser pass claimed.",
+  "remaining_validation": [
+    "Project-specific physical layouts and qualified DRC/LVS/PEX",
+    "Extracted analog correlation, noise/statistics and required PVT",
+    "Actual digital implementation constraints, CDC/RDC and routed timing",
+    "Physical reference/startup and package integration",
+    "Pilot with intended analog/digital learners; target-browser check"
+  ]
+}

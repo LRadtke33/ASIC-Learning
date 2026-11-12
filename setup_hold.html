@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup and Hold</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+td.mark {background: #d9e8f8; font-weight: 600;}
+table.dense {font-size: 0.82rem;}
+.scroll {overflow-x: auto;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 26 / 84 · Part IV, Loads, timing and interconnect</p><h1>Setup and Hold</h1>
+  <p class="subtitle">The two checks that decide whether a flip-flop captures the bit it was meant to capture. Both checks are lookup tables, the same kind of table as a gate delay.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The cell is <code>sky130_fd_sc_hd__dfxtp_1</code> at <code>tt_025C_1v80</code>. Delay tables are <a href="liberty_tables.html">lesson 23</a>. The short version of these two numbers is <a href="timing.html">lesson 25</a>. The transistors inside the flop are <a href="dff_inside.html">lesson 20</a>.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>State setup and hold as signed constraints measured at the capturing clock edge.</li><li>Interpolate the 3 × 3 setup and hold tables of <code>dfxtp_1</code> between slews.</li><li>Compute setup and hold slack, and read WNS and TNS in a timing report.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Setup is checked from <a href="design_flow.html#step-3">step 3, synthesis</a> on; hold becomes real after <a href="design_flow.html#step-6">step 6, clock-tree synthesis</a>; both are signed off at every corner in <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>OpenSTA reports both; OpenROAD’s <code>repair_timing</code> fixes them. Commercial: PrimeTime, Tempus.</dd><dt>Why it matters</dt><dd>A setup failure limits the clock speed; a hold failure breaks the chip at any speed.</dd></dl></aside><aside class="review-note"><p><strong>Source scope.</strong> All four 3×3 constraint tables were checked against <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json">the archived dfxtp_1 TT data</a>. The worked path below now propagates the real output slew through every lookup. It is a calculation with explicit loads, not an extracted design.</p></aside>
+<h2 id="section-1">1. Two questions, asked at the capturing clock edge</h2>
+  <p>
+    A flip-flop copies D onto Q when the clock rises. The copy is reliable only if D
+    has been sitting still for long enough before that edge, and if D keeps sitting
+    still long enough after it. Those two waits are setup and hold.
+  </p>
+  <p>
+    <strong>Setup</strong> is how long D must already be the new value before the clock
+    edge. On this cell, with both the clock edge and the data edge at 0.01&nbsp;ns,
+    the requirement is <strong>0.1033184&nbsp;ns</strong> when D is falling and
+    <strong>0.0508281&nbsp;ns</strong> when D is rising. Falling data is the harder check.
+    Lesson 25 rounds those two cells to 0.103&nbsp;ns and 0.051&nbsp;ns.
+  </p>
+  <p><strong>Hold</strong> constrains the earliest <em>following</em> data transition relative to the capture clock reference crossing. At 0.01 ns slews it is −0.0468281 ns for falling D and −0.0285176 ns for rising D. A negative hold permits that pin transition before the clock reference crossing while preserving the captured value, under the characterized conditions. In a simplified internal model, <code>hold_external ≈ clock_delay + hold_internal − data_delay</code>. Thus a longer internal data delay can make the external hold requirement negative. The published tables, not that simple model, set the actual limits.</p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — A low value being captured. The arriving falling transition meets falling-data setup at −0.1033184 ns. The following rising transition meets rising-data hold at −0.0285176 ns. These are the correct polarities for a low pulse; constraints for falling hold characterize a different following transition."><line x1="60" y1="96" x2="700" y2="96" stroke="#c5d0dc" stroke-width="2"></line><rect x="248.75470769230765" y="78" width="184.12504615384614" height="36" fill="#f6e7c1" stroke="#c47b2c"></rect><text x="340.8172307692307" y="100" text-anchor="middle" font-size="12" font-weight="700" fill="#8a5a12">D valid</text><line x1="248.75470769230765" y1="68" x2="248.75470769230765" y2="124" stroke="#33414f" stroke-width="1.5"></line><line x1="432.8797538461538" y1="68" x2="432.8797538461538" y2="124" stroke="#33414f" stroke-width="1.5"></line><line x1="503.0769230769231" y1="68" x2="503.0769230769231" y2="124" stroke="#1e6b4f" stroke-width="2.5"></line><text x="248.75470769230765" y="152" text-anchor="middle" font-size="12" fill="#33414f">falling setup</text><text x="248.75470769230765" y="170" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">0.103 ns before</text><text x="432.8797538461538" y="152" text-anchor="middle" font-size="12" fill="#33414f">rising hold</text><text x="432.8797538461538" y="170" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">0.029 ns before</text><text x="503.0769230769231" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">CLK rises</text><text x="503.0769230769231" y="58" text-anchor="middle" font-size="11" fill="#1e6b4f">time 0</text></svg></div>
+    <figcaption><strong>Figure 1 — A low value being captured.</strong> The arriving falling transition meets falling-data setup at −0.1033184 ns. The following rising transition meets rising-data hold at −0.0285176 ns. These are the correct polarities for a low pulse; constraints for falling hold characterize a different following transition.</figcaption>
+  </figure>
+
+  <p>
+      In the Liberty file the arcs are <code>timing_type : setup_rising</code> and
+      <code>hold_rising</code> on pin D, with <code>related_pin : CLK</code>. The
+      rising in the name is the clock edge. <code>rise_constraint</code> is the check
+      while D is rising. <code>fall_constraint</code> is the check while D is falling.
+      There is no recovery or removal arc: this cell has no asynchronous set or reset pin.
+    </p>
+    <p>
+      The template is <code>vio_3_3_1</code>. <code>variable_1</code> is the related-pin
+      transition, the clock slew. <code>variable_2</code> is the constrained-pin
+      transition, the data slew. Both axes are 0.01, 0.5, and 1.5&nbsp;ns. There is no
+      load column on a constraint table. Load shows up in the clock-to-Q delay, which
+      is still a <code>del_1_7_7</code> grid on pin Q, the same shape as
+      <a href="liberty_tables.html">lesson 23</a>.
+    </p>
+  
+
+
+  <h2 id="section-2">2. The tables</h2>
+  <p>
+    Each number below is a table cell at the typical corner, in nanoseconds. Rows are
+    the clock slew. Columns are the data slew. The shaded cell is the 0.01&nbsp;ns /
+    0.01&nbsp;ns corner that lesson 25 quotes.
+  </p>
+  <h3>Setup, D falling (<code>fall_constraint</code>)</h3>
+  <table class="dense">
+    <tbody><tr><th>clock \ data</th><th>0.01 ns</th><th>0.50 ns</th><th>1.50 ns</th></tr>
+    <tr><th>0.01 ns</th><td class="mark">0.1033184</td><td>0.3187643</td><td>0.6206849</td></tr>
+    <tr><th>0.50 ns</th><td>−0.0108092</td><td>0.1997539</td><td>0.4980123</td></tr>
+    <tr><th>1.50 ns</th><td>−0.0966654</td><td>0.109015</td><td>0.4036113</td></tr>
+  </tbody></table>
+  <h3>Setup, D rising (<code>rise_constraint</code>)</h3>
+  <table class="dense">
+    <tbody><tr><th>clock \ data</th><th>0.01 ns</th><th>0.50 ns</th><th>1.50 ns</th></tr>
+    <tr><th>0.01 ns</th><td class="mark">0.0508281</td><td>0.1649557</td><td>0.2434876</td></tr>
+    <tr><th>0.50 ns</th><td>−0.0181335</td><td>0.0837871</td><td>0.1476706</td></tr>
+    <tr><th>1.50 ns</th><td>−0.0453958</td><td>0.0504212</td><td>0.1106426</td></tr>
+  </tbody></table>
+  <h3>Hold, D falling</h3>
+  <table class="dense">
+    <tbody><tr><th>clock \ data</th><th>0.01 ns</th><th>0.50 ns</th><th>1.50 ns</th></tr>
+    <tr><th>0.01 ns</th><td class="mark">−0.0468281</td><td>−0.2512878</td><td>−0.5178079</td></tr>
+    <tr><th>0.50 ns</th><td>0.0636374</td><td>−0.1408223</td><td>−0.4146667</td></tr>
+    <tr><th>1.50 ns</th><td>0.1409486</td><td>−0.059849</td><td>−0.3349141</td></tr>
+  </tbody></table>
+  <h3>Hold, D rising</h3>
+  <table class="dense">
+    <tbody><tr><th>clock \ data</th><th>0.01 ns</th><th>0.50 ns</th><th>1.50 ns</th></tr>
+    <tr><th>0.01 ns</th><td class="mark">−0.0285176</td><td>−0.1316588</td><td>−0.1857767</td></tr>
+    <tr><th>0.50 ns</th><td>0.0355612</td><td>−0.0602559</td><td>−0.1143737</td></tr>
+    <tr><th>1.50 ns</th><td>0.0579408</td><td>−0.0354349</td><td>−0.0895527</td></tr>
+  </tbody></table>
+  <p>
+    A slow data edge needs more setup. With the clock still at 0.01&nbsp;ns, falling-D
+    setup grows from 0.1033184&nbsp;ns at a 0.01&nbsp;ns data edge to 0.6206849&nbsp;ns
+    at a 1.5&nbsp;ns data edge. A slow clock edge moves the other way: at data slew
+    0.01&nbsp;ns the falling-D setup is already negative at a 0.50&nbsp;ns clock
+    (−0.0108092&nbsp;ns). A negative setup means the new data may arrive that long
+    <em>after</em> the clock pin and the check still passes. The slow data columns
+    stay positive across the whole clock axis.
+  </p>
+  <p>
+    Hold has the same sign change in the other corner of its table. At clock slew
+    1.50&nbsp;ns and data slew 0.01&nbsp;ns, falling-D hold is
+    <strong>+0.1409486&nbsp;ns</strong>. A slow clock and a sharp data edge ask D to
+    stay valid after the clock. The shaded −0.047&nbsp;ns is the easy cell of that
+    table, the one with both edges fast. It is the wrong cell to quote for a path
+    whose clock edge has slowed down.
+  </p>
+
+  <h2 id="section-3">3. A data slew between two columns</h2>
+  <p>
+    The same straight line as <a href="liberty_tables.html">lesson 23</a> applies here. Hold
+    the clock at the first row, 0.01&nbsp;ns, and put the data slew at 0.20&nbsp;ns.
+    That slew sits between 0.01&nbsp;ns and 0.50&nbsp;ns on the falling-D setup row.
+  </p>
+  <p>
+    (0.20 − 0.01) / (0.50 − 0.01) = 0.19 / 0.49 = <strong>0.387755</strong>.
+  </p>
+  <p>
+    0.1033184 + 0.387755 × (0.3187643 − 0.1033184)
+    = 0.1033184 + 0.387755 × 0.2154459
+    = <strong>0.186859&nbsp;ns</strong>.
+  </p>
+  <p>
+    0.186859&nbsp;ns is the line between two table cells. The cells themselves are
+    0.1033184&nbsp;ns and 0.3187643&nbsp;ns.
+  </p>
+
+  <p>
+      When both slews lie between grid points, use the four surrounding cells, load-style
+      bilinear from <a href="liberty_tables.html">lesson 23</a>. For falling-D setup at clock slew 0.20&nbsp;ns and data
+      slew 0.20&nbsp;ns the fraction on each axis is the same 0.387755. The four
+      corners are 0.1033184, 0.3187643, −0.0108092, and 0.1997539.
+    </p>
+    <p>
+      Along clock slew 0.01&nbsp;ns the line is the 0.186859&nbsp;ns just computed.
+      Along clock slew 0.50&nbsp;ns:
+      −0.0108092 + 0.387755 × (0.1997539 − (−0.0108092)) = 0.070838&nbsp;ns.
+      Between those two results:
+      0.186859 + 0.387755 × (0.070838 − 0.186859) = <strong>0.141871&nbsp;ns</strong>.
+      Walking the axes in the other order gives the same 0.141871&nbsp;ns.
+    </p>
+  
+
+
+  <h2 id="section-4">4. Slack uses a propagated data edge</h2>
+<p>For a single-cycle, same-edge register path, define capture and launch clock arrival times relative to their nominal edges. Include wire delay in <code>Tcomb</code>. A late-data setup analysis uses late launch/data and early capture timing; hold uses early launch/data and late capture timing, with the applicable correlation and pessimism removal.</p>
+<p><code>Setup slack = Tperiod + Tcapture,early − Tsetup − Usetup − (Tlaunch,late + Tcq,late + Tcomb,late)</code><br><code>Hold slack = Tlaunch,early + Tcq,early + Tcomb,early − (Tcapture,late + Thold + Uhold)</code></p>
+<p>Here is a complete <em>nominal teaching calculation</em>, not a frequency guarantee. Both clock slews are 0.01 ns; clock skew, uncertainty and wire resistance are zero; the period is 1 ns. Launch and capture cells are <code>dfxtp_1</code> with one <code>inv_1</code> between them. Total load on launch Q is 9.00162 fF, and total load on inverter Y is 9.52062 fF. These chosen loads include the actual next pin plus extra ideal capacitance: 6.69962 fF at Q and 7.84262 fF at Y, using the published lumped pin caps. This keeps the example physically consistent with the library load columns.</p>
+<figure><div class="figwrap" id="fig2"><svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Propagate slew as well as arrival. Q’s 0.0964473 ns rising slew sets the inverter input row. Its 0.0556048 ns falling output slew sets the capture constraint column. Those lookups use the pinned TT tables, with linear interpolation between adjacent values."><rect x="30" y="60" width="180" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><text x="120" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">launch flop</text><text x="120" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">Q rise</text><text x="120" y="134" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">0.3280 ns</text><rect x="270" y="60" width="180" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><text x="360" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">inv_1</text><text x="360" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">Y fall</text><text x="360" y="134" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">0.0776 ns</text><rect x="510" y="60" width="180" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><text x="600" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">capture flop</text><text x="600" y="112" text-anchor="middle" font-size="12" fill="#5c6b7a">setup, D fall</text><text x="600" y="134" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">0.1234 ns</text><line x1="210" y1="105" x2="265" y2="105" stroke="#33414f" stroke-width="2" marker-end="url(#arrS)"></line><line x1="450" y1="105" x2="505" y2="105" stroke="#33414f" stroke-width="2" marker-end="url(#arrS)"></line><text x="370" y="40" text-anchor="middle" font-size="12" fill="#5c6b7a">clocks at time 0, no wire, period chosen separately</text><text x="370" y="190" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">0.3280 + 0.0776 + 0.1234 = 0.5290 ns setup budget</text><defs><marker id="arrS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#33414f"></path></marker></defs></svg></div><figcaption><strong>Figure 2 — Propagate slew as well as arrival.</strong> Q’s 0.0964473 ns rising slew sets the inverter input row. Its 0.0556048 ns falling output slew sets the capture constraint column. Those lookups use the pinned TT tables, with linear interpolation between adjacent values.</figcaption></figure>
+<table><thead><tr><th>Quantity</th><th>Q rises → capture D falls</th><th>Q falls → capture D rises</th></tr></thead><tbody>
+<tr><td>Clock-to-Q delay</td><td>0.3279992 ns</td><td>0.3040849 ns</td></tr>
+<tr><td>Q slew → inverter input slew</td><td>0.0964473 ns</td><td>0.0532956 ns</td></tr>
+<tr><td>Inverter delay, interpolated</td><td>0.0776193 ns</td><td>0.0903881 ns</td></tr>
+<tr><td>Data slew at capture D</td><td>0.0556048 ns</td><td>0.0878560 ns</td></tr>
+<tr><td>Capture setup / hold</td><td>0.1233702 / −0.0658574 ns</td><td>0.0689618 / −0.0449057 ns</td></tr>
+<tr><td>Data arrival</td><td>0.4056185 ns</td><td>0.3944730 ns</td></tr>
+<tr><td>Setup slack at 1 ns</td><td>+0.4710113 ns</td><td>+0.5365652 ns</td></tr>
+<tr><td>Nominal hold slack</td><td>+0.4714759 ns</td><td>+0.4393787 ns</td></tr>
+</tbody></table>
+<p>For the falling-D case: <code>arrival = 0.3279992 + 0.0776193 = 0.4056185 ns</code>. Required time is <code>1 − 0.1233702 = 0.8766298 ns</code>. Setup slack is <code>0.8766298 − 0.4056185 = 0.4710113 ns</code>. That transition’s setup budget is 0.5289887 ns. Hold slack is <code>0.4056185 − (−0.0658574) = 0.4714759 ns</code>.</p>
+<p>Reading every stage at the 0.01 ns row would incorrectly give a 0.476817 ns setup budget. The actual output slew is slower, so the subsequent delays and setup requirement change. The nominal hold calculation above is not the earliest arrival across process, voltage, temperature, interconnect and variation. A real report evaluates the required early and late scenarios, both polarities and all paths.</p>
+<p>Delaying capture by 0.050 ns improves setup slack by 0.050 ns and worsens hold slack by 0.050 ns, with other quantities fixed. A longer period improves this single-cycle setup budget; it does not repair a same-edge hold violation. Real flows also check minimum pulse width, clock gating, recovery/removal and any multicycle or generated-clock relationships.</p>
+<details class="checkpoint"><summary>Checkpoint: why does a slower clock not fix hold?</summary><p>Hold protects data captured on the same reference edge. Its equation has clock skew and minimum data delay but no full clock-period term. Add suitable data-path delay, reduce harmful skew or change the implementation and verify all corners; do not hide the check with an unjustified timing exception.</p></details>
+
+  <h2 id="section-5">5. The clock pulse has its own table</h2>
+  <p>
+    Pin CLK also carries <code>min_pulse_width</code>. The template is
+    <code>constraint_3_0_1</code>: one axis, the clock slew, at 0.01, 0.50, and
+    1.50&nbsp;ns. The rise constraint specifies the high pulse width (rising to falling); the fall constraint specifies the low width (falling to rising). Check both widths after duty-cycle distortion and clock gating.
+  </p>
+  <table>
+    <tbody><tr><th>Clock slew</th><th>High pulse (rise constraint)</th><th>Low pulse (fall constraint)</th></tr>
+    <tr><td>0.01 ns</td><td>0.1686861 ns</td><td>0.2082325 ns</td></tr>
+    <tr><td>0.50 ns</td><td>0.8333333 ns</td><td>0.8333333 ns</td></tr>
+    <tr><td>1.50 ns</td><td>2.500000 ns</td><td>2.500000 ns</td></tr>
+  </tbody></table>
+  <p>
+    The two slower rows are the clock slew divided by 0.6:
+    0.50 / 0.6 = 0.833333 and 1.50 / 0.6 = 2.5. The 0.6 is the 20-to-80 fraction
+    already in the library header (80% − 20% = 60% of a full swing). The file does
+    not print that division. It is the arithmetic that matches those two rows.
+    At a 0.01&nbsp;ns clock, 0.01 / 0.6 = 0.0167&nbsp;ns, and the table instead says
+    0.1686861&nbsp;ns and 0.2082325&nbsp;ns. On a sharp clock the cell's own limit is
+    the number that binds.
+  </p>
+  <p>
+    The scan cell's minimum pulse width is a different pair. At slew 0.01&nbsp;ns,
+    <code>sdfxtp_1</code> has rise constraint 0.1675876&nbsp;ns and fall constraint
+    0.2400893&nbsp;ns. Those belong to <a href="scan.html">lesson 40</a>.
+  </p>
+
+  <h2 id="section-6">6. PVT changes both checks</h2>
+  <p>
+    The same 0.01&nbsp;ns / 0.01&nbsp;ns cell, read from three library files. Setup
+    grows in the slow file. Hold moves toward zero in the fast file, which means the
+    cell is giving the data less permission to change early. Lesson 25's clock-to-Q
+    row belongs with this table: the slow file more than doubles the launch delay,
+    which is the setup side of the path.
+  </p>
+  <table class="dense">
+    <tbody><tr><th></th><th>Typical<br>25°C, 1.80 V</th><th>Slow<br>100°C, 1.60 V</th><th>Fast<br>−40°C, 1.76 V</th></tr>
+    <tr><td class="n">Setup, D falling</td><td>0.1033184</td><td>0.2601787</td><td>0.0825664</td></tr>
+    <tr><td class="n">Setup, D rising</td><td>0.0508281</td><td>0.1228496</td><td>0.0337383</td></tr>
+    <tr><td class="n">Hold, D falling</td><td>−0.0468281</td><td>−0.096877</td><td>−0.0419453</td></tr>
+    <tr><td class="n">Hold, D rising</td><td>−0.0285176</td><td>−0.0675801</td><td>−0.018752</td></tr>
+  </tbody></table>
+  <p>
+    The fast column is <code>ff_n40C_1v76</code>. Some flow configurations load a different fast file, <code>ff_n40C_1v95</code>; check which file your flow uses. Lesson 25 rounds the falling-D
+    setup to 103&nbsp;ps, 260&nbsp;ps, and 83&nbsp;ps, and the rising-D hold to
+    −29&nbsp;ps, −68&nbsp;ps, and −19&nbsp;ps.
+  </p>
+
+  <p>Slow-cell/late-data scenarios often constrain setup, and fast-cell/early-data scenarios often constrain hold. These are useful starting points, not universal signoff rules. Evaluate every approved PVT and interconnect corner, early/late clock variation, temperature effects, both data polarities and all operating modes. The selected three table entries do not prove which scenario is worst for a complete path.</p>
+  
+
+
+    <h2 id="section-7">7. One path has a slack. The report has WNS and TNS.</h2>
+  <p>For the falling-D case in section 4, arrival is 0.4056185 ns, setup required time is 0.8766298 ns and setup slack is +0.4710113 ns. For setup, slack is required minus arrival. For hold, slack is arrival minus required. Keep the check type attached to the number.</p>
+  <p>WNS summarizes the worst violation in the chosen analysis set (commonly reported as zero when there is no negative slack). TNS (total negative slack) typically sums each violating endpoint’s worst negative slack; it does not add every enumerated path to that endpoint. For endpoint slacks −0.080, −0.030 and +0.050 ns, WNS is −0.080 ns and TNS is −0.110 ns. Confirm the reporting convention and whether the report is for setup or hold. Shared-clock pessimism removal accounts for correlated common clock segments rather than treating the same segment independently early and late.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 228" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Arrival, required, and slack for the section 4 path, beside the report names WNS and TNS.">
+<rect x="40" y="36" width="300" height="150" rx="4" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<text x="190" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">The worked path</text>
+<text x="190" y="88" text-anchor="middle" font-size="13" fill="#33414f">arrival 0.405619 ns</text>
+<text x="190" y="110" text-anchor="middle" font-size="13" fill="#33414f">required 0.876630 ns</text>
+<text x="190" y="136" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">slack +0.471011 ns</text>
+<rect x="380" y="36" width="320" height="150" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="1.5"></rect>
+<text x="540" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Names for a whole report</text>
+<text x="540" y="92" text-anchor="middle" font-size="13" fill="#33414f">WNS: the worst single slack</text>
+<text x="540" y="116" text-anchor="middle" font-size="13" fill="#33414f">TNS: sum of worst negative endpoint slacks</text>
+<text x="540" y="148" text-anchor="middle" font-size="12" fill="#5c6b7a">a positive slack does not shrink TNS</text>
+<text x="370" y="210" text-anchor="middle" font-size="12" fill="#5c6b7a">The 0.471011 ns is the section 4 example. WNS and TNS need the whole report.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 3 — Arrival, required, and slack for the section 4 path, beside the report names WNS and TNS.</strong></figcaption>
+  </figure>
+
+<details class="checkpoint"><summary>Check your understanding — five paths have setup slacks of +0.10, −0.02, −0.05, +0.30 and −0.01 ns. What are WNS and TNS?</summary><p>WNS, the worst negative slack, is −0.05 ns. TNS sums the negative slacks: −0.02 − 0.05 − 0.01 = −0.08 ns. Positive slack on other paths does not offset it.</p></details><aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> In OpenSTA, <code>report_checks -path_delay max</code> lists the worst setup paths and <code>-path_delay min</code> the worst hold paths; <code>report_wns</code> and <code>report_tns</code> give the summary numbers. LibreLane stops with an error if its SetupViolations or HoldViolations checks find negative slack at signoff, and OpenROAD’s <code>repair_timing -hold</code> inserts delay buffers to fix hold.</p><pre>report_checks -path_delay max
+report_checks -path_delay min
+report_wns
+report_tns</pre></aside><p><a href="timed_path.html">Lesson 42</a> applies these checks to a complete path with clock latency at both flops, then shows how supply voltage, cell sizing and threshold choice move the setup slack and the power.</p><div class="takeaways">
+    <h2 id="section-8">Key takeaways</h2>
+    <ul>
+      <li>Setup and hold are signed external constraints referenced to the clock edge; positive setup precedes it and positive hold follows it. On <code>dfxtp_1</code> both are 3×3 tables of clock slew and data slew.</li>
+      <li>At 0.01&nbsp;ns edges, typical corner, falling-D setup is 0.1033184&nbsp;ns and falling-D hold is −0.0468281&nbsp;ns. Negative hold means D may change that early before the clock.</li>
+      <li>A data slew of 0.20&nbsp;ns on the first clock row interpolates the falling-D setup to 0.186859&nbsp;ns. Both slews at 0.20&nbsp;ns interpolate to 0.141871&nbsp;ns.</li>
+      <li>The period is in single-cycle setup slack and absent from same-edge hold slack. The slew-propagated falling-D example has a nominal setup budget of 0.528989 ns, before wire, uncertainty and variation.</li>
+      <li>At a sharp clock the minimum pulse width is 0.1686861&nbsp;ns and 0.2082325&nbsp;ns. At a slow clock the table matches the slew divided by 0.6.</li>
+      <li>The slow file stretches setup to 0.2601787&nbsp;ns. The fast file <code>ff_n40C_1v76</code> moves rising-D hold to −0.018752&nbsp;ns, closer to zero.</li>
+          <li>Setup slack is required minus arrival; hold slack is arrival minus required. WNS reports the worst violation; TNS typically sums the worst negative slack at each endpoint.</li>
+          <li>Level-sensitive latches, and the time-borrowing checks they add to this edge-triggered picture, are <a href="latch_time_borrowing.html">lesson 27</a>.</li>
+    </ul>
+  </div>
+<section class="sources"><h2 id="section-9">Sources &amp; scope</h2><p>Technical review: 6 November 2026. SKY130 numerical links use HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. The path arithmetic was recalculated from the JSON values.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json">SKY130 dfxtp_1 constraints and clock-to-Q tables</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">SKY130 inv_1 delay and transition tables</a></li><li><a href="https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf">Liberty Reference Manual: sequential timing</a></li><li><a href="https://opensta.readthedocs.io/en/latest/">OpenSTA documentation: timing checks, reports and clock pessimism removal</a></li><li><a href="https://github.com/parallaxsw/OpenSTA/blob/master/include/sta/Liberty.hh">OpenSTA pulse-width high/low convention</a></li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html" aria-current="page">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="timing.html"><small>← Previous</small>Timing</a><a href="latch_time_borrowing.html"><small>Next →</small>Latch-Based Design &amp; Time Borrowing</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  const x0 = 60, x1 = 700, y = 96;
+  const t0 = -0.18, t1 = 0.08;
+  const X = t => x0 + (t - t0) / (t1 - t0) * (x1 - x0);
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#c5d0dc" stroke-width="2"/>`;
+  const xA = X(-0.1033184), xB = X(-0.0285176);
+  s += `<rect x="${xA}" y="${y - 18}" width="${xB - xA}" height="36" fill="#f6e7c1" stroke="#c47b2c"/>`;
+  s += txt((xA + xB) / 2, y + 4, 'D valid', {s: 12, b: true, c: '#8a5a12'});
+  [-0.1033184, -0.0285176, 0].forEach(t => {
+    s += `<line x1="${X(t)}" y1="${y - 28}" x2="${X(t)}" y2="${y + 28}" stroke="${t === 0 ? '#1e6b4f' : DK}" stroke-width="${t === 0 ? 2.5 : 1.5}"/>`;
+  });
+  s += txt(X(-0.1033184), y + 56, 'falling setup', {s: 12});
+  s += txt(X(-0.1033184), y + 74, '0.103 ns before', {s: 12, b: true});
+  s += txt(X(-0.0285176), y + 56, 'rising hold', {s: 12});
+  s += txt(X(-0.0285176), y + 74, '0.029 ns before', {s: 12, b: true});
+  s += txt(X(0), 40, 'CLK rises', {b: true, c: '#1e6b4f', s: 14});
+  s += txt(X(0), 58, 'time 0', {s: 11, c: '#1e6b4f'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const boxes = [
+    [30, 'launch flop', 'Q rise', '0.3280 ns'],
+    [270, 'inv_1', 'Y fall', '0.0776 ns'],
+    [510, 'capture flop', 'setup, D fall', '0.1234 ns']
+  ];
+  boxes.forEach(b => {
+    s += `<rect x="${b[0]}" y="60" width="180" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"/>`;
+    s += txt(b[0] + 90, 88, b[1], {b: true, s: 14});
+    s += txt(b[0] + 90, 112, b[2], {s: 12, c: '#5c6b7a'});
+    s += txt(b[0] + 90, 134, b[3], {s: 14, b: true, c: '#1e6b4f'});
+  });
+  s += `<line x1="210" y1="105" x2="265" y2="105" stroke="${DK}" stroke-width="2" marker-end="url(#arrS)"/>`;
+  s += `<line x1="450" y1="105" x2="505" y2="105" stroke="${DK}" stroke-width="2" marker-end="url(#arrS)"/>`;
+  s += txt(370, 40, 'clocks at time 0, no wire, period chosen separately', {s: 12, c: '#5c6b7a'});
+  s += txt(370, 190, '0.3280 + 0.0776 + 0.1234 = 0.5290 ns setup budget', {s: 13, b: true});
+  s += `<defs><marker id="arrS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="${DK}"/></marker></defs>`;
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

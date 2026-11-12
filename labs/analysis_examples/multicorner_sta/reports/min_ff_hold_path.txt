@@ -1,0 +1,54 @@
+Startpoint: _265_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: _264_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: min
+
+Fanout         Cap        Slew       Delay        Time   Description
+---------------------------------------------------------------------------------------------
+                                  0.000000    0.000000   clock clk (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.012903    0.048359    0.030585    0.030585 ^ clk (in)
+                                                         clk (net)
+                      0.048362    0.000000    0.030585 ^ clkbuf_0_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.080033    0.073960    0.117418    0.148003 ^ clkbuf_0_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_clk (net)
+                      0.074083    0.002279    0.150281 ^ clkbuf_3_4__f_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.023492    0.033896    0.093890    0.244172 ^ clkbuf_3_4__f_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_3_4__leaf_clk (net)
+                      0.033901    0.000176    0.244348 ^ _265_/CLK (sky130_fd_sc_hd__dfrtp_2)
+     2    0.008044    0.042320    0.212608    0.456955 ^ _265_/Q (sky130_fd_sc_hd__dfrtp_2)
+                                                         dsa[6].last_carry (net)
+                      0.042320    0.000059    0.457014 ^ _167_/C (sky130_fd_sc_hd__nand3_2)
+     2    0.006495    0.036161    0.044240    0.501255 v _167_/Y (sky130_fd_sc_hd__nand3_2)
+                                                         _055_ (net)
+                      0.036161    0.000033    0.501287 v _168_/B (sky130_fd_sc_hd__nand2_2)
+     1    0.008507    0.040516    0.053880    0.555168 ^ _168_/Y (sky130_fd_sc_hd__nand2_2)
+                                                         _056_ (net)
+                      0.040516    0.000032    0.555200 ^ _169_/B (sky130_fd_sc_hd__xnor2_2)
+     1    0.003017    0.019514    0.029846    0.585046 v _169_/Y (sky130_fd_sc_hd__xnor2_2)
+                                                         dsa[6].y_out_next (net)
+                      0.019514    0.000037    0.585082 v _264_/D (sky130_fd_sc_hd__dfrtp_2)
+                                              0.585082   data arrival time
+
+                                  0.000000    0.000000   clock clk (rise edge)
+                                  0.000000    0.000000   clock source latency
+     1    0.012903    0.048359    0.033805    0.033805 ^ clk (in)
+                                                         clk (net)
+                      0.048362    0.000000    0.033805 ^ clkbuf_0_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.080033    0.073960    0.129777    0.163582 ^ clkbuf_0_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_0_clk (net)
+                      0.074076    0.002438    0.166020 ^ clkbuf_3_5__f_clk/A (sky130_fd_sc_hd__clkbuf_16)
+     8    0.027145    0.036395    0.106423    0.272443 ^ clkbuf_3_5__f_clk/X (sky130_fd_sc_hd__clkbuf_16)
+                                                         clknet_3_5__leaf_clk (net)
+                      0.036398    0.000332    0.272774 ^ _264_/CLK (sky130_fd_sc_hd__dfrtp_2)
+                                  0.100000    0.372774   clock uncertainty
+                                 -0.015579    0.357195   clock reconvergence pessimism
+                                 -0.025239    0.331956   library hold time
+                                              0.331956   data required time
+---------------------------------------------------------------------------------------------
+                                              0.331956   data required time
+                                             -0.585082   data arrival time
+---------------------------------------------------------------------------------------------
+                                              0.253127   slack (MET)
+
+

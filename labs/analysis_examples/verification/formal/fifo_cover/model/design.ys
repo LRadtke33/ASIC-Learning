@@ -1,0 +1,8 @@
+# running in fifo_cover/src/
+read -formal -D FORMAL sync_fifo_formal.v
+prep -top sync_fifo
+
+hierarchy -smtcheck
+rename -witness
+write_jny -no-connections ../model/design.json
+write_rtlil ../model/design.il

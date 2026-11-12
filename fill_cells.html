@@ -1,0 +1,392 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fill Cells</title>
+<style>
+.legend {display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #33414f; margin: 8px 0 0;}
+.legend span {display: inline-flex; align-items: center; gap: 6px;}
+.sw {display: inline-block; width: 22px; height: 12px; border-radius: 2px; border: 1px solid #8895a3;}
+.dot {display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #c0392b; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #c0392b;}
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 47 / 84 · Part VI, Physical cells and the floorplan</p><h1>Fill Cells</h1>
+  <p class="subtitle">What fills the empty sites between standard cells, and why the gaps can't just stay empty.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain why placements leave gaps, and why gaps must still be filled.</li><li>Tile any whole-site gap with <code>fill_1</code>, <code>fill_2</code>, <code>fill_4</code> and <code>fill_8</code>.</li><li>Tell spacer fill cells from decap cells, which add capacitance and leakage.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>The end of <a href="design_flow.html#step-7">step 7, routing</a>, after detailed routing.</dd><dt>Tools</dt><dd>OpenROAD’s <code>filler_placement</code>. Commercial: filler insertion in Innovus and IC Compiler II.</dd><dt>Why it matters</dt><dd>Gaps left unfilled break the continuity of wells and rails and fail design-rule checks.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. Gaps are inevitable</h2>
+  <p>
+    In <a href="site_rows.html">the previous topic</a> the cells were drawn packed tightly together,
+    but a real design never fills its rows 100%. The placer deliberately targets a lower
+    utilization (often 60–80%) so the router has room to work, so cells can be legalized without
+    long displacements, and so late ECO fixes have somewhere to go. The result: after placement,
+    every row has leftover empty sites scattered between the cells.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 706 324" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Gaps in the illustrated cell-only geometry. Each placed cell contributes rail and well segments, leaving gaps before filler insertion. Additional power-grid and well geometry depend on the implementation flow; this drawing does not show the entire supply network."><defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fdeeee"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#e08a8a" stroke-width="2"></line></pattern></defs><rect x="82" y="220" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="156" width="576" height="64" fill="#f2f5f9"></rect><rect x="82" y="92" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="28" width="576" height="64" fill="#f2f5f9"></rect><line x1="82" y1="284" x2="82" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="98" y1="284" x2="98" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="114" y1="284" x2="114" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="130" y1="284" x2="130" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="146" y1="284" x2="146" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="162" y1="284" x2="162" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="178" y1="284" x2="178" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="194" y1="284" x2="194" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="210" y1="284" x2="210" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="226" y1="284" x2="226" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="242" y1="284" x2="242" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="258" y1="284" x2="258" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="274" y1="284" x2="274" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="290" y1="284" x2="290" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="306" y1="284" x2="306" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="322" y1="284" x2="322" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="338" y1="284" x2="338" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="354" y1="284" x2="354" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="370" y1="284" x2="370" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="386" y1="284" x2="386" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="402" y1="284" x2="402" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="418" y1="284" x2="418" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="434" y1="284" x2="434" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="450" y1="284" x2="450" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="466" y1="284" x2="466" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="482" y1="284" x2="482" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="498" y1="284" x2="498" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="514" y1="284" x2="514" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="530" y1="284" x2="530" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="546" y1="284" x2="546" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="562" y1="284" x2="562" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="578" y1="284" x2="578" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="594" y1="284" x2="594" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="610" y1="284" x2="610" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="626" y1="284" x2="626" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="642" y1="284" x2="642" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="658" y1="284" x2="658" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><rect x="82" y="220" width="32" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><rect x="226" y="220" width="48" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="250" y="256" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="450" y="220" width="64" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="482" y="256" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="610" y="220" width="48" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="634" y="256" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="82" y="156" width="64" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="114" y="192" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="322" y="156" width="80" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="362" y="192" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="466" y="156" width="192" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><rect x="82" y="92" width="96" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="130" y="128" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="306" y="92" width="32" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><rect x="450" y="92" width="208" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="554" y="128" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="82" y="28" width="96" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="130" y="64" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="306" y="28" width="48" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="330" y="64" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="434" y="28" width="224" height="64" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"></rect><text x="546" y="64" text-anchor="middle" font-size="10" fill="#a83232">gap</text><rect x="114" y="220" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="138" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X1</text><rect x="162" y="220" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="194" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND2_X1</text><rect x="274" y="220" width="176" height="64" fill="#f7ddc9" stroke="#3d4f60" stroke-width="1.4"></rect><text x="362" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">DFF_X1</text><rect x="514" y="220" width="96" height="64" fill="#e7d9f2" stroke="#3d4f60" stroke-width="1.4"></rect><text x="562" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X4</text><rect x="146" y="156" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="186" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X1</text><rect x="226" y="156" width="96" height="64" fill="#f2cfd8" stroke="#3d4f60" stroke-width="1.4"></rect><text x="274" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">OAI22_X1</text><rect x="402" y="156" width="64" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="434" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X8</text><rect x="178" y="28" width="128" height="128" fill="#d9c9ea" stroke="#3d4f60" stroke-width="1.4"></rect><text x="242" y="57" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X16</text><text x="242" y="73" text-anchor="middle" font-size="10" fill="#5c6b7a">double-height</text><rect x="338" y="92" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="370" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND3_X2</text><rect x="402" y="92" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="426" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X2</text><rect x="354" y="28" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="394" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X2</text><rect x="114" y="280.5" width="48" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="114" y="216.5" width="48" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="162" y="280.5" width="64" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="162" y="216.5" width="64" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="274" y="280.5" width="176" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="274" y="216.5" width="176" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="514" y="280.5" width="96" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="514" y="216.5" width="96" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="146" y="216.5" width="80" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="146" y="152.5" width="80" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="226" y="216.5" width="96" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="226" y="152.5" width="96" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="402" y="216.5" width="64" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="402" y="152.5" width="64" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="178" y="152.5" width="128" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="178" y="88.5" width="128" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="178" y="24.5" width="128" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="338" y="152.5" width="64" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="338" y="88.5" width="64" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="402" y="152.5" width="48" height="7" fill="#3b6fb0" opacity="0.85"></rect><rect x="402" y="88.5" width="48" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="354" y="88.5" width="80" height="7" fill="#d9534f" opacity="0.85"></rect><rect x="354" y="24.5" width="80" height="7" fill="#3b6fb0" opacity="0.85"></rect><circle cx="114" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="162" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="274" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="514" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="146" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="226" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="402" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="178" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="338" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="402" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="354" cy="92" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><text x="562" y="184" text-anchor="middle" font-size="10.5" fill="#a83232">no cell here →</text><text x="562" y="200" text-anchor="middle" font-size="10.5" fill="#a83232">no rails, no wells</text><text x="72" y="250" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 0</text><text x="72" y="265" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="186" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 1</text><text x="72" y="201" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="72" y="122" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 2</text><text x="72" y="137" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="58" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 3</text><text x="72" y="73" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="82" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">0</text><text x="178" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">6</text><text x="274" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">12</text><text x="370" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">18</text><text x="466" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">24</text><text x="562" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">30</text><text x="658" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">36</text><text x="658" y="318" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text></svg></div>
+    <div class="legend">
+      <span><span class="sw" style="background:repeating-linear-gradient(45deg,#fdeeee,#fdeeee 3px,#e08a8a 3px,#e08a8a 5px)"></span> empty sites (gap)</span>
+      <span><span class="dot"></span> cell origin</span>
+      <span><span class="sw" style="background:#d9534f;border:none"></span> VDD rail</span>
+      <span><span class="sw" style="background:#3b6fb0;border:none"></span> VSS rail</span>
+    </div>
+    <figcaption><strong>Figure 1 — Gaps in the illustrated cell-only geometry.</strong> Each placed cell contributes rail and well segments, leaving gaps before filler insertion. Additional power-grid and well geometry depend on the implementation flow; this drawing does not show the entire supply network.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Why an empty site is a problem</h2>
+  <p>
+    An empty site isn't neutral — it's a hole in layers that are required to be continuous along
+    the row:
+  </p>
+  <ul>
+    <li><strong>Rail continuity.</strong> Cell rails may stop at a gap unless special-route metal bridges it. Filler cells continue the rail template and must be connected consistently with the PDN.</li>
+    <li><strong>Well and implant geometry.</strong> Gaps can create well/implant notches, spacing violations or unintended islands. Separate wells are legal when the PDK permits them and each region is correctly biased; “all wells must be continuous” is not a universal rule.</li>
+    <li><strong>Density and pattern rules.</strong> Applicable layers have their own window-based rules. Standard-cell fillers restore row geometry; dedicated metal or device fill may still be needed. Filling every site does not by itself satisfy density checks.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 676 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" style="min-width:600px" aria-label="Figure 2 — Illustrative filler widths. These fillers continue compatible rail, well and implant geometry across a gap without adding a logic function. Their actual shapes, pins and permitted neighbors come from the library views."><rect x="64" y="34" width="104" height="120" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.3"></rect><text x="116" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">NAND2</text><rect x="246" y="34" width="78" height="120" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.3"></rect><text x="285" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">INV</text><rect x="64" y="40" width="104" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><rect x="246" y="40" width="78" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><text x="116" y="58" text-anchor="middle" font-size="9.5" fill="#6d7d3f">n-well</text><rect x="64" y="30.5" width="104" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="64" y="150.5" width="104" height="7" fill="#3b6fb0" opacity="0.9"></rect><rect x="246" y="30.5" width="78" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="246" y="150.5" width="78" height="7" fill="#3b6fb0" opacity="0.9"></rect><text x="58" y="38" text-anchor="end" font-size="10" font-weight="600" fill="#c0392b">VDD</text><text x="58" y="158" text-anchor="end" font-size="10" font-weight="600" fill="#3b6fb0">VSS</text><rect x="168" y="28" width="78" height="132" fill="none" stroke="#cc4a4a" stroke-width="1.5" stroke-dasharray="5 4"></rect><text x="197" y="182" text-anchor="middle" font-size="11" fill="#a83232">✗ rails and n-well broken</text><text x="197" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">before fill insertion</text><rect x="394" y="34" width="104" height="120" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.3"></rect><text x="446" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">NAND2</text><rect x="576" y="34" width="78" height="120" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.3"></rect><text x="615" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">INV</text><rect x="498" y="34" width="52" height="120" fill="#e3e7ea" stroke="#8895a3" stroke-width="1.3"></rect><text x="524" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">F2</text><rect x="550" y="34" width="26" height="120" fill="#e3e7ea" stroke="#8895a3" stroke-width="1.3"></rect><text x="563" y="146" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">F1</text><rect x="394" y="40" width="104" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><rect x="576" y="40" width="78" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><rect x="498" y="40" width="52" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><rect x="550" y="40" width="26" height="54" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"></rect><text x="446" y="58" text-anchor="middle" font-size="9.5" fill="#6d7d3f">n-well</text><rect x="394" y="30.5" width="104" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="394" y="150.5" width="104" height="7" fill="#3b6fb0" opacity="0.9"></rect><rect x="576" y="30.5" width="78" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="576" y="150.5" width="78" height="7" fill="#3b6fb0" opacity="0.9"></rect><rect x="498" y="30.5" width="52" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="498" y="150.5" width="52" height="7" fill="#3b6fb0" opacity="0.9"></rect><rect x="550" y="30.5" width="26" height="7" fill="#d9534f" opacity="0.9"></rect><rect x="550" y="150.5" width="26" height="7" fill="#3b6fb0" opacity="0.9"></rect><text x="388" y="38" text-anchor="end" font-size="10" font-weight="600" fill="#c0392b">VDD</text><text x="388" y="158" text-anchor="end" font-size="10" font-weight="600" fill="#3b6fb0">VSS</text><text x="527" y="182" text-anchor="middle" font-size="11" fill="#1e7e3e">✓ continuous after fill</text><text x="527" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">after fill insertion</text></svg></div>
+    <figcaption><strong>Figure 2 — Illustrative filler widths.</strong> These fillers continue compatible rail, well and implant geometry across a gap without adding a logic function. Their actual shapes, pins and permitted neighbors come from the library views.</figcaption>
+  </figure>
+
+  <h2 id="section-3">3. Fill cells: cells with nothing inside</h2>
+  <p>A basic <strong>fill cell</strong> has no logic function and no signal pins. It normally carries the row’s rail, well and implant geometry. It can have explicit <em>power</em> pins: the SKY130 HD fillers below expose VGND and VPWR in LEF. Do not confuse “no signal pin” with “no pins.”</p>
+  <p>
+    Fillers come in a small family of widths, typically powers of two:
+    <code>FILL1</code>, <code>FILL2</code>, <code>FILL4</code>, <code>FILL8</code>,
+    <code>FILL16</code>… With those widths, any gap can be tiled exactly — the tool scans each
+    row and drops in the largest filler that fits, repeating until every site is occupied
+    (a 5-site gap becomes <code>FILL4</code>&nbsp;+&nbsp;<code>FILL1</code>).
+  </p>
+  <p>Fill insertion occurs after the placement is sufficiently settled; the exact stage is flow-dependent. Tools may remove and reinsert fillers around routing, timing repair or ECO changes. Many libraries also provide <strong>decap cells</strong> to use some whitespace for supply decoupling. They have electrical devices and leakage, so they are not interchangeable with empty spacers in every verification view.</p>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 706 324" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — The illustrative placement after filler insertion. Fillers occupy the shown empty sites and continue the row’s compatible rail/well geometry. The red dots mark placement reference corners. Native LEF origins and orientation transforms must still be handled by the placement flow; fillers alone do not provide the chip’s global power distribution."><rect x="82" y="220" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="156" width="576" height="64" fill="#f2f5f9"></rect><rect x="82" y="92" width="576" height="64" fill="#fafbfd"></rect><rect x="82" y="28" width="576" height="64" fill="#f2f5f9"></rect><line x1="82" y1="284" x2="82" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="98" y1="284" x2="98" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="114" y1="284" x2="114" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="130" y1="284" x2="130" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="146" y1="284" x2="146" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="162" y1="284" x2="162" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="178" y1="284" x2="178" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="194" y1="284" x2="194" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="210" y1="284" x2="210" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="226" y1="284" x2="226" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="242" y1="284" x2="242" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="258" y1="284" x2="258" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="274" y1="284" x2="274" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="290" y1="284" x2="290" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="306" y1="284" x2="306" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="322" y1="284" x2="322" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="338" y1="284" x2="338" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="354" y1="284" x2="354" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="370" y1="284" x2="370" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="386" y1="284" x2="386" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="402" y1="284" x2="402" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="418" y1="284" x2="418" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="434" y1="284" x2="434" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="450" y1="284" x2="450" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="466" y1="284" x2="466" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="482" y1="284" x2="482" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="498" y1="284" x2="498" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="514" y1="284" x2="514" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="530" y1="284" x2="530" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="546" y1="284" x2="546" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="562" y1="284" x2="562" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><line x1="578" y1="284" x2="578" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="594" y1="284" x2="594" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="610" y1="284" x2="610" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="626" y1="284" x2="626" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="642" y1="284" x2="642" y2="28" stroke="#d7dfe8" stroke-width="0.6"></line><line x1="658" y1="284" x2="658" y2="28" stroke="#d7dfe8" stroke-width="1.2"></line><rect x="114" y="220" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="138" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X1</text><rect x="162" y="220" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="194" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND2_X1</text><rect x="274" y="220" width="176" height="64" fill="#f7ddc9" stroke="#3d4f60" stroke-width="1.4"></rect><text x="362" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">DFF_X1</text><rect x="514" y="220" width="96" height="64" fill="#e7d9f2" stroke="#3d4f60" stroke-width="1.4"></rect><text x="562" y="256" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X4</text><rect x="146" y="156" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="186" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X1</text><rect x="226" y="156" width="96" height="64" fill="#f2cfd8" stroke="#3d4f60" stroke-width="1.4"></rect><text x="274" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">OAI22_X1</text><rect x="402" y="156" width="64" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="434" y="192" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X8</text><rect x="178" y="28" width="128" height="128" fill="#d9c9ea" stroke="#3d4f60" stroke-width="1.4"></rect><text x="242" y="57" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">BUF_X16</text><text x="242" y="73" text-anchor="middle" font-size="10" fill="#5c6b7a">double-height</text><rect x="338" y="92" width="64" height="64" fill="#d7ecd0" stroke="#3d4f60" stroke-width="1.4"></rect><text x="370" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">NAND3_X2</text><rect x="402" y="92" width="48" height="64" fill="#cfe3f7" stroke="#3d4f60" stroke-width="1.4"></rect><text x="426" y="128" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">INV_X2</text><rect x="354" y="28" width="80" height="64" fill="#f5efc5" stroke="#3d4f60" stroke-width="1.4"></rect><text x="394" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">AOI21_X2</text><rect x="82" y="220" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="98" y="256" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="226" y="220" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="242" y="256" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="258" y="220" width="16" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="266" y="256" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F1</text><rect x="450" y="220" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="482" y="256" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="610" y="220" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="626" y="256" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="642" y="220" width="16" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="650" y="256" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F1</text><rect x="82" y="156" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="114" y="192" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="322" y="156" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="354" y="192" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="386" y="156" width="16" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="394" y="192" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F1</text><rect x="466" y="156" width="128" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="530" y="192" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL8</text><rect x="594" y="156" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="626" y="192" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="82" y="92" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="114" y="128" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="146" y="92" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="162" y="128" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="306" y="92" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="322" y="128" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="450" y="92" width="128" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="514" y="128" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL8</text><rect x="578" y="92" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="610" y="128" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="642" y="92" width="16" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="650" y="128" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F1</text><rect x="82" y="28" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="114" y="64" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="146" y="28" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="162" y="64" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="306" y="28" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="322" y="64" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="338" y="28" width="16" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="346" y="64" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F1</text><rect x="434" y="28" width="128" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="498" y="64" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL8</text><rect x="562" y="28" width="64" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="594" y="64" text-anchor="middle" font-size="10.5" fill="#5c6b7a">FILL4</text><rect x="626" y="28" width="32" height="64" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"></rect><text x="642" y="64" text-anchor="middle" font-size="9.5" fill="#5c6b7a">F2</text><rect x="82" y="280.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="288" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="216.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="224" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="152.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="160" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><rect x="82" y="88.5" width="576" height="7" fill="#d9534f" opacity="0.85"></rect><text x="666" y="96" font-size="11" font-weight="600" fill="#c0392b">VDD</text><rect x="82" y="24.5" width="576" height="7" fill="#3b6fb0" opacity="0.85"></rect><text x="666" y="32" font-size="11" font-weight="600" fill="#3b6fb0">VSS</text><circle cx="114" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="162" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="274" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="514" cy="284" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="146" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="226" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="402" cy="220" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="178" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="338" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="402" cy="156" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="354" cy="92" r="4.2" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="82" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="226" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="258" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="450" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="610" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="642" cy="284" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="82" cy="220" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="322" cy="220" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="386" cy="220" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="466" cy="220" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="594" cy="220" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="82" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="146" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="306" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="450" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="578" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="642" cy="156" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="82" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="146" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="306" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="338" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="434" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="562" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><circle cx="626" cy="92" r="3" fill="#c0392b" stroke="#fff" stroke-width="1.2"></circle><text x="72" y="250" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 0</text><text x="72" y="265" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="186" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 1</text><text x="72" y="201" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="72" y="122" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 2</text><text x="72" y="137" text-anchor="end" font-size="10.5" fill="#7a8794">N (upright)</text><text x="72" y="58" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row 3</text><text x="72" y="73" text-anchor="end" font-size="10.5" fill="#7a8794">FS (flipped)</text><text x="82" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">0</text><text x="178" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">6</text><text x="274" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">12</text><text x="370" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">18</text><text x="466" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">24</text><text x="562" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">30</text><text x="658" y="302" text-anchor="middle" font-size="10.5" fill="#7a8794">36</text><text x="658" y="318" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text></svg></div>
+    <figcaption><strong>Figure 3 — The illustrative placement after filler insertion.</strong> Fillers occupy the shown empty sites and continue the row’s compatible rail/well geometry. The red dots mark placement reference corners. Native LEF origins and orientation transforms must still be handled by the placement flow; fillers alone do not provide the chip’s global power distribution.</figcaption>
+  </figure>
+
+<!-- sky130-cell -->
+  <h2 id="section-4">4. SkyWater's fillers, and the decap cells that are not fillers</h2>
+  <p>
+    <code>sky130_fd_sc_hd</code> has four spacer cells: <code>fill_1</code>,
+    <code>fill_2</code>, <code>fill_4</code>, and <code>fill_8</code>. There is no
+    <code>fill_16</code> in this library. A 16-site gap is two <code>fill_8</code>
+    cells. A 5-site gap is still <code>fill_4</code> plus <code>fill_1</code>, the
+    tiling in section 3.
+  </p>
+  <p>
+    Each LEF says <code>CLASS CORE SPACER</code> and <code>SITE unithd</code>.
+    The width is the suffix times 0.46&nbsp;µm. <code>fill_1</code>, read in full,
+    has two pins, <code>VGND</code> and <code>VPWR</code>, and both are the met1
+    rails plus a local-interconnect strip on the same edge. No signal pin.
+    The SPICE netlists of <code>fill_1</code> and <code>fill_8</code> contain no
+    transistors. The rail and the well are the whole cell, which is what Figure 2
+    was drawing.
+  </p>
+  <table>
+    <tbody><tr><th>Cell</th><th>Class</th><th>Width</th><th>Sites</th><th>What is inside</th></tr>
+    <tr><td class="n">fill_1</td><td>CORE SPACER</td><td>0.46 µm</td><td>1</td><td class="n">rails only; spice has no devices</td></tr>
+    <tr><td class="n">fill_2</td><td>CORE SPACER</td><td>0.92 µm</td><td>2</td><td class="n">same class and site</td></tr>
+    <tr><td class="n">fill_4</td><td>CORE SPACER</td><td>1.84 µm</td><td>4</td><td class="n">same class and site</td></tr>
+    <tr><td class="n">fill_8</td><td>CORE SPACER</td><td>3.68 µm</td><td>8</td><td class="n">rails only; spice has no devices</td></tr>
+  </tbody></table>
+  <p>
+    The decoupling cells are a different family: <code>decap_3</code>,
+    <code>decap_4</code>, <code>decap_6</code>, <code>decap_8</code>, and
+    <code>decap_12</code>. The LEF class is <code>CORE</code>, not <code>SPACER</code>.
+    They occupy 3, 4, 6, 8, and 12 sites. Each SPICE netlist has two transistors,
+    and the widths do not change with the cell: a high-Vt PMOS of 0.87&nbsp;µm and
+    an NMOS of 0.55&nbsp;µm. The length does change. The PMOS gate is tied to
+    <code>VGND</code> and both channel ends sit on <code>VPWR</code>. The NMOS gate
+    is tied to <code>VPWR</code> and both channel ends sit on <code>VGND</code>.
+    That is a capacitor between the rails, drawn with long channels because the
+    row is only 2.72&nbsp;µm tall and the devices cannot grow upward.
+  </p>
+  <table>
+    <tbody><tr><th>Decap</th><th>Sites</th><th>Width</th><th>Channel length</th><th>Widths</th></tr>
+    <tr><td>decap_3</td><td>3</td><td>1.38 µm</td><td>0.59 µm</td><td rowspan="5">PMOS 0.87 µm high-Vt<br>NMOS 0.55 µm</td></tr>
+    <tr><td>decap_4</td><td>4</td><td>1.84 µm</td><td>1.05 µm</td></tr>
+    <tr><td>decap_6</td><td>6</td><td>2.76 µm</td><td>1.97 µm</td></tr>
+    <tr><td>decap_8</td><td>8</td><td>3.68 µm</td><td>2.89 µm</td></tr>
+    <tr><td>decap_12</td><td>12</td><td>5.52 µm</td><td>4.73 µm</td></tr>
+  </tbody></table>
+  <p>
+      Logic transistors in this library are 0.15&nbsp;µm long. These decap channels
+      are 0.59&nbsp;µm to 4.73&nbsp;µm. The Liberty file for <code>decap_4</code> at
+      the typical corner records area 5.0048&nbsp;µm², which is 1.84 × 2.72, and
+      cell leakage 0.00324&nbsp;nW. It does not publish a pin capacitance. The Liberty file gives no capacitance value for it.
+      The longer channel is the bigger capacitor. How many femtofarads that is
+      comes from a device model, not from the LEF outline.
+    </p>
+    <p>
+      <code>decap_4</code> still draws the same 0.48&nbsp;µm met1 rails as
+      <code>fill_1</code> and <code>inv_1</code>, out to 0.24&nbsp;µm past the top
+      and bottom edges. A decap abuts a logic cell and continues the power stripe.
+      It also adds the two MOS capacitors. A filler only continues the stripe.
+      The decap family is <a href="decap.html">lesson 52</a>. The endcap the flow inserts is <code>decap_3</code>, in <a href="endcaps.html">lesson 49</a>.
+    </p>
+  
+
+    <h2 id="section-5">5. Physical cells and the netlist used for verification</h2>
+  <p>
+    After placement, the row still has jobs that are not logic. A fill cell continues the rails and the well. A tap ties the well and the wafer (<a href="well_taps.html">lesson 48</a>). A decap is a capacitor between the rails (<a href="decap.html">lesson 52</a>). <code>diode_2</code> is the antenna diode (<a href="antenna.html">lesson 51</a>).
+  </p>
+  <p>These cells are usually inserted by physical-design steps rather than by Boolean synthesis. Their presence in exported netlists depends on the view and flow: a logical timing netlist may omit fillers, whereas a physical/LVS netlist must represent or consistently filter the electrically relevant structures. Antenna diodes attach to signal nets and decaps contain devices. They must not be discarded simply because they are not logic gates.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Four cells with physical roles. Logical, timing, and LVS views need not contain the same instance list.">
+<text x="370" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Inserted during physical design; netlist handling is flow-specific.</text>
+<rect x="40" y="50" width="130" height="90" rx="4" fill="#fff" stroke="#718096" stroke-width="2"></rect>
+<text x="105" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#718096">fill_1</text>
+<text x="105" y="112" text-anchor="middle" font-size="11" fill="#5c6b7a">no devices</text>
+<rect x="185" y="50" width="130" height="90" rx="4" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="250" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">tap</text>
+<text x="250" y="112" text-anchor="middle" font-size="11" fill="#5c6b7a">wells to rails</text>
+<rect x="330" y="50" width="130" height="90" rx="4" fill="#fff" stroke="#c0564a" stroke-width="2"></rect>
+<text x="395" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#c0564a">decap</text>
+<text x="395" y="112" text-anchor="middle" font-size="11" fill="#5c6b7a">rail capacitor</text>
+<rect x="475" y="50" width="130" height="90" rx="4" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect>
+<text x="540" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#4a72c4">diode_2</text>
+<text x="540" y="112" text-anchor="middle" font-size="11" fill="#5c6b7a">antenna diode</text>
+<rect x="40" y="50" width="565" height="8" rx="0" fill="#d9534f" stroke="#d9534f" stroke-width="0"></rect>
+<rect x="40" y="132" width="565" height="8" rx="0" fill="#3b6fb0" stroke="#3b6fb0" stroke-width="0"></rect>
+<text x="370" y="190" text-anchor="middle" font-size="12" fill="#5c6b7a">Preserve electrical connectivity; follow the flow’s LVS treatment.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 4 — Four cells with physical roles. Logical, timing, and LVS views need not contain the same instance list.</strong></figcaption>
+  </figure>
+
+<details class="checkpoint"><summary>Worked checkpoint — Fill a thirteen-site gap</summary><p>Assume an otherwise legal gap of 13 ordinary HD sites and compatible filler boundaries. One exact cover is <strong>fill_8 + fill_4 + fill_1</strong>, since 8 + 4 + 1 = 13. Its width is <strong>13 × 0.46 = 5.98 µm</strong>. This checks coverage only: tap spacing, special boundaries, decap planning and power connectivity remain separate requirements.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — why can a decap cell not fill every gap that a spacer can?</summary><p>The smallest decap, <code>decap_3</code>, is three sites wide, so one- and two-site gaps still need spacer cells. Decaps also add leakage current, so a flow may limit how many it inserts.</p></details><aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> OpenROAD’s <code>filler_placement</code> fills every remaining gap after detailed routing with the cells it is given. LibreLane’s FillInsertion step passes it the library’s decap and fill cells. Because fillers have no logic they are left out of the netlist used for timing, but they stay in the layout that goes to DRC and LVS.</p><pre>filler_placement {sky130_fd_sc_hd__decap_* sky130_fd_sc_hd__fill_*}</pre></aside><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li>Real placements leave empty sites on purpose (routability, legalization, ECO space).</li>
+      <li>Gaps can interrupt row geometry; fillers and PDN routing restore the intended template, while DRC and connectivity checks verify it.</li>
+      <li>The checked HD spacers use widths of 1, 2, 4 and 8 sites and can tile integral-site gaps when boundary and placement rules permit.</li>
+      <li>These SKY130 HD filler examples have single-row height and integral-site widths. Placement applies the cell’s LEF origin, allowed symmetry and row orientation so compatible boundaries abut.</li>
+      <li>Filler insertion and reinsertion are flow-dependent; decaps add supply capacitance with leakage and reliability tradeoffs.</li>
+      <li>This library's spacers are <code>fill_1/2/4/8</code>. The decaps are <code>decap_3/4/6/8/12</code>, with a 0.87&nbsp;µm high-Vt PMOS and a 0.55&nbsp;µm NMOS whose channel gets longer as the cell gets wider.</li>
+          <li>Physical-design cells are placed according to their electrical roles, spacing rules and flow. Exported netlists must preserve electrically relevant connectivity, including decoupling and antenna devices where required.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-7">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.lef">HD fill_1 LEF with power pins</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.spice">HD fill_1 empty SPICE subcircuit</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice">HD decap_4 SPICE devices</a></li><li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html">SKY130 periphery design rules</a></li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/dpl/README.html">OpenROAD filler placement</a></li></ul></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html" aria-current="page">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="functional_verification.html"><small>← Previous</small>Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a><a href="well_taps.html"><small>Next →</small>Well Taps and Latch-up</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+// Same geometry as site_rows.html: chip origin bottom-left, sy() flips to SVG coords.
+const SITE = 16, ROW = 64, NSITES = 36, NROWS = 4;
+const ML = 82, MT = 28, MR = 48, MB = 40;
+const W = NSITES * SITE, H = NROWS * ROW;
+const SW = ML + W + MR, SH = MT + H + MB;
+const sx = s => ML + s * SITE;
+const sy = y => MT + H - y;
+
+const CELLS = [
+  { s: 2,  r: 0, w: 3,  name: 'INV_X1',   fill: '#cfe3f7' },
+  { s: 5,  r: 0, w: 4,  name: 'NAND2_X1', fill: '#d7ecd0' },
+  { s: 12, r: 0, w: 11, name: 'DFF_X1',   fill: '#f7ddc9' },
+  { s: 27, r: 0, w: 6,  name: 'BUF_X4',   fill: '#e7d9f2' },
+  { s: 4,  r: 1, w: 5,  name: 'AOI21_X1', fill: '#f5efc5' },
+  { s: 9,  r: 1, w: 6,  name: 'OAI22_X1', fill: '#f2cfd8' },
+  { s: 20, r: 1, w: 4,  name: 'INV_X8',   fill: '#cfe3f7' },
+  { s: 6,  r: 2, w: 8, h: 2, name: 'BUF_X16', sub: 'double-height', fill: '#d9c9ea' },
+  { s: 16, r: 2, w: 4,  name: 'NAND3_X2', fill: '#d7ecd0' },
+  { s: 20, r: 2, w: 3,  name: 'INV_X2',   fill: '#cfe3f7' },
+  { s: 17, r: 3, w: 5,  name: 'AOI21_X2', fill: '#f5efc5' },
+];
+
+// Gaps [startSite, endSite] per row (row 3 sites 6-14 are covered by the double-height cell)
+const GAPS = [
+  [0, [[0,2],[9,12],[23,27],[33,36]]],
+  [1, [[0,4],[15,20],[24,36]]],
+  [2, [[0,6],[14,16],[23,36]]],
+  [3, [[0,6],[14,17],[22,36]]],
+];
+
+// Fill cells: [site, width] per row — greedy largest-first tiling of the gaps above
+const FILLS = [
+  [0, [[0,2],[9,2],[11,1],[23,4],[33,2],[35,1]]],
+  [1, [[0,4],[15,4],[19,1],[24,8],[32,4]]],
+  [2, [[0,4],[4,2],[14,2],[23,8],[31,4],[35,1]]],
+  [3, [[0,4],[4,2],[14,2],[16,1],[22,8],[30,4],[34,2]]],
+];
+
+function rowShading() {
+  let s = '';
+  for (let r = 0; r < NROWS; r++)
+    s += `<rect x="${sx(0)}" y="${sy((r + 1) * ROW)}" width="${W}" height="${ROW}" fill="${r % 2 ? '#f2f5f9' : '#fafbfd'}"/>`;
+  return s;
+}
+function siteLines() {
+  let s = '';
+  for (let i = 0; i <= NSITES; i++)
+    s += `<line x1="${sx(i)}" y1="${sy(0)}" x2="${sx(i)}" y2="${sy(H)}" stroke="#d7dfe8" stroke-width="${i % 6 === 0 ? 1.2 : 0.6}"/>`;
+  return s;
+}
+function rowLabels() {
+  let s = '';
+  for (let r = 0; r < NROWS; r++) {
+    const yc = sy(r * ROW + ROW / 2);
+    s += `<text x="${ML - 10}" y="${yc - 2}" text-anchor="end" font-size="12" font-weight="600" fill="#33414f">Row ${r}</text>`;
+    s += `<text x="${ML - 10}" y="${yc + 13}" text-anchor="end" font-size="10.5" fill="#7a8794">${r % 2 ? 'FS (flipped)' : 'N (upright)'}</text>`;
+  }
+  return s;
+}
+function axis() {
+  let s = '';
+  for (let i = 0; i <= NSITES; i += 6)
+    s += `<text x="${sx(i)}" y="${sy(0) + 18}" text-anchor="middle" font-size="10.5" fill="#7a8794">${i}</text>`;
+  s += `<text x="${sx(NSITES)}" y="${sy(0) + 34}" text-anchor="end" font-size="10.5" fill="#7a8794">site index →</text>`;
+  return s;
+}
+function cellRect(c) {
+  const h = c.h || 1;
+  const x = sx(c.s), y = sy((c.r + h) * ROW), w = c.w * SITE, ht = h * ROW;
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="${c.fill}" stroke="#3d4f60" stroke-width="1.4"/>`;
+  const cy = c.sub ? y + ROW / 2 : y + ht / 2;   // multi-row cells: label in the top row, clear of the shared rail
+  if (c.sub) {
+    s += `<text x="${x + w / 2}" y="${cy - 3}" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">${c.name}</text>`;
+    s += `<text x="${x + w / 2}" y="${cy + 13}" text-anchor="middle" font-size="10" fill="#5c6b7a">${c.sub}</text>`;
+  } else {
+    s += `<text x="${x + w / 2}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#26313c">${c.name}</text>`;
+  }
+  return s;
+}
+function originDot(c, r) {
+  return `<circle cx="${sx(c.s)}" cy="${sy(c.r * ROW)}" r="${r || 4.2}" fill="#c0392b" stroke="#fff" stroke-width="1.2"/>`;
+}
+// Rails drawn per cell: they only exist where a cell provides them (Figure 1)
+function cellRails(cells) {
+  let s = '';
+  for (const c of cells) {
+    const h = c.h || 1;
+    for (let b = c.r; b <= c.r + h; b++) {
+      const vss = b % 2 === 0;
+      s += `<rect x="${sx(c.s)}" y="${sy(b * ROW) - 3.5}" width="${c.w * SITE}" height="7" fill="${vss ? '#3b6fb0' : '#d9534f'}" opacity="0.85"/>`;
+    }
+  }
+  return s;
+}
+// Continuous full-width rails (Figure 3, after fill)
+function fullRails() {
+  let s = '';
+  for (let b = 0; b <= NROWS; b++) {
+    const vss = b % 2 === 0, y = sy(b * ROW);
+    s += `<rect x="${sx(0)}" y="${y - 3.5}" width="${W}" height="7" fill="${vss ? '#3b6fb0' : '#d9534f'}" opacity="0.85"/>`;
+    s += `<text x="${sx(NSITES) + 8}" y="${y + 4}" font-size="11" font-weight="600" fill="${vss ? '#3b6fb0' : '#c0392b'}">${vss ? 'VSS' : 'VDD'}</text>`;
+  }
+  return s;
+}
+function fillRect(r, site, w) {
+  const x = sx(site), y = sy((r + 1) * ROW);
+  let s = `<rect x="${x}" y="${y}" width="${w * SITE}" height="${ROW}" fill="#e3e7ea" stroke="#8895a3" stroke-width="1"/>`;
+  const label = w <= 2 ? `F${w}` : `FILL${w}`;
+  s += `<text x="${x + w * SITE / 2}" y="${y + ROW / 2 + 4}" text-anchor="middle" font-size="${w <= 2 ? 9.5 : 10.5}" fill="#5c6b7a">${label}</text>`;
+  return s;
+}
+function svgOpen(h) {
+  return `<svg viewBox="0 0 ${SW} ${h || SH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+}
+
+// ---------- Figure 1: placement with gaps ----------
+(function () {
+  let s = svgOpen();
+  s += `<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fdeeee"/><line x1="0" y1="0" x2="0" y2="6" stroke="#e08a8a" stroke-width="2"/></pattern></defs>`;
+  s += rowShading() + siteLines();
+  for (const [r, gaps] of GAPS) {
+    for (const [a, b] of gaps) {
+      s += `<rect x="${sx(a)}" y="${sy((r + 1) * ROW)}" width="${(b - a) * SITE}" height="${ROW}" fill="url(#hatch)" stroke="#cc4a4a" stroke-width="1" stroke-dasharray="4 3"/>`;
+      if (b - a >= 3 && !(r === 1 && a === 24))
+        s += `<text x="${sx((a + b) / 2)}" y="${sy(r * ROW + ROW / 2) + 4}" text-anchor="middle" font-size="10" fill="#a83232">gap</text>`;
+    }
+  }
+  s += CELLS.map(cellRect).join('');
+  s += cellRails(CELLS);
+  s += CELLS.map(c => originDot(c)).join('');
+  // Annotation inside the big row-1 gap
+  s += `<text x="${sx(30)}" y="${sy(1.5 * ROW) - 4}" text-anchor="middle" font-size="10.5" fill="#a83232">no cell here →</text>`;
+  s += `<text x="${sx(30)}" y="${sy(1.5 * ROW) + 12}" text-anchor="middle" font-size="10.5" fill="#a83232">no rails, no wells</text>`;
+  s += rowLabels() + axis();
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: zoom on one gap, before vs after fill ----------
+(function () {
+  const PW = 286, PH = 150, GAP = 44, X0 = 30, Y0 = 34;
+  const U = 26; // one site, zoomed
+
+  function panel(ox, filled) {
+    const yTop = Y0, yBot = Y0 + PH - 30; // rail centerlines
+    const rowY = yTop, rowH = yBot - yTop;
+    const cells = [
+      { x: 0, w: 4, name: 'NAND2', fill: '#d7ecd0' },
+      { x: 7, w: 3, name: 'INV', fill: '#cfe3f7' },
+    ];
+    const fills = filled ? [{ x: 4, w: 2, name: 'F2' }, { x: 6, w: 1, name: 'F1' }] : [];
+    let s = '';
+    // cell bodies
+    for (const c of [...cells, ...fills.map(f => ({ ...f, fill: '#e3e7ea' }))]) {
+      s += `<rect x="${ox + c.x * U}" y="${rowY}" width="${c.w * U}" height="${rowH}" fill="${c.fill}" stroke="${c.name[0] === 'F' ? '#8895a3' : '#3d4f60'}" stroke-width="1.3"/>`;
+      s += `<text x="${ox + c.x * U + c.w * U / 2}" y="${yBot - 8}" text-anchor="middle" font-size="10.5" font-weight="600" fill="#26313c">${c.name}</text>`;
+    }
+    // n-well: upper half, per cell
+    for (const c of [...cells, ...fills]) {
+      s += `<rect x="${ox + c.x * U}" y="${rowY + 6}" width="${c.w * U}" height="${rowH * 0.45}" fill="#dbe7b8" opacity="0.8" stroke="#a3b86a" stroke-width="1" stroke-dasharray="3 3"/>`;
+    }
+    s += `<text x="${ox + 2 * U}" y="${rowY + 24}" text-anchor="middle" font-size="9.5" fill="#6d7d3f">n-well</text>`;
+    // rails, per cell
+    for (const c of [...cells, ...fills]) {
+      s += `<rect x="${ox + c.x * U}" y="${rowY - 3.5}" width="${c.w * U}" height="7" fill="#d9534f" opacity="0.9"/>`;
+      s += `<rect x="${ox + c.x * U}" y="${yBot - 3.5}" width="${c.w * U}" height="7" fill="#3b6fb0" opacity="0.9"/>`;
+    }
+    s += `<text x="${ox - 6}" y="${rowY + 4}" text-anchor="end" font-size="10" font-weight="600" fill="#c0392b">VDD</text>`;
+    s += `<text x="${ox - 6}" y="${yBot + 4}" text-anchor="end" font-size="10" font-weight="600" fill="#3b6fb0">VSS</text>`;
+    if (!filled) {
+      s += `<rect x="${ox + 4 * U}" y="${rowY - 6}" width="${3 * U}" height="${rowH + 12}" fill="none" stroke="#cc4a4a" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      s += `<text x="${ox + PW / 2 - 10}" y="${yBot + 28}" text-anchor="middle" font-size="11" fill="#a83232">✗ rails and n-well broken</text>`;
+    } else {
+      s += `<text x="${ox + PW / 2 - 10}" y="${yBot + 28}" text-anchor="middle" font-size="11" fill="#1e7e3e">✓ continuous after fill</text>`;
+    }
+    s += `<text x="${ox + PW / 2 - 10}" y="${Y0 - 14}" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">${filled ? 'after fill insertion' : 'before fill insertion'}</text>`;
+    return s;
+  }
+
+  const VW = X0 * 2 + PW * 2 + GAP;
+  let s = `<svg viewBox="0 0 ${VW} 210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" style="min-width:600px">`;
+  s += panel(X0 + 34, false);
+  s += panel(X0 + 34 + PW + GAP, true);
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: placement after fill insertion ----------
+(function () {
+  let s = svgOpen();
+  s += rowShading() + siteLines();
+  s += CELLS.map(cellRect).join('');
+  for (const [r, fills] of FILLS)
+    for (const [site, w] of fills) s += fillRect(r, site, w);
+  s += fullRails();
+  s += CELLS.map(c => originDot(c)).join('');
+  for (const [r, fills] of FILLS)
+    for (const [site] of fills) s += originDot({ s: site, r }, 3);
+  s += rowLabels() + axis();
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

@@ -1,0 +1,271 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)
+
+-- Executing script file `../model/design.ys' --
+
+1. Executing Verilog-2005 frontend: gray4_bug.v
+Parsing formal SystemVerilog input from `gray4_bug.v' to AST representation.
+Storing AST representation for module `$abstract\gray4'.
+Successfully finished Verilog frontend.
+
+2. Executing PREP pass.
+
+2.1. Executing HIERARCHY pass (managing design hierarchy).
+
+2.2. Executing AST frontend in derive mode using pre-parsed AST for module `\gray4'.
+Generating RTLIL representation for module `\gray4'.
+
+2.2.1. Analyzing design hierarchy..
+Top module:  \gray4
+
+2.2.2. Analyzing design hierarchy..
+Top module:  \gray4
+Removing unused module `$abstract\gray4'.
+Removed 1 unused modules.
+Module gray4 directly or indirectly contains formal properties -> setting "keep" attribute.
+
+2.3. Executing PROC pass (convert processes to netlists).
+
+2.3.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.3.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$gray4_bug.v:12$4 in module gray4.
+Removed a total of 0 dead cases.
+
+2.3.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 1 redundant assignment.
+Promoted 6 assignments to connections.
+
+2.3.4. Executing PROC_INIT pass (extract init attributes).
+Found init rule in `\gray4.$proc$gray4_bug.v:18$40'.
+  Set init value: \f_past_valid = 1'0
+
+2.3.5. Executing PROC_ARST pass (detect async resets in processes).
+Found async reset \rst_n in `\gray4.$proc$gray4_bug.v:12$4'.
+
+2.3.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~2 debug messages>
+
+2.3.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\gray4.$proc$gray4_bug.v:18$40'.
+Creating decoders for process `\gray4.$proc$gray4_bug.v:17$37'.
+Creating decoders for process `\gray4.$proc$gray4_bug.v:20$8'.
+     1/1: $assert$gray4_bug.v:22$15_EN
+Creating decoders for process `\gray4.$proc$gray4_bug.v:19$7'.
+Creating decoders for process `\gray4.$proc$gray4_bug.v:12$4'.
+     1/1: $0\gray[3:0]
+
+2.3.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.3.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\gray4.$past$gray4_bug.v:21$1$0' using process `\gray4.$proc$gray4_bug.v:20$8'.
+  created $dff cell `$procdff$45' with positive edge clock.
+Creating register for signal `\gray4.$past$gray4_bug.v:21$2$0' using process `\gray4.$proc$gray4_bug.v:20$8'.
+  created $dff cell `$procdff$46' with positive edge clock.
+Creating register for signal `\gray4.$past$gray4_bug.v:22$3$0' using process `\gray4.$proc$gray4_bug.v:20$8'.
+  created $dff cell `$procdff$47' with positive edge clock.
+Creating register for signal `\gray4.\f_past_valid' using process `\gray4.$proc$gray4_bug.v:19$7'.
+  created $dff cell `$procdff$48' with positive edge clock.
+Creating register for signal `\gray4.\gray' using process `\gray4.$proc$gray4_bug.v:12$4'.
+  created $adff cell `$procdff$53' with positive edge clock and positive level reset.
+
+2.3.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.3.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `gray4.$proc$gray4_bug.v:18$40'.
+Removing empty process `gray4.$proc$gray4_bug.v:17$37'.
+Found and cleaned up 1 empty switch in `\gray4.$proc$gray4_bug.v:20$8'.
+Removing empty process `gray4.$proc$gray4_bug.v:20$8'.
+Removing empty process `gray4.$proc$gray4_bug.v:19$7'.
+Found and cleaned up 1 empty switch in `\gray4.$proc$gray4_bug.v:12$4'.
+Removing empty process `gray4.$proc$gray4_bug.v:12$4'.
+Cleaned up 2 empty switches.
+
+2.3.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+<suppressed ~11 debug messages>
+
+2.4. Executing FUTURE pass.
+
+2.5. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+
+2.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \gray4..
+Removed 2 unused cells and 18 unused wires.
+<suppressed ~3 debug messages>
+
+2.7. Executing CHECK pass (checking for obvious problems).
+Checking module gray4...
+Found and reported 0 problems.
+
+2.8. Executing OPT pass (performing simple optimizations).
+
+2.8.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+
+2.8.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\gray4'.
+Computing hashes of 27 cells of `\gray4'.
+Finding duplicate cells in `\gray4'.
+Computing hashes of 24 cells of `\gray4'.
+Finding duplicate cells in `\gray4'.
+<suppressed ~9 debug messages>
+Removed a total of 3 cells.
+
+2.8.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \gray4..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+2.8.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \gray4.
+Performed a total of 0 changes.
+
+2.8.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\gray4'.
+Computing hashes of 24 cells of `\gray4'.
+Finding duplicate cells in `\gray4'.
+Removed a total of 0 cells.
+
+2.8.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \gray4..
+Removed 0 unused cells and 6 unused wires.
+<suppressed ~1 debug messages>
+
+2.8.7. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+
+2.8.8. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.8.9. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \gray4..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+2.8.10. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \gray4.
+Performed a total of 0 changes.
+
+2.8.11. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\gray4'.
+Computing hashes of 24 cells of `\gray4'.
+Finding duplicate cells in `\gray4'.
+Removed a total of 0 cells.
+
+2.8.12. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \gray4..
+
+2.8.13. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+
+2.8.14. Finished fast OPT passes. (There is nothing left to do.)
+
+2.9. Executing WREDUCE pass (reducing word size of cells).
+Removed top 3 bits (of 4) from port B of cell gray4.$add$gray4_bug.v:14$6 ($add).
+Removed top 31 bits (of 32) from port A of cell gray4.$add$gray4_bug.v:22$20 ($add).
+Removed top 31 bits (of 32) from port B of cell gray4.$add$gray4_bug.v:22$20 ($add).
+Removed top 30 bits (of 32) from port Y of cell gray4.$add$gray4_bug.v:22$20 ($add).
+Removed top 30 bits (of 32) from port A of cell gray4.$add$gray4_bug.v:22$25 ($add).
+Removed top 31 bits (of 32) from port B of cell gray4.$add$gray4_bug.v:22$25 ($add).
+Removed top 29 bits (of 32) from port Y of cell gray4.$add$gray4_bug.v:22$25 ($add).
+Removed top 29 bits (of 32) from port A of cell gray4.$add$gray4_bug.v:22$30 ($add).
+Removed top 31 bits (of 32) from port B of cell gray4.$add$gray4_bug.v:22$30 ($add).
+Removed top 28 bits (of 32) from port Y of cell gray4.$add$gray4_bug.v:22$30 ($add).
+Removed top 28 bits (of 32) from port A of cell gray4.$add$gray4_bug.v:22$35 ($add).
+Removed top 31 bits (of 32) from port B of cell gray4.$add$gray4_bug.v:22$35 ($add).
+Removed top 27 bits (of 32) from port Y of cell gray4.$add$gray4_bug.v:22$35 ($add).
+Removed top 27 bits (of 32) from port A of cell gray4.$eq$gray4_bug.v:22$36 ($eq).
+Removed top 3 bits (of 4) from port B of cell gray4.$eq$gray4_bug.v:22$36 ($eq).
+Removed top 30 bits (of 32) from wire gray4.$add$gray4_bug.v:22$20_Y.
+Removed top 29 bits (of 32) from wire gray4.$add$gray4_bug.v:22$25_Y.
+Removed top 28 bits (of 32) from wire gray4.$add$gray4_bug.v:22$30_Y.
+Removed top 27 bits (of 32) from wire gray4.$add$gray4_bug.v:22$35_Y.
+Removed top 31 bits (of 32) from wire gray4.$eqx$gray4_bug.v:22$24_Y.
+Removed top 31 bits (of 32) from wire gray4.$eqx$gray4_bug.v:22$29_Y.
+Removed top 31 bits (of 32) from wire gray4.$eqx$gray4_bug.v:22$34_Y.
+Removed top 2 bits (of 4) from wire gray4.$shl$gray4_bug.v:22$17_Y.
+
+2.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \gray4..
+Removed 0 unused cells and 8 unused wires.
+<suppressed ~1 debug messages>
+
+2.11. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module gray4.
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\gray4'.
+Computing hashes of 24 cells of `\gray4'.
+Finding duplicate cells in `\gray4'.
+Removed a total of 0 cells.
+
+2.12.3. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \gray4..
+
+2.12.4. Finished fast OPT passes.
+
+2.13. Printing statistics.
+
+=== gray4 ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       26 wires
+      178 wire bits
+        6 public wires
+       12 public wire bits
+        5 ports
+       11 port bits
+       24 cells
+        5   $add
+        1   $adff
+        2   $check
+        4   $dff
+        1   $eq
+        4   $eqx
+        3   $logic_and
+        2   $mux
+        1   $not
+        1   $xor
+
+2.14. Executing CHECK pass (checking for obvious problems).
+Checking module gray4...
+Found and reported 0 problems.
+
+3. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `gray4'. Setting top module to gray4.
+
+3.1. Analyzing design hierarchy..
+Top module:  \gray4
+
+3.2. Analyzing design hierarchy..
+Top module:  \gray4
+Removed 0 unused modules.
+Module gray4 directly or indirectly contains formal properties -> setting "keep" attribute.
+
+4. Executing jny backend.
+
+5. Executing RTLIL backend.
+Output filename: ../model/design.il
+
+End of script. Logfile hash: afad2b33c8, CPU: user 0.01s system 0.02s, MEM: 26.70 MB peak
+Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)
+Time spent: 24% 6x opt_expr (0 sec), 24% 5x opt_clean (0 sec), ...

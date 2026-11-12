@@ -1,0 +1,15 @@
+
+Found 2 unproven $equiv cells (1 groups) in equiv:
+ Grouping SAT models for \q:
+  Trying to prove $equiv for \q [0]: success!
+  Trying to prove $equiv for \q [1]: success!
+Proved 2 previously unproven $equiv cells.
+
+10. Executing EQUIV_INDUCT pass.
+No selected unproven $equiv cells found in equiv.
+Proved 0 previously unproven $equiv cells.
+
+11. Executing EQUIV_STATUS pass.
+Found 2 $equiv cells in equiv:
+  Of those cells 2 are proven and 0 are unproven.
+  Equivalence successfully proven!

@@ -1,0 +1,14 @@
+[options]
+mode cover
+depth 20
+timeout 60
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal -D FORMAL sync_fifo_formal.v
+prep -top sync_fifo
+
+[files]
+sync_fifo_formal.v

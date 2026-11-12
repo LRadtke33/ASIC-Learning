@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparators &amp; Power Management: StrongARM, LDO &amp; POR</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 77 / 84 · Part VIII, Analog circuits</p>
+
+<h1>Comparators &amp; Power Management: StrongARM, LDO &amp; POR</h1>
+<p class="subtitle">Three analog blocks every digital chip still needs: a clocked comparator that regenerates a decision, a regulator that holds a clean supply, and a power-on-reset that releases the digital only after that supply is legal.</p>
+<p class="scope-note"><strong>Where the facts come from.</strong> The StrongARM schematic, the regeneration waveform, the LDO loop and the POR threshold-and-delay picture are teaching diagrams. They use the language already in <a href="differential_pairs.html">lesson 74</a>, <a href="feedback_stability.html">lesson 73</a> and <a href="references_startup.html">lesson 76</a>. This lesson does not publish a SKY130 StrongARM, LDO or POR characterisation, and it does not claim a measured trip point or dropout. Caravel’s housekeeping power-on behaviour is described in earlier Caravel lessons from documentation, not from a board measurement we ran.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Sketch a StrongARM latch comparator and say what happens in precharge versus regeneration.</li>
+<li>Draw an LDO as a loop — reference, error amplifier, pass device, feedback — and name dropout and dropout’s cost.</li>
+<li>Describe a POR as a threshold plus a delay, and say why releasing reset too early is a digital failure.</li>
+</ul></div>
+
+<h2 id="section-1">1. The StrongARM is a precharged latch</h2>
+<p>A clocked comparator does not amplify continuously. In <strong>precharge</strong> (clock low, in the usual drawing) its output nodes are pulled to a known level, often the supply. When the clock rises, a tail current is steered by the input pair; a small differential at the inputs becomes a small differential at a pair of intermediate nodes; a cross-coupled pair then <strong>regenerates</strong> — the same positive feedback as two inverters in a loop — and the outputs run to the rails. The decision is a regenerative latch, not a linear amplifier, which is why a StrongARM is fast and why its input-referred offset and kickback matter.</p>
+<p>Kickback is the clock-edge charge that couples back through the input-pair gates into the source that is being compared. Offset is a mismatch of the pair and of the latch (Pelgrom’s law, <a href="noise_mismatch.html">lesson 75</a>). Neither is quantified here; the lesson-75 Pelgrom numbers remain the course’s SKY130 mismatch facts, and they are for devices, not for a finished comparator.</p>
+<figure class="diagram" role="img" aria-label="Teaching StrongARM: precharge, input pair, cross-coupled regeneration, and a regeneration waveform.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" width="760" height="340" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="340" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">StrongARM — teaching schematic and waveform, not a measured cell</text>
+  <!-- left: simple block schematic -->
+  <text x="200" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">clocked stages</text>
+  <rect x="80" y="64" width="240" height="36" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="200" y="87" text-anchor="middle" font-size="12" fill="#33414f">precharge switches (clk)</text>
+  <rect x="80" y="112" width="240" height="44" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="200" y="132" text-anchor="middle" font-size="12" fill="#33414f">cross-coupled pair</text>
+  <text x="200" y="148" text-anchor="middle" font-size="11" fill="#5c6b7a">regeneration</text>
+  <rect x="80" y="168" width="240" height="44" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="200" y="188" text-anchor="middle" font-size="12" fill="#33414f">input differential pair</text>
+  <text x="200" y="204" text-anchor="middle" font-size="11" fill="#5c6b7a">VINP / VINN</text>
+  <rect x="130" y="224" width="140" height="28" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="200" y="243" text-anchor="middle" font-size="12" fill="#33414f">tail (clk)</text>
+  <text x="50" y="86" font-size="11" fill="#5c6b7a">VDD</text>
+  <text x="200" y="270" text-anchor="middle" font-size="11" fill="#5c6b7a">GND</text>
+  <text x="330" y="130" font-size="11" fill="#2b6cb0">OUTP, OUTN</text>
+  <!-- right: waveform -->
+  <text x="540" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">outputs vs time</text>
+  <path d="M400 80 V250 H720" fill="none" stroke="#7a8794" stroke-width="1"/>
+  <text x="392" y="88" text-anchor="end" font-size="11" fill="#5c6b7a">VDD</text>
+  <text x="392" y="250" text-anchor="end" font-size="11" fill="#5c6b7a">0</text>
+  <!-- clk -->
+  <path d="M430 280 H500 V268 H700" fill="none" stroke="#7a8794" stroke-width="1.4"/>
+  <text x="410" y="276" font-size="11" fill="#5c6b7a">clk</text>
+  <!-- outp rises, outn falls after a delay -->
+  <path d="M430 90 H500 L560 90 L620 200 L700 210" fill="none" stroke="#c0564a" stroke-width="1.8"/>
+  <path d="M430 90 H500 L560 90 L620 100 L700 92" fill="none" stroke="#2b6cb0" stroke-width="1.8"/>
+  <text x="710" y="96" font-size="11" fill="#2b6cb0">OUTP</text>
+  <text x="710" y="214" font-size="11" fill="#c0564a">OUTN</text>
+  <text x="530" y="118" font-size="11" fill="#5c6b7a">precharge</text>
+  <text x="610" y="160" font-size="11" fill="#5c6b7a">regeneration</text>
+  <line x1="500" y1="80" x2="500" y2="280" stroke="#7a8794" stroke-dasharray="3 3"/>
+</svg>
+<figcaption><strong>Figure — StrongARM idea.</strong> Teaching. After the clock edge the two outputs linger together, then split and run to the rails. The time to a legal digital level is the regeneration time; it depends on the input overdrive, the latch’s time constant, and the load. No SKY130 delay is claimed.</figcaption>
+</figure>
+<details class="checkpoint"><summary>Check your understanding — why not just use a high-gain op-amp as a comparator and skip the latch?</summary><p>You can, and some continuous-time comparators do. A regenerative latch is usually faster for a given current, because positive feedback grows an exponential, and it consumes current mainly in the decision window. The costs are kickback, a clock, and a decision that is not valid until regeneration has finished — so the following logic has to wait, just as a flop’s clk-to-Q has to wait.</p></details>
+
+<h2 id="section-2">2. An LDO is a loop that holds a voltage</h2>
+<p>A low-dropout regulator (LDO) takes a dirty or higher supply and holds a quieter, specified output. The loop is:</p>
+<ul>
+<li>a <strong>reference</strong> (bandgap or otherwise — lesson 76) that does not move with the input;</li>
+<li>an <strong>error amplifier</strong> that looks at a fed-back fraction of the output;</li>
+<li>a <strong>pass device</strong>, usually a large PMOS, between the input supply and the output;</li>
+<li>a <strong>load</strong>, including the digital current that jumps when a clock tree fires, and a capacitor that has to be stable with that load.</li>
+</ul>
+<p><strong>Dropout</strong> is the smallest input-to-output voltage at which the pass device can still regulate. Below dropout the pass device is just a resistor, and the output follows the input down. The “low” in LDO means that number is designed to be small (a few hundred millivolts in many chips), which is why a PMOS pass device is common: it can sit just a V<sub>DS,sat</sub> above the output, without an extra V<sub>GS</sub> stacked on top. Stability is a feedback problem (lesson 73): the load cap, the pass device’s resistance, and the error-amp compensation have to keep the loop from ringing when the digital current steps.</p>
+<figure class="diagram" role="img" aria-label="Teaching LDO loop: reference, error amplifier, PMOS pass device, feedback divider, load.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" width="760" height="250" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="250" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">LDO loop — teaching, not a sized SKY130 regulator</text>
+  <rect x="40" y="90" width="90" height="44" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="85" y="117" text-anchor="middle" font-size="12" fill="#33414f">VREF</text>
+  <rect x="180" y="80" width="120" height="64" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="240" y="108" text-anchor="middle" font-size="12" fill="#33414f">error amp</text>
+  <text x="240" y="126" text-anchor="middle" font-size="11" fill="#5c6b7a">+  −</text>
+  <path d="M130 112 H180" stroke="#33414f" stroke-width="1.4"/>
+  <text x="400" y="50" text-anchor="middle" font-size="12" fill="#33414f">VIN</text>
+  <path d="M400 58 V88" stroke="#33414f" stroke-width="1.4"/>
+  <!-- PMOS box -->
+  <rect x="360" y="88" width="80" height="44" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="400" y="115" text-anchor="middle" font-size="12" fill="#33414f">pass PMOS</text>
+  <path d="M300 112 H360" stroke="#33414f" stroke-width="1.4"/>
+  <path d="M440 110 H560" stroke="#33414f" stroke-width="1.4"/>
+  <text x="600" y="104" font-size="12" font-weight="700" fill="#33414f">VOUT</text>
+  <rect x="540" y="130" width="80" height="36" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="580" y="153" text-anchor="middle" font-size="12" fill="#33414f">load</text>
+  <path d="M560 110 V130" stroke="#33414f" stroke-width="1.4"/>
+  <rect x="200" y="180" width="80" height="32" rx="4" fill="#eef3f8" stroke="#5c6b7a"/>
+  <text x="240" y="201" text-anchor="middle" font-size="12" fill="#33414f">divider</text>
+  <path d="M560 110 V170 H280 V180" fill="none" stroke="#2b6cb0" stroke-width="1.4"/>
+  <path d="M240 180 V144" stroke="#2b6cb0" stroke-width="1.4"/>
+  <text x="420" y="188" font-size="11" fill="#2b6cb0">feedback</text>
+  <text x="40" y="240" font-size="11" fill="#5c6b7a">dropout ≈ VIN − VOUT at the edge of regulation</text>
+</svg>
+<figcaption><strong>Figure — LDO as a loop.</strong> Teaching. The error amp drives the pass device so that the fed-back fraction of VOUT equals VREF. No dropout, PSRR or load-step number is claimed for a SKY130 design.</figcaption>
+</figure>
+<details class="checkpoint"><summary>Check your understanding — the digital current jumps 10× at a clock edge. What does the LDO have to do in that instant?</summary><p>The pass device cannot slew instantly. The output capacitor supplies the step for a moment, the output sags, the feedback notices, and the loop restores VOUT. If the cap is too small, or the loop is slow or poorly compensated, the sag (or a ring) can be large enough to corrupt a SRAM bit or shrink a setup margin — which is why an LDO is a stability problem, not only a DC voltage problem.</p></details>
+
+<h2 id="section-3">3. Power-on reset is a threshold and a delay</h2>
+<p>A power-on-reset (POR) watches the supply (and often the regulator output) and holds the digital in reset until two things are true: the voltage is above a threshold at which flops, memories and isolation actually work, and enough time has passed for that voltage to be stable and for clocks or references to start. Releasing reset while VDD is still climbing through a flop’s legal range is a classic bring-up failure: some registers wake in a one, some in a zero, some metastable, and a “clean” RTL reset never happened.</p>
+<p>A simple POR is a reference compared against a fraction of VDD, plus a delay (an RC, a counter, a second threshold). A brown-out detector is the same idea on the way down. Lesson 76’s startup discussion is the analog sibling: a bandgap itself needs a kick, and a POR should not trust a reference that has not started. This lesson does not assign a SKY130 trip voltage.</p>
+<figure class="diagram" role="img" aria-label="Teaching POR: supply ramp, threshold, delay, then reset release.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 240" width="760" height="240" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="240" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">POR — teaching timing, not a measured trip point</text>
+  <path d="M50 50 V200 H720" fill="none" stroke="#7a8794" stroke-width="1"/>
+  <text x="42" y="58" text-anchor="end" font-size="11" fill="#5c6b7a">VDD</text>
+  <path d="M80 190 L280 80 H700" fill="none" stroke="#2b6cb0" stroke-width="1.8"/>
+  <line x1="50" y1="110" x2="720" y2="110" stroke="#c0564a" stroke-dasharray="4 3"/>
+  <text x="710" y="102" text-anchor="end" font-size="11" fill="#c0564a">threshold</text>
+  <!-- reset bar -->
+  <path d="M80 220 H300 V206 H700" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <text x="50" y="218" font-size="11" fill="#33414f">RESET_B</text>
+  <!-- markers -->
+  <line x1="230" y1="110" x2="230" y2="200" stroke="#7a8794" stroke-dasharray="3 3"/>
+  <text x="226" y="96" text-anchor="middle" font-size="11" fill="#5c6b7a">VDD crosses</text>
+  <line x1="300" y1="50" x2="300" y2="220" stroke="#7a8794" stroke-dasharray="3 3"/>
+  <text x="360" y="70" text-anchor="middle" font-size="11" fill="#5c6b7a">delay, then release</text>
+  <text x="400" y="236" text-anchor="middle" font-size="12" fill="#33414f">time</text>
+</svg>
+<figcaption><strong>Figure — Threshold then delay.</strong> Teaching. RESET_B stays low until VDD has crossed the threshold <em>and</em> a delay has elapsed. The exact voltages and times are a design choice; none are cited from a SKY130 cell.</figcaption>
+</figure>
+<details class="checkpoint"><summary>Check your understanding — the supply is already at 1.8&nbsp;V when you attach a programmer and release a chip-level reset. Do you still need a POR?</summary><p>You still need something that is legal at the first moment VDD is applied, including on a board that is powered from a supply that ramps, brown-outs, or is plugged in live. A debugger reset is a later, software-visible event. The POR is the hardware guarantee that the first instruction, and the first flop, see a defined state. Bring-up (lesson 71) still checks that this happened, because a POR that trips too low, or that glitches, is a common “the chip is dead” cause.</p></details>
+
+<h2 id="key-takeaways">Key takeaways</h2>
+<ul>
+<li>A StrongARM precharges, then regenerates a decision with a cross-coupled pair. Offset and kickback are the analog costs; no SKY130 comparator is characterised here.</li>
+<li>An LDO is a feedback loop: reference, error amp, pass device, divider. Dropout is the headroom it needs; a load step is a stability problem.</li>
+<li>A POR is a threshold plus a delay. Releasing the digital before the supply (and the reference) are legal is a reset that never happened.</li>
+</ul>
+<section class="sources"><h2 id="sources">Sources &amp; scope</h2>
+<p>Teaching lesson, using ideas from the analog part already in the course. No SKY130 StrongARM, LDO or POR measurement is claimed.</p>
+<ol>
+<li><a href="differential_pairs.html">Lesson 74</a> — the input pair.</li>
+<li><a href="feedback_stability.html">Lesson 73</a> — why an LDO is a loop-stability problem.</li>
+<li><a href="references_startup.html">Lesson 76</a> — references and startup, which a POR has to respect.</li>
+<li><a href="noise_mismatch.html">Lesson 75</a> — Pelgrom numbers, for devices, not for a finished comparator.</li>
+<li><a href="post_silicon_bringup.html">Lesson 71</a> — checking that reset actually released cleanly.</li>
+</ol>
+</section>
+
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html" aria-current="page">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+<div class="lesson-footer"><a href="references_startup.html"><small>← Previous</small>References, Temperature &amp; Startup</a><a href="matching_layout_extraction.html"><small>Next →</small>Matching, Layout &amp; Extracted Netlists</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main></body></html>

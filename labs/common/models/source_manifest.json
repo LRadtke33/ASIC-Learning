@@ -1,0 +1,97 @@
+{
+  "repository": "google/skywater-pdk-libs-sky130_fd_pr",
+  "revision": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+  "files": [
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__tt.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__tt.corner.spice",
+      "bytes": 66384,
+      "sha256": "0c03b2e5727c414942f1d2b27e19a68724fb84be90b2c73b361ad41779311130"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ff.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ff.corner.spice",
+      "bytes": 67078,
+      "sha256": "440a5b78e0aa92f9cae53a7fc750493211c9e08dbdf0169de8396de0a53e7c55"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ss.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ss.corner.spice",
+      "bytes": 67129,
+      "sha256": "896cd2d75e86826556819d92048c99a14bab6b9e4ae9d9295519a1bd64a3210f"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__mismatch.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__mismatch.corner.spice",
+      "bytes": 962,
+      "sha256": "24a3b29d7d7f26f99098811c31eb5497950a3aed520ab83768a96f35467fe818"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__tt.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__tt.corner.spice",
+      "bytes": 88134,
+      "sha256": "69401f9b657f9ebb20d201d39e3fbf36b68628307d6fa982168fa51db3e77b03"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ff.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ff.corner.spice",
+      "bytes": 89002,
+      "sha256": "209003cb03ec551cd1dfe51259a1e795fef8d6ef1bde697f74d62db28c51ae79"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ss.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ss.corner.spice",
+      "bytes": 89097,
+      "sha256": "514f2133d1a022a7956374c69bb66fe549ab5977669ae284159916d75e1324dc"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__mismatch.corner.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__mismatch.corner.spice",
+      "bytes": 1039,
+      "sha256": "05e258ab6724c8276cc058f6dba732e8024c5f0bb79ff3131ca219143491d631"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__tt.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__tt.pm3.spice",
+      "bytes": 1109307,
+      "sha256": "3d706d50cf2e57175aea78bcf27e4ee07d9f750b154a4b06e6090531364a831b"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ff.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ff.pm3.spice",
+      "bytes": 1113856,
+      "sha256": "6b7859f53968eb8bd82a8febb6ab252bb98c550b6f2c3f743db9d9728c304405"
+    },
+    {
+      "path": "cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ss.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ss.pm3.spice",
+      "bytes": 1112058,
+      "sha256": "5280e1a07ed54547a4393008dccc4c3c1640920a5741f507ad7db9467b809114"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__tt.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__tt.pm3.spice",
+      "bytes": 1314282,
+      "sha256": "f575eef5caea7f9638fa7e1b0078aedcf6d8513f5499b5bb79399186557881f2"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ff.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ff.pm3.spice",
+      "bytes": 1318660,
+      "sha256": "6bb3e467fd1ea6eebe0831a8844b381e507165a6c7bab4affb4fb5b87e39e9d0"
+    },
+    {
+      "path": "cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ss.pm3.spice",
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_pr/f62031a1be9aefe902d6d54cddd6f59b57627436/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ss.pm3.spice",
+      "bytes": 1318479,
+      "sha256": "5954e8e5e14dee0153f39fb2c9ae74aa3a69621ec8098e18266b2fa049e4841c"
+    }
+  ],
+  "scope": "Selected unmodified NMOS 1.8V and HVT PMOS 1.8V BSIM model files; deterministic tt/ff/ss only. Complete PDK, extraction, mismatch validation and reliability qualification are not included."
+}

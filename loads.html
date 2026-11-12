@@ -1,0 +1,233 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loads</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 21 / 84 · Part IV, Loads, timing and interconnect</p><h1>Loads</h1>
+  <p class="subtitle">What an output has to charge, where that capacitance comes from on SKY130, and why a stronger cell is also a heavier load.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> Examples are the open SKY130 high-density library <code>sky130_fd_sc_hd</code>, typical corner 25°C and 1.8&nbsp;V, unless a corner is named. Capacitance in that library is in picofarads. 0.001&nbsp;pF is 1&nbsp;fF.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Express an output’s load as receiver pin capacitance plus wire capacitance.</li><li>Use SKY130 Liberty values such as 2.30 fF for an <code>inv_1</code> input and 9.00 fF for <code>inv_4</code>.</li><li>Avoid double-counting a cell’s own parasitics when building a load.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Every timing estimate: <a href="design_flow.html#step-3">step 3, synthesis</a> with estimated wires, <a href="design_flow.html#step-5">step 5, placement</a> to <a href="design_flow.html#step-7">step 7, routing</a> as the layout forms, and <a href="design_flow.html#step-8">step 8, extraction and timing</a> with extracted wires.</dd><dt>Tools</dt><dd>OpenSTA adds up pin and wire capacitance on each net; OpenROAD estimates wires before routing. Commercial: PrimeTime, Tempus.</dd><dt>Why it matters</dt><dd>Every delay in the design depends on the load it drives.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. The load is the capacitance on the output</h2>
+  <p>
+    A gate does not change its output by magic. The PMOS has to supply current to raise the
+    voltage, or the NMOS has to remove current to lower it. How long that takes depends on how
+    much charge has to move. The thing that stores the charge is a capacitor. That capacitor is
+    the <strong>load</strong>.
+  </p>
+  <p>A simple SPICE testbench models the external load as a capacitor from the output to an AC reference. A conventional STA engine uses characterized cell tables plus interconnect models instead of transistor-level simulation on each path. Resistive wires and coupling may require an effective-capacitance model rather than just one lumped C. Larger capacitance normally slows the edge for the same driver and operating condition.</p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — One inverter, one load. The load is everything connected to
+      Y: the input capacitance of the gates that listen, plus the capacitance of
+      the wire that reaches them. Lesson 11's delay ≈ 0.7·R·C is this C."><polygon points="70,70 70,180 160,125" fill="#f4f7fb" stroke="#33414f" stroke-width="2"></polygon><circle cx="172" cy="125" r="8" fill="#fff" stroke="#33414f" stroke-width="2"></circle><text x="32" y="129" text-anchor="end" font-size="12" font-weight="700" fill="#33414f">A</text><line x1="40" y1="125" x2="70" y2="125" stroke="#33414f" stroke-width="2"></line><line x1="180" y1="125" x2="430" y2="125" stroke="#d9534f" stroke-width="2.5"></line><text x="300" y="112" text-anchor="middle" font-size="12" font-weight="700" fill="#d9534f">Y</text><line x1="430" y1="125" x2="430" y2="168" stroke="#33414f" stroke-width="2"></line><line x1="412" y1="168" x2="448" y2="168" stroke="#1e6b4f" stroke-width="3"></line><line x1="412" y1="180" x2="448" y2="180" stroke="#1e6b4f" stroke-width="3"></line><line x1="430" y1="180" x2="430" y2="210" stroke="#33414f" stroke-width="2"></line><line x1="416" y1="210" x2="444" y2="210" stroke="#33414f" stroke-width="2"></line><line x1="422" y1="216" x2="438" y2="216" stroke="#33414f" stroke-width="2"></line><text x="470" y="178" text-anchor="start" font-size="16" font-weight="700" fill="#1e6b4f">C<tspan baseline-shift="sub" font-size="11">load</tspan></text><line x1="448" y1="174" x2="500" y2="78" stroke="#9aa5b1" stroke-width="1.2"></line><text x="508" y="70" text-anchor="start" font-size="13" fill="#33414f">gate inputs + wire</text><text x="360" y="230" text-anchor="middle" font-size="12" fill="#5c6b7a">charge has to move before the voltage does</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — One inverter, one load.</strong> The load is everything connected to
+      <code>Y</code>: the input capacitance of the gates that listen, plus the capacitance of
+      the wire that reaches them. Lesson 11's delay ≈ 0.7·R·C is this C.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. On SKY130, a gate input is a few femtofarads</h2>
+  <p>
+    The smallest high-density inverter is <code>sky130_fd_sc_hd__inv_1</code>. Its input pin
+    <code>A</code> is listed as <code>capacitance : 0.002302</code>, which is
+    <strong>2.30&nbsp;fF</strong>. Four of those inputs are 9.21&nbsp;fF.
+  </p>
+  <p>
+    The wire adds more. In the technology LEF for this library, minimum-width metal&nbsp;1
+    (0.14&nbsp;µm wide) is about <strong>0.085&nbsp;fF per micrometer</strong>, counting the
+    area of the wire and its two sidewalls. One inverter input is then the same capacitance as
+    about <strong>27&nbsp;µm</strong> of that wire, roughly 59 site widths. A short hop inside
+    a block is a small fraction of a gate. A long route is several gates.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — The same femtofarads, from different places. Input pins of
+      inv_1, inv_2, and inv_4, next to a length of
+      minimum metal&nbsp;1. The input pin grows almost in step with the drive number:
+      2.30&nbsp;fF, 4.46&nbsp;fF, 9.00&nbsp;fF."><text x="150" y="44" text-anchor="end" font-size="13" fill="#33414f">inv_1 input</text><rect x="170" y="28" width="96.68400000000001" height="24" rx="3" fill="#3b6fb0"></rect><text x="276.684" y="44" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">2.30 fF</text><text x="150" y="86" text-anchor="end" font-size="13" fill="#33414f">≈27 µm of met1</text><rect x="170" y="70" width="96.6" height="24" rx="3" fill="#1e6b4f"></rect><text x="276.6" y="86" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">2.30 fF</text><text x="150" y="128" text-anchor="end" font-size="13" fill="#33414f">inv_2 input</text><rect x="170" y="112" width="187.278" height="24" rx="3" fill="#3b6fb0"></rect><text x="367.278" y="128" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">4.46 fF</text><text x="150" y="170" text-anchor="end" font-size="13" fill="#33414f">four inv_1 inputs</text><rect x="170" y="154" width="386.73600000000005" height="24" rx="3" fill="#c47b2c"></rect><text x="566.7360000000001" y="170" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">9.21 fF</text><text x="150" y="212" text-anchor="end" font-size="13" fill="#33414f">inv_4 input</text><rect x="170" y="196" width="378.168" height="24" rx="3" fill="#3b6fb0"></rect><text x="558.168" y="212" text-anchor="start" font-size="13" font-weight="700" fill="#33414f">9.00 fF</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — The same femtofarads, from different places.</strong> Input pins of
+      <code>inv_1</code>, <code>inv_2</code>, and <code>inv_4</code>, next to a length of
+      minimum metal&nbsp;1. The input pin grows almost in step with the drive number:
+      2.30&nbsp;fF, 4.46&nbsp;fF, 9.00&nbsp;fF.
+    </figcaption>
+  </figure>
+
+  <p>The same input has <code>rise_capacitance : 0.002390</code> and <code>fall_capacitance : 0.002214</code> pF. These refer to <em>input</em> transitions at that pin. Bias-dependent device capacitance, switching state and the characterization method can produce a difference; it cannot be uniquely attributed to overlap capacitance from these two numbers alone. The plain value 0.002302 pF is their average in this file.</p>
+    <p>
+      Metal&nbsp;1 in <code>sky130_fd_sc_hd.tlef</code> has <code>CAPACITANCE CPERSQDIST
+      25.7784e-6</code> pF/µm² and <code>EDGECAPACITANCE 40.567e-6</code> pF/µm, at a drawn
+      width of 0.14&nbsp;µm. Per micrometer that is
+      25.7784e-6&nbsp;×&nbsp;0.14 plus two edges of 40.567e-6, which is 0.0847&nbsp;fF/µm.
+      Sheet resistance on that layer is 0.125&nbsp;Ω/square, so 0.89&nbsp;Ω/µm. Twenty-seven
+      micrometers is only about 24&nbsp;Ω. Against 2.3&nbsp;fF that RC is a fraction of a
+      picosecond, nothing next to the gate delay in <a href="liberty_tables.html">lesson 23</a>.
+    </p>
+    <p>
+      The local-interconnect layer under it, <code>li1</code>, is the resistive one:
+      12.2&nbsp;Ω/square at 0.17&nbsp;µm wide, about 72&nbsp;Ω/µm, with a similar capacitance
+      (0.088&nbsp;fF/µm). Two hundred micrometers of <code>li1</code> is roughly 14&nbsp;kΩ
+      and 18&nbsp;fF, an RC around 250&nbsp;ps. That is longer than the inverter delay below.
+      On this process a short metal&nbsp;1 route is a capacitor. A long <code>li1</code> route
+      is a resistor and a capacitor, and both belong in the load.
+    </p>
+    <p>The output <code>max_capacitance</code> is 0.181284 pF, about 181 fF. It is an electrical design-rule limit at the named corner, not a promise that any load below it meets a design’s frequency or slew target. Check the characterized table range, output transition limit and actual timing slack too.</p>
+  
+
+
+  <h2 id="section-3">3. A stronger cell is a heavier load for whoever drives it</h2>
+  <p>
+    Lesson 11 sized transistors up so the cell could charge a big capacitor faster. Those wider
+    transistors are a bigger capacitor themselves. On this inverter the input capacitance tracks
+    the drive number: <code>inv_2</code> is 4.46&nbsp;fF, <code>inv_4</code> is 9.00&nbsp;fF,
+    almost two times and four times the 2.30&nbsp;fF of <code>inv_1</code>.
+  </p>
+  <p>
+    So the load on a net is a sum you can write down. Add the input capacitance of every pin
+    the net touches, then add the wire. Upsizing the receivers makes that sum larger, which
+    slows the driver that came before them.
+  </p>
+
+  <p>The published inverter SPICE calls the SKY130 device subcircuits with <code>w=650000u</code>, <code>w=1e+06u</code> and <code>l=150000u</code>. SPICE’s <code>u</code> suffix evaluates those parameter values to 0.65, 1.0 and 0.15; the called SKY130 wrappers interpret them in micrometers. This is a wrapper convention, not a general rule that a primitive MOS <code>W=0.65</code> means 0.65 µm in every simulator. The PMOS model is <code>pfet_01v8_hvt</code>, and its width ratio to the NMOS is 1.54.</p>
+    <p>
+      <code>inv_2</code> is two of each device. <code>inv_4</code> is four of each.
+      <code>inv_1</code> and <code>inv_2</code> report the same area, 3.7536&nbsp;µm², which
+      is exactly three sites of 0.46&nbsp;×&nbsp;2.72&nbsp;µm. The second finger fits in the
+      same three sites. <code>inv_4</code> is 6.256&nbsp;µm², five sites. Same row height,
+      more sites, as lesson 11 drew.
+    </p>
+    <p>
+      At an input edge of 0.01&nbsp;ns and a load of 9.21&nbsp;fF (four <code>inv_1</code>
+      inputs), reading in a straight line between the two neighboring load columns:
+    </p>
+    <table>
+      <tbody><tr><th>Cell</th><th>Input cap</th><th>Rise delay</th><th>Fall delay</th><th>Sites</th></tr>
+      <tr><td><code>inv_1</code></td><td>2.30 fF</td><td>71 ps</td><td>44 ps</td><td>3</td></tr>
+      <tr><td><code>inv_2</code></td><td>4.46 fF</td><td>47 ps</td><td>27 ps</td><td>3</td></tr>
+      <tr><td><code>inv_4</code></td><td>9.00 fF</td><td>37 ps</td><td>20 ps</td><td>5</td></tr>
+    </tbody></table>
+    <p>
+      Twice the width does not cut the delay in half. Part of the delay is inside the cell
+      and does not shrink with the load resistor. The input capacitance did almost exactly
+      double, and that cost is paid by the previous stage on every transition.
+    </p>
+  
+
+
+    <h2 id="section-4">4. Three capacitances, and one number the timer uses</h2>
+  <p>Physically the output sees receiver input capacitances, driver-side diffusion/internal capacitances, and interconnect capacitance. <strong>For a standard-cell Liberty lookup, the cell’s own internal parasitics are already represented by its characterization.</strong> The external load normally adds receiver pin capacitances and extracted interconnect; do not add the driver’s diffusion again. At transistor level, device models and extracted geometry carry those internal contributions explicitly.</p>
+  <p>Gate-to-drain capacitance couples an input to a moving output (Miller coupling). Characterized receiver pin capacitance approximates the charge presented to the driver under the characterization conditions. One scalar cannot describe every simultaneous-switching state, nonlinear waveform or coupling event; more detailed timing/noise models or SPICE may be needed. Avoid adding a second arbitrary “Miller capacitor” on top of an already characterized pin model.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Physical capacitance locations. Driver diffusion is already in the cell model; receiver pins and wire form the external load.">
+<rect x="40" y="70" width="90" height="50" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="85" y="100" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">driver</text>
+<line x1="130" y1="95" x2="250" y2="95" stroke="#33414f" stroke-width="2"></line>
+<line x1="310" y1="95" x2="310" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="286" y1="120" x2="334" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="286" y1="132" x2="334" y2="132" stroke="#33414f" stroke-width="2"></line>
+<line x1="310" y1="132" x2="310" y2="155" stroke="#33414f" stroke-width="2"></line>
+<text x="310" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">gate</text>
+<text x="310" y="192" text-anchor="middle" font-size="11" fill="#5c6b7a">next input</text>
+<line x1="460" y1="95" x2="460" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="436" y1="120" x2="484" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="436" y1="132" x2="484" y2="132" stroke="#33414f" stroke-width="2"></line>
+<line x1="460" y1="132" x2="460" y2="155" stroke="#33414f" stroke-width="2"></line>
+<text x="460" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">diffusion</text>
+<text x="460" y="192" text-anchor="middle" font-size="11" fill="#5c6b7a">this drain</text>
+<line x1="610" y1="95" x2="610" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="586" y1="120" x2="634" y2="120" stroke="#33414f" stroke-width="2"></line>
+<line x1="586" y1="132" x2="634" y2="132" stroke="#33414f" stroke-width="2"></line>
+<line x1="610" y1="132" x2="610" y2="155" stroke="#33414f" stroke-width="2"></line>
+<text x="610" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">wire</text>
+<text x="610" y="192" text-anchor="middle" font-size="11" fill="#5c6b7a">the route</text>
+<text x="85" y="50" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">C on the output</text>
+<text x="370" y="214" text-anchor="middle" font-size="12" fill="#5c6b7a">External STA load: receiver pin caps + wire. Driver parasitics are characterized.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 3 — Physical capacitance locations. Driver diffusion is already in the cell model; receiver pins and wire form the external load.</strong></figcaption>
+  </figure>
+
+<details class="checkpoint"><summary>Worked check — Four receivers plus 100 µm of minimum met1</summary><p>Using the quoted nominal estimates, C<sub>pins</sub> = 4 × 2.302 = 9.208 fF and C<sub>wire</sub> ≈ 100 × 0.084743 = 8.474 fF. External C is about <strong>17.68 fF</strong>. Do not add the driver’s output diffusion to this Liberty load. R<sub>wire</sub> ≈ 100 × 0.125/0.14 = 89.3 Ω; include its distribution when the required timing/noise accuracy makes it relevant. These isolated-wire LEF estimates omit neighbors and vias.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a driver feeds two <code>inv_4</code> inputs over 50 µm of minimum-width met1. Roughly what load does it see?</summary><p>Two inputs are 2 × 9.00 = 18.0 fF. Minimum met1 is about 0.085 fF/µm, so 50 µm adds about 4.3 fF, for a total near 22 fF. At this length the wire’s resistance hardly matters.</p></details><div class="takeaways">
+    <h2 id="section-5">Key takeaways</h2>
+    <ul>
+      <li>A simple lumped model represents external load as receiver pin capacitances plus wire capacitance. STA uses the applicable load/interconnect model, including distributed RC or coupling when required.</li>
+      <li><code>sky130_fd_sc_hd__inv_1</code> pin <code>A</code> is 2.30&nbsp;fF. Four of them are 9.21&nbsp;fF.</li>
+      <li>Minimum metal&nbsp;1 is about 0.085&nbsp;fF/µm. One inverter input matches about 27&nbsp;µm of that wire.</li>
+      <li><code>inv_2</code> and <code>inv_4</code> inputs are 4.46&nbsp;fF and 9.00&nbsp;fF. A stronger receiver is a heavier load.</li>
+      <li>At the cited nominal corner, inv_1 has max_capacitance ≈ 181 fF. This electrical constraint does not guarantee a required delay or output slew at that load.</li>
+          <li>Avoid double counting: the characterized cell includes its own parasitics, while external load adds receiver pins and interconnect.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-6">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">Nominal inverter pin capacitance and delay</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice">Inverter SPICE wrapper parameters</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">Technology LEF RC estimate</a></li><li><a href="https://vlsida.github.io/chip-tutorials/klayout-lvs.html">UCSC tutorial: SKY130 SPICE scaling convention</a></li></ul></section>
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_inverter_characterization.html">Characterize a capacitive load</a></li><li><a href="lab_sampling_interface.html">See acquisition with source and switch resistance</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html" aria-current="page">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="dff_inside.html"><small>← Previous</small>A Flip-Flop From the Inside</a><a href="liberty.html"><small>Next →</small>Liberty Files: What a Cell Library Records</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', HI = '#d9534f', LO = '#3b6fb0', CAP = '#1e6b4f';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  let s = `<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // inverter body
+  s += `<polygon points="70,70 70,180 160,125" fill="#f4f7fb" stroke="${DK}" stroke-width="2"/>`;
+  s += `<circle cx="172" cy="125" r="8" fill="#fff" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(32, 129, 'A', {b: true, a: 'end'});
+  s += `<line x1="40" y1="125" x2="70" y2="125" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="180" y1="125" x2="430" y2="125" stroke="${HI}" stroke-width="2.5"/>`;
+  s += txt(300, 112, 'Y', {b: true, c: HI});
+  // capacitor
+  s += `<line x1="430" y1="125" x2="430" y2="168" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="412" y1="168" x2="448" y2="168" stroke="${CAP}" stroke-width="3"/>`;
+  s += `<line x1="412" y1="180" x2="448" y2="180" stroke="${CAP}" stroke-width="3"/>`;
+  s += `<line x1="430" y1="180" x2="430" y2="210" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="416" y1="210" x2="444" y2="210" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="422" y1="216" x2="438" y2="216" stroke="${DK}" stroke-width="2"/>`;
+  s += `<text x="470" y="178" text-anchor="start" font-size="16" font-weight="700" fill="${CAP}">C<tspan baseline-shift="sub" font-size="11">load</tspan></text>`;
+  s += `<line x1="448" y1="174" x2="500" y2="78" stroke="#9aa5b1" stroke-width="1.2"/>`;
+  s += txt(508, 70, 'gate inputs + wire', {a: 'start', s: 13});
+  s += txt(360, 230, 'charge has to move before the voltage does', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  const rows = [
+    ['inv_1 input', 2.302, '#3b6fb0'],
+    ['≈27 µm of met1', 2.30, '#1e6b4f'],
+    ['inv_2 input', 4.459, '#3b6fb0'],
+    ['four inv_1 inputs', 9.208, '#c47b2c'],
+    ['inv_4 input', 9.004, '#3b6fb0']
+  ];
+  const max = 10;
+  let s = `<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  rows.forEach((r, i) => {
+    const y = 28 + i * 42;
+    const w = r[1] / max * 420;
+    s += txt(150, y + 16, r[0], {a: 'end', s: 13});
+    s += `<rect x="170" y="${y}" width="${w}" height="24" rx="3" fill="${r[2]}"/>`;
+    s += txt(180 + w, y + 16, r[1].toFixed(2) + ' fF', {a: 'start', s: 13, b: true});
+  });
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

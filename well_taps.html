@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Well Taps and Latch-up</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 48 / 84 · Part VI, Physical cells and the floorplan</p><h1>Well Taps and Latch-up</h1>
+  <p class="subtitle">Most standard cells do not tie their own well. A one-site tap cell does that, so the n-well stays at the power rail and the wafer stays at ground.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> Cell sizes and pins are from the <code>sky130_fd_sc_hd</code> LEF and schematic spice. The foundry note is the SkyWater library page. The flow setting is from the open_pdks LibreLane configuration for this library.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain why wells and the substrate must be tied to the rails, and how latch-up starts.</li><li>Identify the SKY130 tap cells and their pins, starting with <code>tapvpwrvgnd_1</code>.</li><li>Know where the tap-spacing limit comes from: the foundry rules, not the cell LEF.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-4">step 4, floorplan and power grid</a>, before any logic cell is placed.</dd><dt>Tools</dt><dd>OpenROAD’s <code>tapcell</code>. Commercial: well-tap insertion in Innovus and IC Compiler II.</dd><dt>Why it matters</dt><dd>Without taps the wells float, which risks latch-up: a destructive short between the supplies.</dd></dl></aside><h2 id="section-1">1. The well and the wafer have to sit on the rails</h2>
+  <p>
+    A CMOS cell puts the PMOS in an n-well and the NMOS in the p-type wafer
+    under the chip. That wafer is the substrate. The n-well against the wafer,
+    and each source against its well, is a diode. Those diodes are supposed to
+    stay off.
+  </p>
+  <p>
+    If the well or the wafer is left floating, a current spike can turn on a
+    pair of parasitic bipolar transistors, one PNP in the well and one NPN in
+    the wafer. Together they are a latch: once both are on, they hold each
+    other on and short <code>VPWR</code> to <code>VGND</code>. That short is
+    <strong>latch-up</strong>. Contacts that reduce this risk tie the
+    n-well to <code>VPWR</code> and the local p-type body/substrate to <code>VGND</code>.
+    Contacts reduce well/substrate resistance; they do not make arbitrary current injection,
+    overvoltage, or illegal spacing safe. <a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html">[foundry library guidance]</a>
+  </p>
+  <p>
+    The SkyWater foundry note says individual cells do not have that tie, with
+    a few exceptions. Tap cells are placed on a staggered grid instead. The
+    same note says those taps are also how a design does body bias and supports
+    latch-up protection.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — A tap in the row. Logic cells abut. Every so
+      often a one-site tap cell takes a site. Its top contact holds the n-well
+      on VPWR. Its bottom contact holds the wafer on VGND.
+      The spice of this cell has no transistor. The contacts are layout."><rect x="40" y="70" width="660" height="100" fill="#e8f0ea" stroke="#718096"></rect><rect x="50" y="78" width="110" height="84" fill="#f7f9fb" stroke="#33414f" stroke-width="1.5"></rect><text x="105" y="124" text-anchor="middle" font-size="14" fill="#33414f">logic</text><rect x="170" y="78" width="110" height="84" fill="#f7f9fb" stroke="#33414f" stroke-width="1.5"></rect><text x="225" y="124" text-anchor="middle" font-size="14" fill="#33414f">logic</text><rect x="290" y="78" width="110" height="84" fill="#fff" stroke="#1e9e50" stroke-width="2.5"></rect><text x="345" y="124" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">tap</text><rect x="410" y="78" width="110" height="84" fill="#f7f9fb" stroke="#33414f" stroke-width="1.5"></rect><text x="465" y="124" text-anchor="middle" font-size="14" fill="#33414f">logic</text><rect x="530" y="78" width="110" height="84" fill="#f7f9fb" stroke="#33414f" stroke-width="1.5"></rect><text x="585" y="124" text-anchor="middle" font-size="14" fill="#33414f">logic</text><rect x="330" y="78" width="30" height="14" fill="#c0564a"></rect><rect x="330" y="148" width="30" height="14" fill="#4a72c4"></rect><text x="370" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#c0564a">n-well contact to VPWR</text><line x1="345" y1="58" x2="345" y2="78" stroke="#c0564a" stroke-width="1.5"></line><text x="370" y="206" text-anchor="middle" font-size="13" font-weight="700" fill="#4a72c4">wafer contact to VGND</text><line x1="345" y1="162" x2="345" y2="188" stroke="#4a72c4" stroke-width="1.5"></line></svg></div>
+    <figcaption>
+      <strong>Figure 1 — A tap in the row.</strong> Logic cells abut. Every so
+      often a one-site tap cell takes a site. Its top contact holds the n-well
+      on <code>VPWR</code>. Its bottom contact holds the wafer on <code>VGND</code>.
+      The spice of this cell has no transistor. The contacts are layout.
+    </figcaption>
+  </figure>
+
+  <p>
+    The parasitic pair sits in the same stack as the transistors. The PMOS
+    source, the n-well, and the p-type wafer form a PNP. The NMOS source, the
+    wafer, and the n-well form an NPN. Each collector is the other's base. Once
+    both are on, current through one keeps the other on, and the supply is
+    in a high-current state while the external circuit sustains the latch. It releases when
+    voltage/current falls below the holding condition, commonly by removing power. The tap holds the n-well at
+    <code>VPWR</code> and the wafer at <code>VGND</code>, so those two junctions
+    stay off during normal operation. The cited library overview does not give a maximum
+    distance between taps. Placement still has to satisfy the process body-contact rules;
+    choosing a pitch is a constrained floorplan decision.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 740 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — The parasitic pair, in cross-section.
+      A sketch of the devices named above. The n+ in the n-well is the tie to
+      VPWR. The p+ in the wafer is the tie to VGND.
+      The other two contacts are the MOSFET sources that complete the PNP and
+      the NPN. The maximum tap spacing is a foundry design rule, so it is not drawn here."><rect x="80" y="36" width="580" height="170" fill="#f4e4d4" stroke="#33414f"></rect><rect x="200" y="36" width="340" height="78" fill="#d9e4f5" stroke="#4a72c4"></rect><text x="370" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#4a72c4">n-well, tied to VPWR</text><rect x="250" y="48" width="70" height="22" fill="#c0564a"></rect><text x="285" y="63" text-anchor="middle" font-size="12" fill="#fff">p+</text><rect x="430" y="48" width="70" height="22" fill="#3b6fb0"></rect><text x="465" y="63" text-anchor="middle" font-size="12" fill="#fff">n+</text><rect x="120" y="48" width="70" height="22" fill="#3b6fb0"></rect><text x="155" y="63" text-anchor="middle" font-size="12" fill="#fff">n+</text><rect x="560" y="48" width="70" height="22" fill="#c0564a"></rect><text x="595" y="63" text-anchor="middle" font-size="12" fill="#fff">p+</text><text x="155" y="91" text-anchor="middle" font-size="11" fill="#33414f">NMOS source</text><text x="595" y="91" text-anchor="middle" font-size="11" fill="#33414f">wafer tie</text><text x="595" y="107" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">VGND</text><text x="285" y="86" text-anchor="middle" font-size="11" fill="#33414f">PMOS source</text><text x="465" y="86" text-anchor="middle" font-size="11" fill="#33414f">well tie</text><text x="370" y="130" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">p-type wafer</text><text x="250" y="230" text-anchor="middle" font-size="13" fill="#c0564a">PNP: p+ / n-well / wafer</text><text x="520" y="230" text-anchor="middle" font-size="13" fill="#3b6fb0">NPN: n+ / wafer / n-well</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — The parasitic pair, in cross-section.</strong>
+      A sketch of the devices named above. The n+ in the n-well is the tie to
+      <code>VPWR</code>. The p+ in the wafer is the tie to <code>VGND</code>.
+      The other two contacts are the MOSFET sources that complete the PNP and
+      the NPN. The maximum tap spacing is a foundry design rule, so it is not drawn here.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The cell the digital flow inserts is tapvpwrvgnd_1</h2>
+  <p>
+    <code>sky130_fd_sc_hd__tapvpwrvgnd_1</code> is class <code>CORE WELLTAP</code>,
+    site <code>unithd</code>, <code>SIZE 0.460 BY 2.720</code>. That is one site,
+    the same 0.46&nbsp;µm by 2.72&nbsp;µm row pitch as
+    <a href="site_rows.html">lesson 13</a>. The LEF pins are <code>VGND</code> and
+    <code>VPWR</code>. The schematic subcircuit has those two ports and no devices.
+  </p>
+  <p>
+    The historical open_pdks/OpenLane variable <code>FP_WELLTAP_CELL</code> names this cell;
+    the current <a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">LibreLane config</a> uses <code>WELLTAP_CELL</code> for the same choice.
+    Both body terminals are tied to the rails inside it, which is what the name
+    says: <code>VPWR</code> and <code>VGND</code> are the well and the wafer.
+    A flow that is not using a separate body voltage inserts this one.
+  </p>
+
+  <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> The command is OpenROAD’s <code>tapcell</code>, run by LibreLane’s TapEndcapInsertion step right after the rows are created. It places a tap in every row at a fixed maximum spacing and an endcap at each row end. Commercial place-and-route tools have matching commands.</p><pre>tapcell -distance &lt;max_tap_spacing&gt; \
+        -tapcell_master sky130_fd_sc_hd__tapvpwrvgnd_1 \
+        -endcap_master sky130_fd_sc_hd__decap_3</pre></aside><h2 id="section-3">3. Tap variants have different pin lists</h2>
+  <p>
+    The LEF abstract of every tap below lists only the two rails. The schematic
+    is where the body pins show up, and they are not the same cell to cell.
+    An analog block that biases the body needs appropriate body ports and an
+    independently isolated body region; the port list alone does not establish that
+    isolation. The cited conventional digital flow uses
+    <code>tapvpwrvgnd_1</code>, where those pins are not separate schematic ports.
+  </p>
+  <table>
+    <tbody><tr><th>Cell</th><th>Size</th><th>Sites</th><th>Schematic ports</th><th>Devices</th></tr>
+    <tr><td class="n">tapvpwrvgnd_1</td><td>0.46 × 2.72</td><td>1</td><td class="n">VGND VPWR</td><td>none</td></tr>
+    <tr><td class="n">tap_1</td><td>0.46 × 2.72</td><td>1</td><td class="n">VGND VNB VPB VPWR</td><td>none</td></tr>
+    <tr><td class="n">tapvgnd_1</td><td>0.46 × 2.72</td><td>1</td><td class="n">VGND VPB VPWR</td><td>none</td></tr>
+    <tr><td class="n">tap_2</td><td>0.92 × 2.72</td><td>2</td><td class="n">VGND VNB VPB VPWR</td><td class="n">none</td></tr>
+    <tr><td class="n">tapvgnd2_1</td><td>0.46 × 2.72</td><td>1</td><td class="n">VGND VPB VPWR</td><td class="n">none</td></tr>
+  </tbody></table>
+  <p>
+    All five are <code>CLASS CORE WELLTAP</code>. <code>tap_1</code> and <code>tap_2</code>
+    bring both body nets out. <code>tapvgnd_1</code> has <code>VPB</code>
+    and does not have <code>VNB</code>. Opening the LEF and expecting to see
+    <code>VNB</code> will fail on every one of these: the body port lives in
+    the schematic, and only on the cells whose port list includes it.
+  </p>
+
+  <p>
+      The two bipolars, named the usual way: the PNP is the PMOS source (emitter),
+      the n-well (base), and the p-type wafer (collector). The NPN is the NMOS
+      source (emitter), the wafer (base), and the n-well (collector). Each
+      collector is the other base. That loop is a silicon controlled rectifier.
+      The tap holds the well-to-wafer diode off and gives each base a path to a
+      rail, so a spike has to develop voltage across a real contact instead of
+      across a floating well.
+    </p>
+    <p>
+      Neither the LEF nor the SPICE netlist states a latch-up spacing; that limit is a foundry design rule. The flow inserts <code>tapvpwrvgnd_1</code>. The floorplan sets their positions, but the <strong>maximum allowed tap distance is
+    constrained by the process and the approved library/flow rules</strong>, including coverage
+    near macros, row ends, and isolated wells. An absent pitch in a cell LEF does not make
+    spacing arbitrary. <a href="https://openroad.readthedocs.io/en/latest/main/src/tap/README.html">[tap placement and row handling]</a>
+       The spice says
+      there is no transistor. It does not say where the contact is drawn.
+    </p>
+    <p>
+      Logic cells in this library still list <code>VNB</code> and <code>VPB</code>
+      as supply pins (<a href="cell_layout.html">lesson 16</a>). Those pins are
+      the transistor bodies. The tap is the cell that connects the well and the
+      wafer to something. One HD cell is both a level shifter and a well tap;
+      that is <a href="level_shifters.html">lesson 54</a>.
+    </p>
+  
+
+
+    <h2 id="section-4">4. A flipped row flips the tap with the rail</h2>
+  <p>
+    The well contact in <code>tapvpwrvgnd_1</code> is drawn on the <code>VPWR</code> side, and the wafer contact on the <code>VGND</code> side. Flip the row and both contacts flip. They still land on the right rail, because the rails flipped too.
+  </p>
+  <p>
+    A staggered tap grid puts the next row's tap in a different column, so the wells are tied on a lattice rather than in one vertical stripe. The spacing must satisfy the applicable body-contact rules and the flow’s distance convention. <a href="https://openroad.readthedocs.io/en/latest/main/src/tap/README.html">OpenROAD’s distance option</a> describes its checkerboard; a drawn x-pitch alone is not a universal maximum distance to a tap.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — The same tap, upright and flipped. The well contact stays on VPWR.">
+<text x="180" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Row N</text>
+<text x="540" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Row FS</text>
+<rect x="60" y="40" width="200" height="140" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<rect x="60" y="40" width="200" height="16" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<rect x="60" y="164" width="200" height="16" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<circle cx="160" cy="48" r="6" fill="#fff" stroke="#33414f" stroke-width="1.5"></circle>
+<text x="160" y="110" text-anchor="middle" font-size="13" fill="#33414f">well contact</text>
+<text x="160" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">on the VPWR edge</text>
+<rect x="420" y="40" width="200" height="140" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<rect x="420" y="40" width="200" height="16" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="420" y="164" width="200" height="16" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<circle cx="520" cy="172" r="6" fill="#fff" stroke="#33414f" stroke-width="1.5"></circle>
+<text x="520" y="110" text-anchor="middle" font-size="13" fill="#33414f">well contact</text>
+<text x="520" y="128" text-anchor="middle" font-size="12" fill="#5c6b7a">on the VPWR edge</text>
+<text x="370" y="214" text-anchor="middle" font-size="12" fill="#5c6b7a">Flip the row and the contact flips with VPWR. Staggering must still meet body-contact distance rules.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 3 — The same tap, upright and flipped. The well contact stays on <code>VPWR</code>.</strong></figcaption>
+  </figure>
+
+<h2 id="section-5">5. Body voltage is part of the circuit</h2>
+<p>In the HD transistor netlists, <code>VNB</code> connects to the NMOS body and <code>VPB</code> to the PMOS body. Follow actual net connectivity; do not infer well polarity from a pin spelling or one Liberty metadata field. A body port in SPICE does not prove that the layout has an independently isolated well. Separate NMOS body bias may require an isolated p-well/deep-n-well structure and suitable guard rings.</p>
+<p><strong>Worked example — assumed local body network:</strong> an injected 100&nbsp;µA flowing through an effective 2&nbsp;kΩ body resistance develops <code>ΔV = IR = 0.20&nbsp;V</code>. Reducing that effective resistance to 200&nbsp;Ω reduces the same disturbance to 20&nbsp;mV. These are teaching assumptions, not a SKY130 latch-up threshold. They explain why a distant tap can allow a local body voltage to move even though the schematic body net has the right name.</p>
+<p><strong>Analog ↔ digital:</strong> digital switching and I/O injection can disturb an analog device’s body, changing threshold and bias. Taps and guard rings help collect current, but they also have parasitic resistance and capacitance. Connectivity, isolation, contact distance, and injection limits all belong in the mixed-signal review.</p><details class="checkpoint"><summary>Check your understanding — Does a no-device SPICE tap mean the cell does nothing?</summary><p>No. It is a physical well/substrate contact structure. An empty schematic subcircuit does not model the distributed body resistance or latch-up network. Layout connectivity and the process rules supply that information.</p></details>
+<details class="checkpoint"><summary>Check your understanding — two well taps sit far apart in a long row. Why does that raise latch-up risk?</summary><p>The well and substrate between the taps reach the rails only through their own resistance. A current spike injected far from a tap develops more voltage across that resistance, which can forward-bias the parasitic bipolar junctions and trigger latch-up. Closer taps lower the resistance; the foundry rule sets the maximum distance.</p></details><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li>Latch-up is a supply short that holds itself on. The n-well has to stay on <code>VPWR</code> and the wafer on <code>VGND</code>.</li>
+      <li>Most HD cells do not contain that tie. The LibreLane configuration inserts <code>tapvpwrvgnd_1</code>.</li>
+      <li>That cell is one site, 0.46 × 2.72&nbsp;µm, class <code>WELLTAP</code>, and its spice has no transistors.</li>
+      <li><code>tap_1</code> exposes <code>VNB</code> and <code>VPB</code> in the schematic. <code>tapvgnd_1</code> exposes <code>VPB</code> only. The LEF of each tap lists the rails.</li>
+      <li>A cell LEF does not set a universal tap pitch. The floorplan must obey the process and library body-contact rules.</li>
+          <li>Flipping a row flips the tap, and the well contact stays on <code>VPWR</code>. A staggered grid must still provide legal coverage near macros, well boundaries, and row ends.</li>
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-7">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. Cell data are from HD revision ac7fb61f and flow names from open-pdks c6df28c1. No universal SKY130 tap pitch or safe injected-current limit is inferred; the body-network calculation is illustrative.</p><ol>
+<li><a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html">SkyWater foundry library guidance — body contacts and staggered taps.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.lef">Tap cell LEF at pinned HD revision.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.spice">Tap cell SPICE; related tap variants are in the same cells directory.</a></li>
+<li><a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">Pinned open-pdks LibreLane configuration.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/tap/README.html">OpenROAD tap insertion and distance conventions.</a></li>
+<li><a href="https://www.analog.com/en/resources/analog-dialogue/articles/winning-the-battle-against-latchup.html">Analog Devices — parasitic SCR and holding conditions.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html" aria-current="page">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="fill_cells.html"><small>← Previous</small>Fill Cells</a><a href="endcaps.html"><small>Next →</small>Endcaps</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="70" width="660" height="100" fill="${WELL}" stroke="${GD}"/>`;
+  const cells = [
+    [50, 'logic'], [170, 'logic'], [290, 'tap'], [410, 'logic'], [530, 'logic']
+  ];
+  cells.forEach(([x, kind]) => {
+    const tap = kind === 'tap';
+    s += `<rect x="${x}" y="78" width="110" height="84" fill="${tap ? '#fff' : '#f7f9fb'}" stroke="${tap ? CAP : DK}" stroke-width="${tap ? 2.5 : 1.5}"/>`;
+    s += txt(x + 55, 124, tap ? 'tap' : 'logic', {b: tap, s: 14, c: tap ? CAP : DK});
+  });
+  s += `<rect x="330" y="78" width="30" height="14" fill="${PW}"/>`;
+  s += `<rect x="330" y="148" width="30" height="14" fill="${MET}"/>`;
+  s += txt(370, 52, 'n-well contact to VPWR', {s: 13, c: PW, b: true});
+  s += `<line x1="345" y1="58" x2="345" y2="78" stroke="${PW}" stroke-width="1.5"/>`;
+  s += txt(370, 206, 'wafer contact to VGND', {s: 13, c: MET, b: true});
+  s += `<line x1="345" y1="162" x2="345" y2="188" stroke="${MET}" stroke-width="1.5"/>`;
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="80" y="36" width="580" height="170" fill="#f4e4d4" stroke="${DK}"/>`;
+  s += `<rect x="200" y="36" width="340" height="78" fill="#d9e4f5" stroke="${MET}"/>`;
+  s += txt(370, 28, 'n-well, tied to VPWR', {s: 13, b: true, c: MET});
+  s += `<rect x="250" y="48" width="70" height="22" fill="#c0564a"/>`;
+  s += txt(285, 63, 'p+', {s: 12, c: '#fff'});
+  s += `<rect x="430" y="48" width="70" height="22" fill="#3b6fb0"/>`;
+  s += txt(465, 63, 'n+', {s: 12, c: '#fff'});
+  s += `<rect x="120" y="48" width="70" height="22" fill="#3b6fb0"/>`;
+  s += txt(155, 63, 'n+', {s: 12, c: '#fff'});
+  s += `<rect x="560" y="48" width="70" height="22" fill="#c0564a"/>`;
+  s += txt(595, 63, 'p+', {s: 12, c: '#fff'});
+  s += txt(155, 91, 'NMOS source', {s: 11});
+  s += txt(595, 91, 'wafer tie', {s: 11});
+  s += txt(595, 107, 'VGND', {s: 11, b: true});
+  s += txt(285, 86, 'PMOS source', {s: 11});
+  s += txt(465, 86, 'well tie', {s: 11});
+  s += txt(370, 130, 'p-type wafer', {s: 13, b: true});
+  s += txt(250, 230, 'PNP: p+ / n-well / wafer', {s: 13, c: '#c0564a'});
+  s += txt(520, 230, 'NPN: n+ / wafer / n-well', {s: 13, c: '#3b6fb0'});
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

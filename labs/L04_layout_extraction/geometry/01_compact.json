@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "layer": "met3",
+  "logical_connection": {
+    "net": "SIG",
+    "driver": "SIG_DRV",
+    "receiver": "SIG_RX"
+  },
+  "reference_plane_met2_um": [
+    -20,
+    -20,
+    260,
+    280
+  ],
+  "aggressor_met4_um": [
+    [
+      -10,
+      100,
+      250,
+      270
+    ]
+  ],
+  "grounded_patch_met4_um": [],
+  "width_um": 0.4,
+  "path_um": [
+    [
+      20,
+      40
+    ],
+    [
+      220,
+      40
+    ]
+  ],
+  "id": "compact",
+  "label": "Compact route"
+}

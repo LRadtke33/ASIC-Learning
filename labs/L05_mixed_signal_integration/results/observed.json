@@ -1,0 +1,52 @@
+{
+  "tool": "Icarus Verilog version 12.0 (stable) ()",
+  "scope": "Digital event simulation; no analog metastability or physical timing model.",
+  "negative_control": false,
+  "cases": [
+    {
+      "name": "fast_source",
+      "source_period_ns": 14,
+      "readout_period_ns": 22,
+      "readout_initial_phase_ns": 3,
+      "seed": 4369,
+      "exit_code": 0,
+      "accepted": 11,
+      "delivered": 9,
+      "aborted": 2,
+      "rejected_busy": 22,
+      "min_latency_ns": 45.0,
+      "max_latency_ns": 173.0,
+      "observed": "PASS"
+    },
+    {
+      "name": "fast_readout",
+      "source_period_ns": 26,
+      "readout_period_ns": 10,
+      "readout_initial_phase_ns": 1,
+      "seed": 8738,
+      "exit_code": 0,
+      "accepted": 13,
+      "delivered": 11,
+      "aborted": 2,
+      "rejected_busy": 20,
+      "min_latency_ns": 21.0,
+      "max_latency_ns": 243.0,
+      "observed": "PASS"
+    },
+    {
+      "name": "close_clocks",
+      "source_period_ns": 20,
+      "readout_period_ns": 22,
+      "readout_initial_phase_ns": 4,
+      "seed": 13107,
+      "exit_code": 0,
+      "accepted": 11,
+      "delivered": 9,
+      "aborted": 2,
+      "rejected_busy": 22,
+      "min_latency_ns": 47.0,
+      "max_latency_ns": 217.0,
+      "observed": "PASS"
+    }
+  ]
+}

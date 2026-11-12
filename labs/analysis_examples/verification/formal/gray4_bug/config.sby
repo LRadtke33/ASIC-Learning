@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 12
+timeout 30
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal -D FORMAL gray4_bug.v
+prep -top gray4
+
+[files]
+gray4_bug.v

@@ -1,0 +1,4 @@
+GL simulation without SDF (unit-delay models only)
+PASS  tb_gray4_gl  USE_SDF=0  32 steps, 0 errors
+CLK->Q  n=32  min=0.0010 ns  mean=0.0010 ns  max=0.0010 ns
+tb_gray4_gl.v:84: $finish called at 350000 (1ps)

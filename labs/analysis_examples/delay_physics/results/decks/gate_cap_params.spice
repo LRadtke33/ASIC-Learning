@@ -1,0 +1,19 @@
+* caps
+.lib "../../../../common/models/sky130_course.lib.spice" tt
+.temp 25
+XN d g 0 0 sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP dp gp vdd vdd sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+VDD vdd 0 1.8
+VD d 0 0
+VG g 0 1.8
+VDp dp 0 1.8
+VGp gp 0 0
+.control
+op
+showmod m.xn.msky130_fd_pr__nfet_01v8 : cgso cgdo toxe epsrox toxp dlc lint wint
+showmod m.xp.msky130_fd_pr__pfet_01v8_hvt : cgso cgdo toxe epsrox toxp dlc lint wint
+show m.xn.msky130_fd_pr__nfet_01v8 : cgg cgs cgd
+show m.xp.msky130_fd_pr__pfet_01v8_hvt : cgg cgs cgd
+quit
+.endc
+.end

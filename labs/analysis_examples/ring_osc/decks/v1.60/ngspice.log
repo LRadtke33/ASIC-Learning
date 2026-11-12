@@ -1,0 +1,68 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * 11-stage inv_1 ring, tt 25c, vdd=1.6
+
+Doing analysis at TEMP = 25.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.6
+vgnd                                         0
+n2                                         1.6
+n1                                           0
+n3                                 2.14012e-09
+n4                                         1.6
+n5                                 2.14012e-09
+n6                                         1.6
+n7                                 2.14012e-09
+n8                                         1.6
+n9                                 2.14012e-09
+n10                                        1.6
+n11                                2.14012e-09
+vss#branch                          1.7569e-11
+vdd#branch                        -0.000100462
+
+ Reference value :  0.00000e+00
+ Reference value :  6.60280e-10
+ Reference value :  1.17128e-09
+ Reference value :  1.78728e-09
+ Reference value :  2.41428e-09
+ Reference value :  2.99528e-09
+ Reference value :  3.62028e-09
+ Reference value :  4.28128e-09
+ Reference value :  4.78928e-09
+ Reference value :  5.41528e-09
+ Reference value :  5.99228e-09
+ Reference value :  6.61328e-09
+ Reference value :  7.18128e-09
+ Reference value :  7.82728e-09
+ Reference value :  8.45428e-09
+ Reference value :  9.05628e-09
+ Reference value :  9.66228e-09
+ Reference value :  1.03733e-08
+ Reference value :  1.09393e-08
+ Reference value :  1.15053e-08
+ Reference value :  1.20263e-08
+ Reference value :  1.26383e-08
+ Reference value :  1.33113e-08
+ Reference value :  1.39473e-08
+ Reference value :  1.45373e-08
+ Reference value :  1.52273e-08
+ Reference value :  1.58993e-08
+ Reference value :  1.66383e-08
+ Reference value :  1.72513e-08
+ Reference value :  1.78083e-08
+ Reference value :  1.84703e-08
+ Reference value :  1.91173e-08
+ Reference value :  1.97483e-08
+No. of Data Rows : 20008
+DONE
+Note: Simulation executed from .control section 
+

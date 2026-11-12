@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+<testsuite timestamp="2026-11-11T16:26:46" hostname="grok-bot-vm-513224384" package="fifo_bmc" id="0" name="default" tests="13" errors="0" failures="0" time="0" skipped="3">
+<properties>
+<property name="os" value="Linux"/>
+<property name="expect" value="PASS"/>
+<property name="status" value="PASS"/>
+</properties>
+<testcase classname="default" name="build execution" time="0">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:60.13-60.38" time="0" type="ASSERT" location="sync_fifo_formal.v:60.13-60.38" id="_witness_.check_assert_sync_fifo_formal_v_60_60">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:61.13-61.46" time="0" type="ASSERT" location="sync_fifo_formal.v:61.13-61.46" id="_witness_.check_assert_sync_fifo_formal_v_61_63">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:62.13-62.46" time="0" type="ASSERT" location="sync_fifo_formal.v:62.13-62.46" id="_witness_.check_assert_sync_fifo_formal_v_62_66">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:63.13-63.35" time="0" type="ASSERT" location="sync_fifo_formal.v:63.13-63.35" id="_witness_.check_assert_sync_fifo_formal_v_63_69">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:70.17-70.54" time="0" type="ASSERT" location="sync_fifo_formal.v:70.17-70.54" id="_witness_.check_assert_sync_fifo_formal_v_70_101">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:72.17-72.54" time="0" type="ASSERT" location="sync_fifo_formal.v:72.17-72.54" id="_witness_.check_assert_sync_fifo_formal_v_72_110">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:74.17-74.47" time="0" type="ASSERT" location="sync_fifo_formal.v:74.17-74.47" id="_witness_.check_assert_sync_fifo_formal_v_74_118">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:76.17-76.47" time="0" type="ASSERT" location="sync_fifo_formal.v:76.17-76.47" id="_witness_.check_assert_sync_fifo_formal_v_76_127">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:82.13-82.43" time="0" type="ASSERT" location="sync_fifo_formal.v:82.13-82.43" id="_witness_.check_assert_sync_fifo_formal_v_82_140">
+</testcase>
+<testcase classname="default" name="Property ASSERT in sync_fifo at sync_fifo_formal.v:86.21-86.61" time="0" type="ASSERT" location="sync_fifo_formal.v:86.21-86.61" id="_witness_.check_assert_sync_fifo_formal_v_86_145">
+</testcase>
+<testcase classname="default" name="Property COVER in sync_fifo at sync_fifo_formal.v:89.27-89.55" time="0" type="COVER" location="sync_fifo_formal.v:89.27-89.55" id="_witness_.check_cover_sync_fifo_formal_v_89_151">
+<skipped />
+</testcase>
+<testcase classname="default" name="Property COVER in sync_fifo at sync_fifo_formal.v:95.27-95.96" time="0" type="COVER" location="sync_fifo_formal.v:95.27-95.96" id="_witness_.check_cover_sync_fifo_formal_v_95_156">
+<skipped />
+</testcase>
+<testcase classname="default" name="Property COVER in sync_fifo at sync_fifo_formal.v:96.27-96.122" time="0" type="COVER" location="sync_fifo_formal.v:96.27-96.122" id="_witness_.check_cover_sync_fifo_formal_v_96_165">
+<skipped />
+</testcase>
+<system-out>SBY 16:26:45 [fifo_bmc] Removing directory '/workspace/learn/learning/labs/analysis_examples/verification/formal/fifo_bmc'.
+SBY 16:26:45 [fifo_bmc] Copy '/workspace/learn/learning/labs/analysis_examples/verification/formal/sync_fifo_formal.v' to '/workspace/learn/learning/labs/analysis_examples/verification/formal/fifo_bmc/src/sync_fifo_formal.v'.
+SBY 16:26:45 [fifo_bmc] engine_0: smtbmc z3
+SBY 16:26:45 [fifo_bmc] base: starting process &quot;cd fifo_bmc/src; yosys -ql ../model/design.log ../model/design.ys&quot;
+SBY 16:26:45 [fifo_bmc] base: Warning: Replacing memory \mem with list of registers. See sync_fifo_formal.v:31
+SBY 16:26:45 [fifo_bmc] base: finished (returncode=0)
+SBY 16:26:45 [fifo_bmc] prep: starting process &quot;cd fifo_bmc/model; yosys -ql design_prep.log design_prep.ys&quot;
+SBY 16:26:45 [fifo_bmc] prep: finished (returncode=0)
+SBY 16:26:45 [fifo_bmc] smt2: starting process &quot;cd fifo_bmc/model; yosys -ql design_smt2.log design_smt2.ys&quot;
+SBY 16:26:45 [fifo_bmc] smt2: finished (returncode=0)
+SBY 16:26:45 [fifo_bmc] engine_0: starting process &quot;cd fifo_bmc; yosys-smtbmc -s z3 --presat --noprogress -t 20  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2&quot;
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Solver: z3
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 0..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 0..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 1..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 1..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 2..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 2..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 3..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 3..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 4..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 4..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 5..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 5..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 6..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 6..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 7..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 7..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 8..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 8..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 9..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 9..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 10..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 10..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 11..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 11..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 12..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 12..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 13..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 13..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 14..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 14..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 15..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 15..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 16..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 16..
+SBY 16:26:45 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 17..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 17..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 18..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 18..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Checking assumptions in step 19..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Checking assertions in step 19..
+SBY 16:26:46 [fifo_bmc] engine_0: ##   0:00:00  Status: passed
+SBY 16:26:46 [fifo_bmc] engine_0: finished (returncode=0)
+SBY 16:26:46 [fifo_bmc] engine_0: Status returned by engine: pass
+SBY 16:26:46 [fifo_bmc] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:46 [fifo_bmc] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:46 [fifo_bmc] summary: engine_0 (smtbmc z3) returned pass
+SBY 16:26:46 [fifo_bmc] summary: engine_0 did not produce any traces
+SBY 16:26:46 [fifo_bmc] DONE (PASS, rc=0)
+</system-out>
+<system-err>
+</system-err>
+</testsuite>
+</testsuites>

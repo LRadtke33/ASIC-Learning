@@ -1,0 +1,29 @@
+* Minimal SKY130 teaching model library; upstream parameters unchanged.
+* Not a complete installed PDK. See README.txt and source_manifest.json.
+
+.lib tt
+.option scale=1u
+.param sky130_fd_pr__nfet_01v8__dlc_rotweak=0 sky130_fd_pr__pfet_01v8_hvt__dlc_rotweak=0
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__tt.corner.spice"
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__mismatch.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__tt.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__mismatch.corner.spice"
+.endl tt
+
+.lib ff
+.option scale=1u
+.param sky130_fd_pr__nfet_01v8__dlc_rotweak=0 sky130_fd_pr__pfet_01v8_hvt__dlc_rotweak=0
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ff.corner.spice"
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__mismatch.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ff.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__mismatch.corner.spice"
+.endl ff
+
+.lib ss
+.option scale=1u
+.param sky130_fd_pr__nfet_01v8__dlc_rotweak=0 sky130_fd_pr__pfet_01v8_hvt__dlc_rotweak=0
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__ss.corner.spice"
+.include "upstream/cells/nfet_01v8/sky130_fd_pr__nfet_01v8__mismatch.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__ss.corner.spice"
+.include "upstream/cells/pfet_01v8_hvt/sky130_fd_pr__pfet_01v8_hvt__mismatch.corner.spice"
+.endl ss

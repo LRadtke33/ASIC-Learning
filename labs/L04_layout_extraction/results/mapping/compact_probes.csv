@@ -1,0 +1,12 @@
+schematic_net,physical_role,spice_node,ngspice_vector,x_um,y_um,path_node_index
+SIG,driver_terminal,SIG_DRV,v(sig_drv),20,40,0
+SIG,interconnect_internal,SIG_001,v(xroute.sig_001),40,40,1
+SIG,interconnect_internal,SIG_002,v(xroute.sig_002),60,40,2
+SIG,interconnect_internal,SIG_003,v(xroute.sig_003),80,40,3
+SIG,interconnect_internal,SIG_004,v(xroute.sig_004),100,40,4
+SIG,interconnect_internal,SIG_005,v(xroute.sig_005),120,40,5
+SIG,interconnect_internal,SIG_006,v(xroute.sig_006),140,40,6
+SIG,interconnect_internal,SIG_007,v(xroute.sig_007),160,40,7
+SIG,interconnect_internal,SIG_008,v(xroute.sig_008),180,40,8
+SIG,interconnect_internal,SIG_009,v(xroute.sig_009),200,40,9
+SIG,receiver_terminal,SIG_RX,v(sig_rx),220,40,10

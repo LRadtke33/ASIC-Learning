@@ -1,0 +1,268 @@
+{
+  "status": "complete_frozen_for_root_integration",
+  "completed_utc": "2026-11-06T22:53:55.380759+00:00",
+  "scope": "Only three new HTML pages and labs/L02_bias_amplifier were created/edited in this phase. Original 42 lesson bodies and shared common models were not edited. Root handles final shell, full QA, packaging and saving.",
+  "files": [
+    {
+      "file": "differential_pairs.html",
+      "number": 43,
+      "status": "complete_frozen_for_root_integration",
+      "summary": "Defines differential/common-mode coordinates; derives current steering, gain, headroom, CMRR normalization and separate output common-mode feedback.",
+      "word_count_excluding_style_script_nav": 2317,
+      "inline_svg_count": 3,
+      "external_svg_image_count": 0,
+      "table_count": 2,
+      "solved_checkpoint_count": 2,
+      "sha256_before_global_shell": "aaf572b8d1e0d2e2852741e3f62c4a9cb0361c87b37ee9ba50953d879b3616d9",
+      "sources": [
+        "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+        "https://www.ti.com/lit/pdf/sloa054",
+        "https://www.ti.com/lit/pdf/snoa506",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html"
+      ]
+    },
+    {
+      "file": "references_startup.html",
+      "number": 44,
+      "status": "complete_frozen_for_root_integration",
+      "summary": "Derives an illustrative PTAT/CTAT sum, temperature/trim limits, box tempco, startup equilibria and reference/digital readiness interfaces.",
+      "word_count_excluding_style_script_nav": 2492,
+      "inline_svg_count": 3,
+      "external_svg_image_count": 0,
+      "table_count": 2,
+      "solved_checkpoint_count": 2,
+      "sha256_before_global_shell": "59f88310f2384950c7b39a6e1aef26c20624acadaad1cb43718f5fc150afd5e9",
+      "sources": [
+        "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html#bipolar-pnp-transistor",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf"
+      ]
+    },
+    {
+      "file": "lab_bias_amplifier.html",
+      "number": "Lab 2",
+      "status": "complete_frozen_for_root_integration",
+      "summary": "Step-by-step actual SKY130 mirror and amplifier experiments, followed by six explicitly behavioral startup/ramp/brownout cases.",
+      "word_count_excluding_style_script_nav": 2992,
+      "inline_svg_count": 2,
+      "external_svg_image_count": 7,
+      "table_count": 5,
+      "solved_checkpoint_count": 2,
+      "sha256_before_global_shell": "6eaf3f004100c717f37a3afcd1d009afe69fe16025b044bf3171d522c9500363",
+      "sources": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html",
+        "https://wiki.analog.com/university/courses/electronics/text/chapter-14"
+      ]
+    }
+  ],
+  "lab": {
+    "path": "learning/labs/L02_bias_amplifier",
+    "runner": "run_lab.py",
+    "readme": "README.md",
+    "templates": [
+      "circuits/mirror.cir.in",
+      "circuits/amplifier.cir.in",
+      "circuits/startup_behavioral.cir.in"
+    ],
+    "actual_case_count": 41,
+    "case_breakdown": {
+      "mirror_sweeps": 2,
+      "amplifier_dc_transfer": 1,
+      "amplifier_bias_calibration": 23,
+      "amplifier_unclamped_op": 1,
+      "amplifier_finite_difference": 4,
+      "amplifier_ac_loads": 2,
+      "amplifier_transient_amplitudes": 2,
+      "behavioral_startup": 6
+    },
+    "default_new_output": "run_results/",
+    "captured_output": "results/",
+    "model_revision": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+    "model_wrapper_sha256": "93b4a996977c95caade912278bb47c46381ce71fdc87c52bd77ae36848748c26",
+    "runner_sha256": "228b4e4152ed7537e4a7e4866dad98f96be0014ac22b1a8db3a9b08bbe365555",
+    "simulator_executable_sha256": "5572ee292ef1fa157d8a4dc0ad90e12949ad206d6555362bb670aa4c5e7cfcf4",
+    "simulator_version": "******\n** ngspice-44.2 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2024, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Sun Jan 12 08:19:15 UTC 2025\n******",
+    "run_utc": "2026-11-06T23:00:30.494825+00:00",
+    "corner": "tt",
+    "temperature_c": 25,
+    "supply_v": 1.8,
+    "reference_current_a": 2e-05,
+    "supported_geometry_note": "Model bins inspected: NMOS W5um L1um or0.15um; HVT PMOS W7um L1um. Wrapper scale1u means numeric dimension arguments in micrometres without u suffix. Diffusion extension0.29um and junction geometry are illustrative assumptions, not extracted layout.",
+    "verified_upstream_file_count": 15,
+    "all_checked_upstream_hashes_match": true,
+    "all_current_deck_raw_csv_hashes_match_provenance": true,
+    "checks": {
+      "all_cases_exited_successfully": true,
+      "startup_zero_state_stays_low": true,
+      "startup_kick_reaches_high": true,
+      "rearmed_startup_recovers": true,
+      "timed_startup_does_not_recover": true,
+      "dc_derivative_matches_ac_within_2pct": true,
+      "larger_load_reduces_bandwidth": true,
+      "calibrated_bias_within_1mV": true
+    },
+    "measured_metrics": {
+      "status": "actually_executed",
+      "corner": "tt",
+      "temperature_c": 25,
+      "supply_v": 1.8,
+      "reference_current_a": 2e-05,
+      "geometry_scope": "W/L are supported model-bin values in micrometres. Source/drain rectangles assume0.29um extension; no layout extraction.",
+      "startup_scope": "Separate phenomenological ODE; no SKY130 transistor or bandgap performance is inferred.",
+      "mirror": {
+        "long": {
+          "width_um": 5,
+          "length_um": 1.0,
+          "gate_bias_v": 0.759158630107024,
+          "output_current_at_0p9v_a": 2.019208843460262e-05,
+          "ratio_at_0p9v": 1.009604421730131,
+          "within_5pct_of_20uA_intervals_v": [
+            [
+              0.2850000000000001,
+              1.569999999999989
+            ]
+          ],
+          "rout_near_0p9v_ohm": 758919.2746829172,
+          "sweep_step_v": 0.005
+        },
+        "short": {
+          "width_um": 5,
+          "length_um": 0.15,
+          "gate_bias_v": 0.7059935322187053,
+          "output_current_at_0p9v_a": 2.338555337630392e-05,
+          "ratio_at_0p9v": 1.169277668815196,
+          "within_5pct_of_20uA_intervals_v": [
+            [
+              0.6500000000000005,
+              0.7600000000000006
+            ]
+          ],
+          "rout_near_0p9v_ohm": 57644.16679381468,
+          "sweep_step_v": 0.005
+        }
+      },
+      "amplifier": {
+        "bias_input_v": 0.7570107936859132,
+        "bias_mode": "calibrated_to_0p9v_output_at_this_corner",
+        "operating_point": {
+          "scale": 1.8,
+          "vin_value": 0.757010793686,
+          "vout": 0.9000002587003693,
+          "vbiasp": 0.4400801702102544,
+          "id_n": 1.973897517497533e-05,
+          "id_p": 1.973897517497532e-05,
+          "supply_current": 3.973897517492442e-05
+        },
+        "perturbation_v": 0.0001,
+        "gm_n_s": 0.00020962066742355478,
+        "gds_n_s": 1.2959248586994789e-06,
+        "gds_p_s": 6.92891696607936e-07,
+        "ro_n_ohm": 771649.6780558301,
+        "ro_p_ohm": 1443226.9933317404,
+        "predicted_low_frequency_gain_v_per_v": -105.39969956713949,
+        "ac_1pF": {
+          "gain_at_10hz_v_per_v": -105.3997011810606,
+          "magnitude_at_10hz": 105.3997012344719,
+          "bandwidth_3db_hz": 314155.84120215074
+        },
+        "ac_10pF": {
+          "gain_at_10hz_v_per_v": -105.3996907519383,
+          "magnitude_at_10hz": 105.3996960199565,
+          "bandwidth_3db_hz": 31629.032377436743
+        },
+        "ac_vs_dc_derivative_relative_error": 1.5312388246258024e-08,
+        "transient_small": {
+          "input_amplitude_v": 0.0005,
+          "frequency_hz": 10000,
+          "output_min_last_two_cycles_v": 0.8472926752782611,
+          "output_max_last_two_cycles_v": 0.9525495469492401,
+          "amplitude_ratio_last_two_cycles": 105.25687167097897,
+          "ratio_scope": "Peak-to-peak amplitude ratio, not a distortion or linear-gain measurement for the large case."
+        },
+        "transient_large": {
+          "input_amplitude_v": 0.05,
+          "frequency_hz": 10000,
+          "output_min_last_two_cycles_v": 0.09683983257845538,
+          "output_max_last_two_cycles_v": 1.702541264867945,
+          "amplitude_ratio_last_two_cycles": 16.057014322894894,
+          "ratio_scope": "Peak-to-peak amplitude ratio, not a distortion or linear-gain measurement for the large case."
+        }
+      },
+      "behavioral_startup": {
+        "no_startup": {
+          "initial_normalized_state": 0,
+          "final_reference_v": 0.0,
+          "first_99pct_crossing_s": null,
+          "after_brownout_99pct_crossing_s": null,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        },
+        "forced_initial": {
+          "initial_normalized_state": 0.8,
+          "final_reference_v": 1.199999999999993,
+          "first_99pct_crossing_s": 0.0002569839999999995,
+          "after_brownout_99pct_crossing_s": null,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        },
+        "fast_ramp": {
+          "initial_normalized_state": 0,
+          "final_reference_v": 1.199999999999993,
+          "first_99pct_crossing_s": 0.0004918457848614314,
+          "after_brownout_99pct_crossing_s": null,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        },
+        "slow_ramp": {
+          "initial_normalized_state": 0,
+          "final_reference_v": 1.199999999999993,
+          "first_99pct_crossing_s": 0.0009364008933747569,
+          "after_brownout_99pct_crossing_s": null,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        },
+        "brownout_rearmed": {
+          "initial_normalized_state": 0,
+          "final_reference_v": 1.199999999999994,
+          "first_99pct_crossing_s": 0.0004918457848614314,
+          "after_brownout_99pct_crossing_s": 0.002992224593216775,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        },
+        "brownout_timed_kick": {
+          "initial_normalized_state": 0,
+          "final_reference_v": 1.782845192076357e-11,
+          "first_99pct_crossing_s": 0.0004918457848613786,
+          "after_brownout_99pct_crossing_s": null,
+          "scope": "Behavioral result; threshold crossings are not a physical ready specification."
+        }
+      }
+    },
+    "results_provenance": "learning/labs/L02_bias_amplifier/results/provenance.json"
+  },
+  "technical_review": {
+    "verified_derivations": [
+      "Differential-output gain -gm*RD versus single-output gain -gm*RD/2 for a pure differential input, with explicit output polarity.",
+      "Finite tail resistance changes output mean but does not by itself create differential common-mode error in exact symmetry.",
+      "Illustrative square-law current steering uses beta*vd*sqrt(Itail/beta-vd^2/4), only within both-on/headroom assumptions.",
+      "Bandgap example uses kT/q*ln8=53.758mV at300K, K about10.045 for assumed -1.8mV/K VBE slope, and output1.190V.",
+      "Offset, slope and curvature trim distinguished; box tempco includes interior extrema. Example2mV/(1.2V*165K)=10.10ppm/K.",
+      "Actual amplifier low-frequency gain from measured gm/(gdsN+gdsP) agrees with small-signal AC; AC1 is normalization rather than a1V large signal.",
+      "Mirror +/-5% intervals are accuracy windows on a5mV grid, not BSIM saturation voltages.",
+      "Behavioral startup state dynamics explicitly separate stable off/on states and test brownout recovery, with no physical bandgap inference."
+    ],
+    "visual_review": "All15 new vector diagrams/charts rendered with librsvg for targeted inspection. Added explicit shared-gate junction dots, distinguished the CMFB route crossing, corrected the phase-portrait axis range and extended the measured mirror-current chart so its short-channel endpoint is visible. Root performs final integrated HTML/browser QA.",
+    "calculation_scope": "Lesson43/44 numerical design examples are analytic and illustrative. Lab2 MOS data are actual nominal compact-model simulations. Startup data are actual simulations of an explicitly constructed behavioral model.",
+    "limitations": [
+      "No fabricated-silicon validation, post-layout extraction, physical current-reference circuit or transistor-level bandgap simulation.",
+      "Captured MOS results are TT/25C/1.8V only; FF/SS/85C commands are proposed extensions and explicitly not labeled as executed.",
+      "No validated mismatch Monte Carlo, yield, noise or reliability characterization.",
+      "Calibrated amplifier bias is an external testbench operation; no claim of autonomous bias or PVT robustness.",
+      "Startup time constants and currents are chosen behavioral coefficients; first99percent crossings do not establish a physical ready contract.",
+      "Integration now links the release44manual that matches the recorded ngspice44.2 runs."
+    ]
+  },
+  "primary_sources_checked_date": "2026-11-06",
+  "integration_note": "Runner gained a common .lib whitespace-path adapter; default41case run repeated successfully with unchanged numerical results. See portability_report.json for targeted spaced-path probes."
+}

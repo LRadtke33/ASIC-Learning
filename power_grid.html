@@ -1,0 +1,424 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power Grid &amp; Routing Grids</title>
+<style>
+.legend {display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #33414f; margin: 8px 0 0;}
+.legend span {display: inline-flex; align-items: center; gap: 6px;}
+.sw {display: inline-block; width: 22px; height: 10px; border-radius: 2px;}
+.swv {display: inline-block; width: 10px; height: 18px; border-radius: 2px;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 14 / 84 · Part III, Standard-cell layout</p><h1>The Power Grid &amp; Routing Grids</h1>
+  <p class="subtitle">How power reaches every cell, how voltage is lost along the way, and how routing tracks help digital implementation.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Describe the ring, strap and rail structure of a power delivery network.</li><li>Distinguish routing tracks, preferred directions and the manufacturing grid.</li><li>Estimate the voltage drop along a rail or strap, and explain why a mesh reduces it.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>The grid is built in <a href="design_flow.html#step-4">step 4, floorplan and power grid</a>, routing tracks are used in <a href="design_flow.html#step-7">step 7, routing</a>, and voltage drop is checked in <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>OpenROAD: <code>pdngen</code> for the grid, <code>global_route</code> and <code>detailed_route</code> for signals, <code>analyze_power_grid</code> for voltage drop. Commercial: Innovus, Voltus, RedHawk.</dd><dt>Why it matters</dt><dd>A weak grid slows every cell through voltage drop; an over-built one leaves no room to route.</dd></dl></aside><h2 id="section-1">1. The power delivery network (PDN)</h2>
+  <p>
+    Every cell in every row needs VDD and VSS. The M1 rails from the
+    <a href="site_rows.html">site-row template</a> deliver power <em>along</em> each row, but a
+    thin M1 rail alone can't carry current for a whole chip — the resistance would cause the
+    supply voltage to sag (<strong>IR drop</strong>) far from the source. So power is delivered
+    through a <strong>grid (mesh)</strong> built on the thick upper metal layers, dropping down
+    to the rails everywhere via stacked vias.
+  </p>
+  <p>A PDN is usually planned during floorplanning and refined as placement, current demand, and package connections become known. One common topology is the following; rings and this exact construction order are not mandatory. <a href="https://openroad.readthedocs.io/en/latest/main/src/pdn/README.html">OpenROAD PDN policies</a> specify the actual layers, widths, domains, and connections.</p>
+  <ol>
+    <li><strong>Core ring</strong> — wide VDD and VSS rings around the core area on top metals, fed from the pads/bumps.</li>
+    <li><strong>Straps (the mesh)</strong> — wide vertical straps on one upper layer and horizontal straps on the layer above, at a regular pitch, connected to the ring and to each other with via arrays.</li>
+    <li><strong>Follow-pin rails</strong> — the horizontal M1 rails drawn along every row boundary ("follow pin" because they overlap the rail pins of every cell placed later), with legal via stacks at selected same-net crossings. An M1-to-M4 connection needs intermediate metal landings and each intervening via layer.</li>
+  </ol>
+  <p>The pad-ring buses that feed this grid, and the IR drop along them, are <a href="io_power.html">lesson 68</a>.</p>
+  <p>
+    The planned PDN consumes routing resources. Routers respect its shapes, while placement considers associated blockages, utilization, and power needs. Upper-metal straps can pass over standard cells; a metal obstruction is not automatically a cell-placement blockage. A current can then flow from a bump, around the ring, down
+    a strap, and along an M1 rail into any cell — with many redundant parallel paths, which is
+    exactly what keeps IR drop low.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 668 362" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — An illustrative power mesh over the site rows. The core ring, vertical M4 straps and horizontal M5 straps are one possible topology. Dark squares indicate connections between conductors of the same supply net; intermediate metal/via stacks are omitted from this top-down sketch. Opposite supplies cross without a connection. The M1 follow-pin rails are the rails the standard cells abut onto."><rect x="46" y="242" width="576" height="64" fill="#fafbfd"></rect><rect x="46" y="178" width="576" height="64" fill="#f2f5f9"></rect><rect x="46" y="114" width="576" height="64" fill="#fafbfd"></rect><rect x="46" y="50" width="576" height="64" fill="#f2f5f9"></rect><rect x="46" y="303" width="576" height="6" fill="#3b6fb0" opacity="0.9"></rect><rect x="46" y="239" width="576" height="6" fill="#d9534f" opacity="0.9"></rect><rect x="46" y="175" width="576" height="6" fill="#3b6fb0" opacity="0.9"></rect><rect x="46" y="111" width="576" height="6" fill="#d9534f" opacity="0.9"></rect><rect x="46" y="47" width="576" height="6" fill="#3b6fb0" opacity="0.9"></rect><rect x="28" y="209.4" width="612" height="14" fill="#3b6fb0" opacity="0.4"></rect><rect x="28" y="132.6" width="612" height="14" fill="#d9534f" opacity="0.4"></rect><rect x="120" y="32" width="12" height="292" fill="#d9534f" opacity="0.45"></rect><rect x="168" y="32" width="12" height="292" fill="#3b6fb0" opacity="0.45"></rect><rect x="312" y="32" width="12" height="292" fill="#d9534f" opacity="0.45"></rect><rect x="360" y="32" width="12" height="292" fill="#3b6fb0" opacity="0.45"></rect><rect x="504" y="32" width="12" height="292" fill="#d9534f" opacity="0.45"></rect><rect x="552" y="32" width="12" height="292" fill="#3b6fb0" opacity="0.45"></rect><rect x="122" y="238" width="8" height="8" fill="#2c3540"></rect><rect x="122" y="110" width="8" height="8" fill="#2c3540"></rect><rect x="170" y="302" width="8" height="8" fill="#2c3540"></rect><rect x="170" y="174" width="8" height="8" fill="#2c3540"></rect><rect x="170" y="46" width="8" height="8" fill="#2c3540"></rect><rect x="314" y="238" width="8" height="8" fill="#2c3540"></rect><rect x="314" y="110" width="8" height="8" fill="#2c3540"></rect><rect x="362" y="302" width="8" height="8" fill="#2c3540"></rect><rect x="362" y="174" width="8" height="8" fill="#2c3540"></rect><rect x="362" y="46" width="8" height="8" fill="#2c3540"></rect><rect x="506" y="238" width="8" height="8" fill="#2c3540"></rect><rect x="506" y="110" width="8" height="8" fill="#2c3540"></rect><rect x="554" y="302" width="8" height="8" fill="#2c3540"></rect><rect x="554" y="174" width="8" height="8" fill="#2c3540"></rect><rect x="554" y="46" width="8" height="8" fill="#2c3540"></rect><rect x="168.5" y="210.9" width="11" height="11" fill="#2c3540"></rect><rect x="360.5" y="210.9" width="11" height="11" fill="#2c3540"></rect><rect x="552.5" y="210.9" width="11" height="11" fill="#2c3540"></rect><rect x="120.5" y="134.1" width="11" height="11" fill="#2c3540"></rect><rect x="312.5" y="134.1" width="11" height="11" fill="#2c3540"></rect><rect x="504.5" y="134.1" width="11" height="11" fill="#2c3540"></rect><rect x="32" y="36" width="604" height="284" fill="none" stroke="#d9534f" stroke-width="7"></rect><rect x="18" y="22" width="632" height="312" fill="none" stroke="#3b6fb0" stroke-width="7"></rect><text x="46" y="14" font-size="11" fill="#33414f">core ring (VSS outer, VDD inner)</text><text x="182" y="354" font-size="11" fill="#33414f">M4 straps ↑</text><text x="618" y="204.4" text-anchor="end" font-size="11" fill="#33414f">M5 strap →</text><text x="398" y="354" font-size="11" fill="#33414f">M1 follow-pin rails on every row boundary</text></svg></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#d9534f"></span> VDD (ring / straps / rails)</span>
+      <span><span class="sw" style="background:#3b6fb0"></span> VSS (ring / straps / rails)</span>
+      <span><span class="swv" style="background:#e9a49d"></span> M4 vertical strap</span>
+      <span><span class="sw" style="background:#e9a49d"></span> M5 horizontal strap</span>
+      <span><span class="sw" style="background:#2c3540;width:10px;height:10px"></span> via array</span>
+    </div>
+    <figcaption>Figure 1 — An illustrative power mesh over the site rows. The core ring, vertical M4 straps and horizontal M5 straps are one possible topology. Dark squares indicate connections between conductors of the same supply net; intermediate metal/via stacks are omitted from this top-down sketch. Opposite supplies cross without a connection. The M1 follow-pin rails are the rails the standard cells abut onto.</figcaption>
+  </figure>
+
+  <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> OpenROAD’s <code>pdngen</code> builds the grid from a short description: <code>add_pdn_stripe</code> adds the met1 rails that follow the cell pins and the wider straps on upper metals, <code>add_pdn_ring</code> adds rings, and <code>add_pdn_connect</code> places the vias between layers. LibreLane runs this as its GeneratePDN step and later estimates the voltage drop with <code>analyze_power_grid</code> (IRDropReport). Commercial flows build the grid in Innovus or IC Compiler II and analyze it in Voltus or RedHawk. The widths and pitches below are example values.</p><pre>add_pdn_stripe -layer met1 -width 0.48 -followpins
+add_pdn_stripe -layer met4 -width 1.6 -pitch 153.6
+add_pdn_connect -layers {met1 met4}
+pdngen</pre></aside><h2 id="section-2">2. Routing grids: tracks</h2>
+  <p>
+    Signal routing is also grid-based. For each metal layer, the technology defines a
+    <strong>routing grid</strong> — a set of evenly spaced <strong>tracks</strong> on which wire
+    centerlines are supposed to run. The track spacing (<strong>routing pitch</strong>) is
+    essentially <em>minimum wire width + minimum spacing</em> (or the via-to-via pitch, whichever
+    is larger), so ordinary wires can often occupy adjacent tracks. Width-dependent spacing, end-of-line rules, via enclosures, neighboring pins, and other checks still apply; being on a track does not prove DRC cleanliness.
+  </p>
+  <p>
+    Each layer also has a <strong>preferred direction</strong>, alternating layer by layer so
+    that any two points can be reached with simple L-shapes and vias:
+  </p>
+  <table>
+    <tbody><tr><th>Layer</th><th>Preferred direction</th><th>Typical use</th></tr>
+    <tr><td>M1</td><td>horizontal</td><td>inside cells: rails, pins, internal connections</td></tr>
+    <tr><td>M2</td><td>vertical</td><td>short signal routes, pin access</td></tr>
+    <tr><td>M3</td><td>horizontal</td><td>signal routing</td></tr>
+    <tr><td>M4, M5, …</td><td>alternating V / H</td><td>longer routes, clock, power straps</td></tr>
+  </tbody></table>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 724 316" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Routing tracks and a routed net. Dashed lines are the tracks:
+      M2's grid is vertical, M3's is horizontal. The router connects pin&nbsp;A to pin&nbsp;B by
+      running on tracks and switching layers with vias at track intersections. Note the pitch:
+      a simplified width-plus-spacing example. Actual SKY130 pitches can be larger, and via or end-of-line rules can prevent simultaneous use of adjacent tracks."><defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#33414f"></path></marker></defs><line x1="48" y1="52" x2="48" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="80" y1="52" x2="80" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="112" y1="52" x2="112" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="144" y1="52" x2="144" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="176" y1="52" x2="176" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="208" y1="52" x2="208" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="240" y1="52" x2="240" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="272" y1="52" x2="272" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="304" y1="52" x2="304" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="336" y1="52" x2="336" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="368" y1="52" x2="368" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="400" y1="52" x2="400" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="432" y1="52" x2="432" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="464" y1="52" x2="464" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="496" y1="52" x2="496" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="528" y1="52" x2="528" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="560" y1="52" x2="560" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="592" y1="52" x2="592" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="624" y1="52" x2="624" y2="276" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="52" x2="624" y2="52" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="84" x2="624" y2="84" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="116" x2="624" y2="116" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="148" x2="624" y2="148" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="180" x2="624" y2="180" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="212" x2="624" y2="212" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="244" x2="624" y2="244" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="48" y1="276" x2="624" y2="276" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><rect x="108" y="84" width="8" height="160" fill="#e0862e"></rect><rect x="112" y="80" width="352" height="8" fill="#2e9e9e"></rect><rect x="460" y="84" width="8" height="128" fill="#e0862e"></rect><rect x="106.5" y="78.5" width="11" height="11" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><rect x="458.5" y="78.5" width="11" height="11" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><rect x="106" y="238" width="12" height="12" fill="#4a5866"></rect><text x="123" y="248" font-size="11" font-weight="600" fill="#33414f">pin A</text><rect x="458" y="206" width="12" height="12" fill="#4a5866"></rect><text x="475" y="216" font-size="11" font-weight="600" fill="#33414f">pin B</text><line x1="272" y1="38" x2="304" y2="38" stroke="#33414f" stroke-width="1" marker-start="url(#ah2)" marker-end="url(#ah2)"></line><text x="288" y="32" text-anchor="middle" font-size="10.5" fill="#33414f">pitch = width + spacing</text><text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="566" y="142" font-size="10.5" fill="#2e9e9e">M3 tracks (horizontal)</text><text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="208" y="296" font-size="10.5" fill="#e0862e">M2 tracks (vertical)</text><text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="272" y="74" font-size="10.5" fill="#2e9e9e">M3 wire on track</text><text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="120" y="180" font-size="10.5" fill="#e0862e">M2 wire on track</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — Routing tracks and a routed net.</strong> Dashed lines are the tracks:
+      M2's grid is vertical, M3's is horizontal. The router connects pin&nbsp;A to pin&nbsp;B by
+      running on tracks and switching layers with vias at track intersections. Note the pitch:
+      a simplified width-plus-spacing example. Actual SKY130 pitches can be larger, and via or end-of-line rules can prevent simultaneous use of adjacent tracks.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-3">3. Routing tracks and the manufacturing grid are different</h2>
+  <p><strong>A routing track is a tool convention; the manufacturing grid is a geometry constraint.</strong> The HD technology LEF specifies a 0.005&nbsp;µm manufacturing grid, a 0.34&nbsp;µm M1 pitch, and a 0.46&nbsp;µm M2 pitch. A coordinate may be on the manufacturing grid while being between routing tracks. Off-track shapes can be legal. They must still meet the complete process rules.</p>
+  <p>Standard-cell internal wiring, analog routes, power straps, and pin-access jogs may use several metal layers and may be off track. The router needs accurate pin and obstruction geometry. Keeping ordinary digital routes on the advertised tracks usually makes access and spacing more predictable. Detailed routers can also construct permitted off-track access segments; they do not need a DRC waiver merely because a segment is off track.</p>
+  <ul>
+    <li><strong>Capacity:</strong> an off-track wire can block neighboring tracks. How many depends on its width, spacing rule, pitch, and offset; “always two” is not a physical law.</li>
+    <li><strong>Vias:</strong> a via must satisfy cut, enclosure, and surrounding-metal rules. It need not lie at an intersection of preferred routing tracks in every flow.</li>
+    <li><strong>Abstraction:</strong> cell-internal M2 and higher metal must appear in the abstract as pins or obstructions when relevant to routing.</li>
+  </ul>
+  <p>Figure 3 deliberately chooses geometry in which the off-track wire blocks two neighbors. It illustrates a congestion cost, not a universal legality test. See the <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF</a> and <a href="https://openroad.readthedocs.io/en/latest/main/src/drt/README.html">OpenROAD detailed-routing documentation</a>.</p>
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 670 290" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — A routing-capacity example with the shown wire widths and spacing halos. The on-track wires each use one track in this sketch. Moving the illustrated wire between tracks makes both adjacent centerlines unusable at the assumed spacing. Actual capacity loss depends on geometry and rules; a legal off-track jog or via access is not automatically a violation."><text x="165" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#1e7e3e">✓ on-grid</text><line x1="44" y1="60" x2="44" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="92" y1="60" x2="92" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="140" y1="60" x2="140" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="188" y1="60" x2="188" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="236" y1="60" x2="236" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="284" y1="60" x2="284" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><rect x="87" y="76" width="10" height="154" fill="#e0862e"></rect><rect x="135" y="76" width="10" height="154" fill="#e0862e"></rect><rect x="231" y="76" width="10" height="154" fill="#e0862e"></rect><text x="165" y="270" text-anchor="middle" font-size="11" fill="#33414f">3 wires, 3 tracks used — tracks 0, 3, 5 still free</text><text x="505" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#a83232">✗ off-grid</text><line x1="384" y1="60" x2="384" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="432" y1="60" x2="432" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="480" y1="60" x2="480" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><line x1="528" y1="60" x2="528" y2="246" stroke="#cc4a4a" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.9"></line><text x="528" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#cc4a4a">✗</text><line x1="576" y1="60" x2="576" y2="246" stroke="#cc4a4a" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.9"></line><text x="576" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#cc4a4a">✗</text><line x1="624" y1="60" x2="624" y2="246" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line><rect x="427" y="76" width="10" height="154" fill="#e0862e"></rect><rect x="547" y="76" width="10" height="154" fill="#e0862e"></rect><rect x="523" y="76" width="10" height="154" fill="none" stroke="#cc4a4a" stroke-width="1.5" stroke-dasharray="5 4"></rect><line x1="534" y1="150" x2="546" y2="150" stroke="#cc4a4a" stroke-width="1.5"></line><text x="540" y="140" text-anchor="middle" font-size="10" fill="#cc4a4a" paint-order="stroke" stroke="#fff" stroke-width="3">&lt; min space</text><text x="505" y="270" text-anchor="middle" font-size="11" fill="#a83232">This off-grid example blocks tracks 3 and 4</text></svg></div>
+    <figcaption>Figure 3 — A routing-capacity example with the shown wire widths and spacing halos. The on-track wires each use one track in this sketch. Moving the illustrated wire between tracks makes both adjacent centerlines unusable at the assumed spacing. Actual capacity loss depends on geometry and rules; a legal off-track jog or via access is not automatically a violation.</figcaption>
+  </figure>
+
+  <h2 id="section-4">4. From netlist to wires: the routing flow</h2>
+  <p>
+    Knowing the tracks exist, how does the router actually use them? A modern design has
+    millions of nets — no tool can draw final geometry for all of them in one pass. Routing is
+    staged, coarse to fine:
+  </p>
+  <ol>
+    <li><strong>Global route.</strong> The core is divided into a coarse grid of
+        <em>gcells</em> (each a few routing tracks tall and wide). Every gcell has a known
+        <em>capacity</em> — how many tracks per layer pass through it. The global router assigns
+        each net a corridor of gcells from pin to pin, spreading nets out so no gcell is asked
+        to carry more wires than it has tracks. No real shapes are drawn yet — it's a plan.</li>
+    <li><strong>Track assignment.</strong> Within their corridors, the long straight pieces of
+        each net are assigned to specific tracks on specific layers.</li>
+    <li><strong>Detail route.</strong> The exact wires and vias are drawn: on-track, in the
+        preferred direction per layer, connecting down to the actual pin shapes, obeying every
+        spacing/width/via rule.</li>
+    <li><strong>Search &amp; repair.</strong> A detail pass may leave
+        violations where nets fought for the same resources. The router iterates: rip up the
+        offending wire, re-route it along another track or layer, re-check — toward a DRC-clean design. Unresolved violations must be reported; completion of routing is not proof that signoff checks pass.</li>
+  </ol>
+
+  <figure>
+    <div class="figwrap" id="fig4"><svg viewBox="0 0 720 305" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Routing stages. Global routing plans a corridor of gcells from S to T around congestion. Detailed routing constructs actual wires, vias and access jogs. Search and repair resolves a shown spacing conflict by choosing a different route. Preferred tracks help organize routing, while complete geometry and design rules determine legality."><text x="120" y="30" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">1 · global route</text><rect x="18" y="56" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="18" y="90" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="18" y="124" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="18" y="158" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="18" y="192" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="52" y="56" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="52" y="90" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="52" y="124" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="52" y="158" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="52" y="192" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="86" y="56" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="86" y="90" width="34" height="34" fill="#f6cdc7" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="86" y="124" width="34" height="34" fill="#f6cdc7" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="86" y="158" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="86" y="192" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="120" y="56" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="120" y="90" width="34" height="34" fill="#f6cdc7" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="120" y="124" width="34" height="34" fill="#f6cdc7" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="120" y="158" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="120" y="192" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="154" y="56" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="154" y="90" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="154" y="124" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="154" y="158" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="154" y="192" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="188" y="56" width="34" height="34" fill="#d9efd9" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="188" y="90" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="188" y="124" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="188" y="158" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><rect x="188" y="192" width="34" height="34" fill="#fafbfd" stroke="#c8d0d8" stroke-width="0.8"></rect><polyline points="35,209 69,209 103,209 137,209 171,209 171,175 171,141 171,107 171,73 205,73" fill="none" stroke="#1e9e50" stroke-width="2.5" stroke-linejoin="round" opacity="0.85"></polyline><circle cx="35" cy="209" r="5" fill="#33414f"></circle><text x="22" y="213" text-anchor="middle" font-size="11" fill="#33414f" font-weight="700">S</text><circle cx="205" cy="73" r="5" fill="#33414f"></circle><text x="218" y="77" text-anchor="middle" font-size="11" fill="#33414f" font-weight="700">T</text><text x="137" y="113.8" text-anchor="middle" font-size="13" fill="#a83232" font-weight="700">✗</text><text x="120" y="258" text-anchor="middle" font-size="10" fill="#5c6b7a">gcell corridor planned, steering</text><text x="120" y="272" text-anchor="middle" font-size="10" fill="#5c6b7a">around congested (red) gcells</text><text x="370" y="30" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">2 · detail route</text><line x1="285" y1="56" x2="285" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="309" y1="56" x2="309" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="333" y1="56" x2="333" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="357" y1="56" x2="357" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="381" y1="56" x2="381" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="405" y1="56" x2="405" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="429" y1="56" x2="429" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="453" y1="56" x2="453" y2="226" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="60" x2="465" y2="60" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="84" x2="465" y2="84" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="108" x2="465" y2="108" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="132" x2="465" y2="132" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="156" x2="465" y2="156" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="180" x2="465" y2="180" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="204" x2="465" y2="204" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="275" y1="228" x2="465" y2="228" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><rect x="306" y="84" width="6" height="120" fill="#e0862e"></rect><rect x="309" y="81" width="120" height="6" fill="#2e9e9e"></rect><rect x="426" y="84" width="6" height="48" fill="#e0862e"></rect><rect x="304.5" y="79.5" width="9" height="9" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><rect x="424.5" y="79.5" width="9" height="9" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><rect x="304" y="199" width="10" height="10" fill="#4a5866"></rect><rect x="424" y="127" width="10" height="10" fill="#4a5866"></rect><text x="308" y="224" text-anchor="middle" font-size="11" fill="#33414f" font-weight="700">S</text><text x="428" y="152" text-anchor="middle" font-size="11" fill="#33414f" font-weight="700">T</text><text x="370" y="258" text-anchor="middle" font-size="10" fill="#5c6b7a">real wires and vias, on tracks,</text><text x="370" y="272" text-anchor="middle" font-size="10" fill="#5c6b7a">inside the planned corridor</text><text x="605" y="30" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">3 · search &amp; repair</text><line x1="535" y1="52" x2="535" y2="118" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="571" y1="52" x2="571" y2="118" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="607" y1="52" x2="607" y2="118" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="643" y1="52" x2="643" y2="118" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="679" y1="52" x2="679" y2="118" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><rect x="567" y="58" width="8" height="54" fill="#e0862e"></rect><rect x="603" y="58" width="8" height="54" fill="#e0862e"></rect><rect x="617" y="58" width="8" height="54" fill="#e0862e"></rect><circle cx="614" cy="85" r="11" fill="none" stroke="#cc4a4a" stroke-width="2"></circle><text x="653" y="89" text-anchor="middle" font-size="10" fill="#a83232" font-weight="700">✗ spacing</text><text x="605" y="140" text-anchor="middle" font-size="10.5" fill="#5c6b7a" font-style="italic">↓ rip up &amp; re-route</text><line x1="535" y1="158" x2="535" y2="224" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="571" y1="158" x2="571" y2="224" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="607" y1="158" x2="607" y2="224" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="643" y1="158" x2="643" y2="224" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><line x1="679" y1="158" x2="679" y2="224" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"></line><rect x="567" y="164" width="8" height="54" fill="#e0862e"></rect><rect x="603" y="164" width="8" height="54" fill="#e0862e"></rect><rect x="639" y="164" width="8" height="54" fill="#e0862e"></rect><text x="677" y="195" text-anchor="middle" font-size="10" fill="#1e7e3e" font-weight="700">✓ clean</text><text x="605" y="258" text-anchor="middle" font-size="10" fill="#5c6b7a">violations fixed iteratively</text><text x="605" y="272" text-anchor="middle" font-size="10" fill="#5c6b7a">toward a DRC-clean result</text></svg></div>
+    <figcaption>Figure 4 — Routing stages. Global routing plans a corridor of gcells from S to T around congestion. Detailed routing constructs actual wires, vias and access jogs. Search and repair resolves a shown spacing conflict by choosing a different route. Preferred tracks help organize routing, while complete geometry and design rules determine legality.</figcaption>
+  </figure>
+
+  <p>
+    <strong>Congestion</strong> is the number to watch: wherever demand for tracks exceeds
+    capacity, nets take detours — longer wires, more vias, off-preferred jogs — and timing
+    suffers. This is precisely why the placer holds utilization down and spreads cells out
+    (lesson 58): whitespace in the rows is really <em>track supply</em> for the router. And the
+    power grid from section 1, built first, is a fixed obstruction the whole flow simply routes
+    around — its tracks were spent before the first signal net was planned.
+  </p>
+
+    <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> Global routing is OpenROAD’s <code>global_route</code> (the FastRoute engine): it divides the core into routing cells, gives each net a corridor and reports congestion. Detailed routing is <code>detailed_route</code> (TritonRoute): it draws the wires and vias on tracks and repairs spacing violations until none remain. The commercial counterparts are NanoRoute in Innovus and Zroute in IC Compiler II.</p></aside><h2 id="section-5">5. A mesh is several paths to the same rail</h2>
+  <p>
+    A single strap reaches a cell through one piece of metal. Every extra micron of that strap is more resistance, and every cell downstream of a break loses the rail.
+  </p>
+  <p>
+    A mesh crosses straps in both directions, the pattern section 1 already builds with met4 and met5 over the met1 rails. Current has a second path. <a href="io_power.html">Lesson 68</a> does the one numbered drop this course has, on the pad-ring sheet resistance. Section 6 adds a deliberately simplified resistor example. Its current and dimensions are teaching assumptions, not extracted performance.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 5 — One strap, then a mesh. The colors are the supply metals. No voltage number is claimed for the core.">
+<text x="180" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">One strap</text>
+<text x="540" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">A mesh</text>
+<rect x="60" y="50" width="240" height="140" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="1"></rect>
+<rect x="80" y="108" width="200" height="14" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<text x="180" y="160" text-anchor="middle" font-size="12" fill="#5c6b7a">far cells see a long path</text>
+<rect x="420" y="50" width="240" height="140" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="1"></rect>
+<rect x="440" y="80" width="200" height="10" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<rect x="440" y="150" width="200" height="10" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<rect x="480" y="70" width="10" height="100" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="590" y="70" width="10" height="100" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<text x="540" y="210" text-anchor="middle" font-size="12" fill="#5c6b7a">another path is always nearby</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 5 — One strap, then a mesh. The colors are the supply metals. No voltage number is claimed for the core.</strong></figcaption>
+  </figure>
+
+<h2 id="section-6">6. Worked example: supply resistance becomes an analog error</h2>
+<p><strong>Teaching assumptions:</strong> one uniform met4 segment is 500&nbsp;µm long and 10&nbsp;µm wide, carrying 2&nbsp;mA at its far end. Using the HD LEF sheet resistance 0.047&nbsp;Ω/square gives <code>R = 0.047 × 500/10 = 2.35&nbsp;Ω</code> and <code>ΔV = 2&nbsp;mA × 2.35&nbsp;Ω = 4.7&nbsp;mV</code>. Vias, temperature change, the ground return, and the upstream network are omitted. This is a resistance calculation, not an EM (electromigration) pass.</p>
+<table><tbody><tr><th>Assumed network</th><th>Equivalent resistance</th><th>Drop at 2 mA</th></tr><tr><td>One segment</td><td>2.35 Ω</td><td>4.7 mV</td></tr><tr><td>Two identical independent segments in parallel</td><td>1.175 Ω</td><td>2.35 mV</td></tr><tr><td>Same total current uniformly drawn along one segment</td><td>Far-end drop = I<sub>total</sub>R/2</td><td>2.35 mV</td></tr></tbody></table>
+<p>The last row is a distributed-load calculation: upstream metal carries more current than metal near the end. Real meshes require network analysis with source locations and current maps. <a href="https://openroad.readthedocs.io/en/latest/main/src/psm/README.html">OpenROAD PDNSim</a> is a static IR analyzer; a DC solution does not include package <code>L·di/dt</code> or time-varying droop.</p>
+<p><strong>Across the boundary:</strong> for a digital path, rail loss changes cell delay and noise margin. For an analog circuit it can change bias, output headroom, or reference accuracy. Both sides need the voltage <em>between the local supply and local return</em>, not just an ideal schematic VDD.</p>
+<details class="checkpoint"><summary>Check your understanding: does doubling width halve every source of droop?</summary><p>No. It halves this segment's resistance at fixed length and sheet resistance. Via resistance, package inductance, source impedance, and other segments remain. A droop budget must include those terms and their timing.</p></details>
+<details class="checkpoint"><summary>Check your understanding — global routing finds that one region needs 14 tracks on a layer that offers only 10. What happens, and what are the usual fixes?</summary><p>The region is congested. Detailed routing must detour around it, adding wire length, delay and coupling, or it ends with violations. Typical fixes are spreading the cells there (lower local utilization or placement padding), moving straps or blockages, or making other layers available.</p></details><p><strong>Macros in the grid.</strong> A hard macro such as an SRAM interrupts this mesh. Rows, met1 rails and met4 straps stop at its halo, while the met5 straps cross it and drop a via4 onto the macro’s own met4 ring. The SKY130 SRAM case, and how to size a ring you draw around a block, are in <a href="floorplan.html#section-7">lesson 50, section 7</a>.</p><div class="takeaways">
+    <p>A grid-level IR map of the Lab 6 SPM (132&nbsp;µV worst VPWR drop, recorded in OpenROAD) and what LibreLane’s IR step actually runs are <a href="power_integrity_signoff.html">lesson 63</a>.</p>
+<h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>Plan the PDN during floorplanning, then refine it. A ring, mesh, and M1 rails are a common topology, connected only at legal same-net vias.</li>
+      <li>The mesh gives every cell many parallel paths to the supply, keeping IR drop low; it is a fixed obstruction the router works around.</li>
+      <li>Each routing layer has evenly spaced tracks (pitch ≈ wire width + spacing) and a preferred direction that alternates H/V by layer.</li>
+      <li>Routing tracks are distinct from the manufacturing grid. Custom shapes and pin-access jogs can be off track on any layer if their geometry and abstractions are legal.</li>
+      <li>Off-track shapes can consume additional routing capacity. On-track shapes still need spacing, enclosure, and end-of-line checks.</li>
+      <li>Routing runs coarse-to-fine: global route (gcell corridors, congestion-aware) → track assignment → detail route → search &amp; repair iterations until DRC-clean.</li>
+      <li>Congestion = track demand exceeding gcell capacity; it forces detours and hurts timing — placement whitespace is really track supply for the router.</li>
+          <li>A mesh gives the rail a second path. Compute drops using the actual current distribution; a mesh reduces resistance but does not make the supply ideal.</li>
+    </ul>
+  </div>
+<section class="sources"><h2 id="section-8">Sources &amp; scope</h2><p>The drawn mesh is conceptual. The resistor example uses stated assumptions and nominal LEF values. Checked 6 November 2026.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">SKY130 HD technology LEF</a> — pitches, manufacturing grid, and sheet resistance at pinned HD revision ac7fb61.</li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/pdn/README.html">OpenROAD PDN generator</a> — grid policies and domain connections.</li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/drt/README.html">OpenROAD detailed routing</a> — pin access, track assignment, routing, and repair.</li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/psm/README.html">OpenROAD static IR analysis</a> — scope of PDNSim and current/source requirements.</li></ol></section><section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="power_package_thermal.html">Explore impedance and decoupling resonance</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html" aria-current="page">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="site_rows.html"><small>← Previous</small>Site Rows &amp; Standard Cell Placement</a><a href="metal_layers.html"><small>Next →</small>Metal Layers, Vias &amp; the Stackup</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+// ---------- Figure 1: PDN over the site rows ----------
+(function () {
+  const SITE = 16, ROW = 64, NSITES = 36, NROWS = 4;
+  const ML = 46, MT = 50, MR = 46, MB = 56;
+  const W = NSITES * SITE, H = NROWS * ROW;
+  const SW = ML + W + MR, SH = MT + H + MB;
+  const sx = s => ML + s * SITE;
+  const sy = y => MT + H - y;         // chip origin bottom-left
+
+  const VDD = '#d9534f', VSS = '#3b6fb0';
+  let s = `<svg viewBox="0 0 ${SW} ${SH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  // rows
+  for (let r = 0; r < NROWS; r++)
+    s += `<rect x="${sx(0)}" y="${sy((r + 1) * ROW)}" width="${W}" height="${ROW}" fill="${r % 2 ? '#f2f5f9' : '#fafbfd'}"/>`;
+
+  // M1 follow-pin rails (horizontal, on every row boundary)
+  for (let b = 0; b <= NROWS; b++) {
+    const vss = b % 2 === 0;
+    s += `<rect x="${sx(0)}" y="${sy(b * ROW) - 3}" width="${W}" height="6" fill="${vss ? VSS : VDD}" opacity="0.9"/>`;
+  }
+
+  // M5 horizontal straps (wide, translucent)
+  const m5 = [{ y: 1.4 * ROW, net: VSS }, { y: 2.6 * ROW, net: VDD }];
+  for (const t of m5)
+    s += `<rect x="${sx(0) - 18}" y="${sy(t.y) - 7}" width="${W + 36}" height="14" fill="${t.net}" opacity="0.4"/>`;
+
+  // M4 vertical straps (wide, translucent)
+  const m4 = [];
+  for (const base of [5, 17, 29]) {
+    m4.push({ x: base, net: VDD });
+    m4.push({ x: base + 3, net: VSS });
+  }
+  for (const t of m4)
+    s += `<rect x="${sx(t.x) - 6}" y="${sy(H) - 18}" width="12" height="${H + 36}" fill="${t.net}" opacity="0.45"/>`;
+
+  // via arrays: M4 strap to same-net M1 rails
+  for (const t of m4)
+    for (let b = 0; b <= NROWS; b++) {
+      const railNet = b % 2 === 0 ? VSS : VDD;
+      if (railNet === t.net)
+        s += `<rect x="${sx(t.x) - 4}" y="${sy(b * ROW) - 4}" width="8" height="8" fill="#2c3540"/>`;
+    }
+  // via arrays: M5 straps to same-net M4 straps (larger)
+  for (const h5 of m5)
+    for (const v4 of m4)
+      if (h5.net === v4.net)
+        s += `<rect x="${sx(v4.x) - 5.5}" y="${sy(h5.y) - 5.5}" width="11" height="11" fill="#2c3540"/>`;
+
+  // core ring: VDD inner, VSS outer
+  s += `<rect x="${sx(0) - 14}" y="${sy(H) - 14}" width="${W + 28}" height="${H + 28}" fill="none" stroke="${VDD}" stroke-width="7"/>`;
+  s += `<rect x="${sx(0) - 28}" y="${sy(H) - 28}" width="${W + 56}" height="${H + 56}" fill="none" stroke="${VSS}" stroke-width="7"/>`;
+
+  // labels
+  s += `<text x="${sx(0)}" y="${sy(H) - 36}" font-size="11" fill="#33414f">core ring (VSS outer, VDD inner)</text>`;
+  s += `<text x="${sx(8.5)}" y="${sy(0) + 48}" font-size="11" fill="#33414f">M4 straps ↑</text>`;
+  s += `<text x="${sx(NSITES) - 4}" y="${sy(1.4 * ROW) - 12}" text-anchor="end" font-size="11" fill="#33414f">M5 strap →</text>`;
+  s += `<text x="${sx(22)}" y="${sy(0) + 48}" font-size="11" fill="#33414f">M1 follow-pin rails on every row boundary</text>`;
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: routing tracks and a routed net ----------
+(function () {
+  const P = 32;                       // routing pitch (drawn)
+  const vx = i => 48 + i * P;         // M2 track x positions
+  const hy = j => 52 + j * P;         // M3 track y positions
+  const NI = 18, NJ = 7;
+  const M2 = '#e0862e', M3 = '#2e9e9e';
+  const VW = vx(NI) + 100, VH = hy(NJ) + 40;
+
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#33414f"/></marker></defs>`;
+
+  // tracks
+  for (let i = 0; i <= NI; i++)
+    s += `<line x1="${vx(i)}" y1="${hy(0)}" x2="${vx(i)}" y2="${hy(NJ)}" stroke="${M2}" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>`;
+  for (let j = 0; j <= NJ; j++)
+    s += `<line x1="${vx(0)}" y1="${hy(j)}" x2="${vx(NI)}" y2="${hy(j)}" stroke="${M3}" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>`;
+
+  // routed net: pin A -> M2 up -> via -> M3 across -> via -> M2 down -> pin B
+  const wireW = 8;
+  s += `<rect x="${vx(2) - wireW / 2}" y="${hy(1)}" width="${wireW}" height="${hy(6) - hy(1)}" fill="${M2}"/>`;
+  s += `<rect x="${vx(2)}" y="${hy(1) - wireW / 2}" width="${vx(13) - vx(2)}" height="${wireW}" fill="${M3}"/>`;
+  s += `<rect x="${vx(13) - wireW / 2}" y="${hy(1)}" width="${wireW}" height="${hy(5) - hy(1)}" fill="${M2}"/>`;
+  // vias at track crossings
+  for (const [i, j] of [[2, 1], [13, 1]])
+    s += `<rect x="${vx(i) - 5.5}" y="${hy(j) - 5.5}" width="11" height="11" fill="#2c3540" stroke="#fff" stroke-width="1"/>`;
+  // pins
+  s += `<rect x="${vx(2) - 6}" y="${hy(6) - 6}" width="12" height="12" fill="#4a5866"/>`;
+  s += `<text x="${vx(2) + 11}" y="${hy(6) + 4}" font-size="11" font-weight="600" fill="#33414f">pin A</text>`;
+  s += `<rect x="${vx(13) - 6}" y="${hy(5) - 6}" width="12" height="12" fill="#4a5866"/>`;
+  s += `<text x="${vx(13) + 11}" y="${hy(5) + 4}" font-size="11" font-weight="600" fill="#33414f">pin B</text>`;
+
+  // pitch dimension between two tracks
+  s += `<line x1="${vx(7)}" y1="${hy(0) - 14}" x2="${vx(8)}" y2="${hy(0) - 14}" stroke="#33414f" stroke-width="1" marker-start="url(#ah2)" marker-end="url(#ah2)"/>`;
+  s += `<text x="${(vx(7) + vx(8)) / 2}" y="${hy(0) - 20}" text-anchor="middle" font-size="10.5" fill="#33414f">pitch = width + spacing</text>`;
+
+  // layer labels
+  s += `<text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="${vx(16) + 6}" y="${hy(3) - 6}" font-size="10.5" fill="${M3}">M3 tracks (horizontal)</text>`;
+  s += `<text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="${vx(5)}" y="${hy(NJ) + 20}" font-size="10.5" fill="${M2}">M2 tracks (vertical)</text>`;
+  s += `<text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="${vx(7)}" y="${hy(1) - 10}" font-size="10.5" fill="${M3}">M3 wire on track</text>`;
+  s += `<text paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round" x="${vx(2) + 8}" y="${hy(4)}" font-size="10.5" fill="${M2}">M2 wire on track</text>`;
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: on-grid vs off-grid ----------
+(function () {
+  const PW = 290, T = 48, N = 6;
+  const M2 = '#e0862e';
+  const VW = 2 * PW + 90, VH = 290;
+  const yTop = 66, yBot = 240;
+
+  function tracks(ox, blocked) {
+    let s = '';
+    for (let k = 0; k < N; k++) {
+      const bad = blocked && blocked.includes(k);
+      s += `<line x1="${ox + 24 + k * T}" y1="${yTop - 6}" x2="${ox + 24 + k * T}" y2="${yBot + 6}" stroke="${bad ? '#cc4a4a' : M2}" stroke-width="${bad ? 1.6 : 1}" stroke-dasharray="4 4" opacity="${bad ? 0.9 : 0.55}"/>`;
+      if (bad) s += `<text x="${ox + 24 + k * T}" y="${yTop - 14}" text-anchor="middle" font-size="13" font-weight="700" fill="#cc4a4a">✗</text>`;
+    }
+    return s;
+  }
+  const wire = (cx, dashed) => dashed
+    ? `<rect x="${cx - 5}" y="${yTop + 10}" width="10" height="${yBot - yTop - 20}" fill="none" stroke="#cc4a4a" stroke-width="1.5" stroke-dasharray="5 4"/>`
+    : `<rect x="${cx - 5}" y="${yTop + 10}" width="10" height="${yBot - yTop - 20}" fill="${M2}"/>`;
+
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  // left panel: on-grid
+  const L = 20;
+  s += `<text x="${L + PW / 2}" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#1e7e3e">✓ on-grid</text>`;
+  s += tracks(L);
+  for (const k of [1, 2, 4]) s += wire(L + 24 + k * T);
+  s += `<text x="${L + PW / 2}" y="${yBot + 30}" text-anchor="middle" font-size="11" fill="#33414f">3 wires, 3 tracks used — tracks 0, 3, 5 still free</text>`;
+
+  // right panel: off-grid
+  const R = L + PW + 50;
+  s += `<text x="${R + PW / 2}" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#a83232">✗ off-grid</text>`;
+  s += tracks(R, [3, 4]);
+  s += wire(R + 24 + 1 * T);
+  const offX = R + 24 + 3.5 * T;              // between tracks 3 and 4
+  s += wire(offX);
+  // ghost wire showing why track 3 is now unusable
+  s += wire(R + 24 + 3 * T, true);
+  s += `<line x1="${R + 24 + 3 * T + 6}" y1="150" x2="${offX - 6}" y2="150" stroke="#cc4a4a" stroke-width="1.5"/>`;
+  s += `<text x="${(R + 24 + 3 * T + offX) / 2}" y="140" text-anchor="middle" font-size="10" fill="#cc4a4a" paint-order="stroke" stroke="#fff" stroke-width="3">&lt; min space</text>`;
+  s += `<text x="${R + PW / 2}" y="${yBot + 30}" text-anchor="middle" font-size="11" fill="#a83232">This off-grid example blocks tracks 3 and 4</text>`;
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+
+// ---------- Figure 4: the routing flow (global -> detail -> repair) ----------
+(function () {
+  const M2 = '#e0862e', M3 = '#2e9e9e', DK = '#33414f';
+  let s = `<svg viewBox="0 0 720 305" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const txt = (x, y, t, size, color, opts) =>
+    `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" fill="${color || DK}" ${opts || ''}>${t}</text>`;
+
+  // ----- panel 1: global route over gcells -----
+  let ox = 15;
+  s += txt(ox + 105, 30, '1 · global route', 12, DK, 'font-weight="700"');
+  const B = 34, GX = ox + 3, GY = 56;
+  const bx = (c, r) => [GX + c * B, GY + r * B];
+  const congested = [[2, 1], [3, 1], [2, 2], [3, 2]];
+  const corridor = [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [4, 3], [4, 2], [4, 1], [4, 0], [5, 0]];
+  for (let c = 0; c < 6; c++)
+    for (let r = 0; r < 5; r++) {
+      const [x, y] = bx(c, r);
+      const isCong = congested.some(([a, b]) => a === c && b === r);
+      const inPath = corridor.some(([a, b]) => a === c && b === r);
+      const fill = isCong ? '#f6cdc7' : inPath ? '#d9efd9' : '#fafbfd';
+      s += `<rect x="${x}" y="${y}" width="${B}" height="${B}" fill="${fill}" stroke="#c8d0d8" stroke-width="0.8"/>`;
+    }
+  // corridor centerline
+  const ctr = corridor.map(([c, r]) => { const [x, y] = bx(c, r); return `${x + B / 2},${y + B / 2}`; }).join(' ');
+  s += `<polyline points="${ctr}" fill="none" stroke="#1e9e50" stroke-width="2.5" stroke-linejoin="round" opacity="0.85"/>`;
+  const [sx0, sy0] = bx(0, 4), [tx0, ty0] = bx(5, 0);
+  s += `<circle cx="${sx0 + B / 2}" cy="${sy0 + B / 2}" r="5" fill="${DK}"/>` + txt(sx0 + B / 2 - 13, sy0 + B / 2 + 4, 'S', 11, DK, 'font-weight="700"');
+  s += `<circle cx="${tx0 + B / 2}" cy="${ty0 + B / 2}" r="5" fill="${DK}"/>` + txt(tx0 + B / 2 + 13, ty0 + B / 2 + 4, 'T', 11, DK, 'font-weight="700"');
+  s += txt(bx(2.5, 0)[0] + B, GY + 1.7 * B, '✗', 13, '#a83232', 'font-weight="700"');
+  s += txt(ox + 105, 258, 'gcell corridor planned, steering', 10, '#5c6b7a');
+  s += txt(ox + 105, 272, 'around congested (red) gcells', 10, '#5c6b7a');
+
+  // ----- panel 2: detail route on tracks -----
+  ox = 265;
+  s += txt(ox + 105, 30, '2 · detail route', 12, DK, 'font-weight="700"');
+  for (let i = 0; i < 8; i++)
+    s += `<line x1="${ox + 20 + i * 24}" y1="56" x2="${ox + 20 + i * 24}" y2="226" stroke="${M2}" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"/>`;
+  for (let j = 0; j < 8; j++)
+    s += `<line x1="${ox + 10}" y1="${60 + j * 24}" x2="${ox + 200}" y2="${60 + j * 24}" stroke="${M3}" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"/>`;
+  const wx1 = ox + 20 + 1 * 24, wx2 = ox + 20 + 6 * 24, wy1 = 60 + 1 * 24, wy2 = 60 + 6 * 24, wy3 = 60 + 3 * 24;
+  s += `<rect x="${wx1 - 3}" y="${wy1}" width="6" height="${wy2 - wy1}" fill="${M2}"/>`;
+  s += `<rect x="${wx1}" y="${wy1 - 3}" width="${wx2 - wx1}" height="6" fill="${M3}"/>`;
+  s += `<rect x="${wx2 - 3}" y="${wy1}" width="6" height="${wy3 - wy1}" fill="${M2}"/>`;
+  for (const [vx, vy] of [[wx1, wy1], [wx2, wy1]])
+    s += `<rect x="${vx - 4.5}" y="${vy - 4.5}" width="9" height="9" fill="#2c3540" stroke="#fff" stroke-width="1"/>`;
+  s += `<rect x="${wx1 - 5}" y="${wy2 - 5}" width="10" height="10" fill="#4a5866"/>`;
+  s += `<rect x="${wx2 - 5}" y="${wy3 - 5}" width="10" height="10" fill="#4a5866"/>`;
+  s += txt(wx1 - 1, wy2 + 20, 'S', 11, DK, 'font-weight="700"');
+  s += txt(wx2 - 1, wy3 + 20, 'T', 11, DK, 'font-weight="700"');
+  s += txt(ox + 105, 258, 'real wires and vias, on tracks,', 10, '#5c6b7a');
+  s += txt(ox + 105, 272, 'inside the planned corridor', 10, '#5c6b7a');
+
+  // ----- panel 3: search & repair -----
+  ox = 505;
+  s += txt(ox + 100, 30, '3 · search &amp; repair', 12, DK, 'font-weight="700"');
+  function miniTracks(y0, y1) {
+    let t = '';
+    for (let i = 0; i < 5; i++)
+      t += `<line x1="${ox + 30 + i * 36}" y1="${y0}" x2="${ox + 30 + i * 36}" y2="${y1}" stroke="${M2}" stroke-width="1" stroke-dasharray="4 4" opacity="0.45"/>`;
+    return t;
+  }
+  // before: wires on tracks 1 and 2, a third squeezed off grid against track 2's wire
+  s += miniTracks(52, 118);
+  s += `<rect x="${ox + 30 + 36 - 4}" y="58" width="8" height="54" fill="${M2}"/>`;
+  s += `<rect x="${ox + 30 + 2 * 36 - 4}" y="58" width="8" height="54" fill="${M2}"/>`;
+  s += `<rect x="${ox + 30 + 2 * 36 + 10}" y="58" width="8" height="54" fill="${M2}"/>`;
+  s += `<circle cx="${ox + 30 + 2 * 36 + 7}" cy="85" r="11" fill="none" stroke="#cc4a4a" stroke-width="2"/>`;
+  s += txt(ox + 30 + 2 * 36 + 46, 89, '✗ spacing', 10, '#a83232', 'font-weight="700"');
+  s += txt(ox + 100, 140, '↓ rip up &amp; re-route', 10.5, '#5c6b7a', 'font-style="italic"');
+  // after: all three wires on tracks
+  s += miniTracks(158, 224);
+  s += `<rect x="${ox + 30 + 36 - 4}" y="164" width="8" height="54" fill="${M2}"/>`;
+  s += `<rect x="${ox + 30 + 2 * 36 - 4}" y="164" width="8" height="54" fill="${M2}"/>`;
+  s += `<rect x="${ox + 30 + 3 * 36 - 4}" y="164" width="8" height="54" fill="${M2}"/>`;
+  s += txt(ox + 30 + 3 * 36 + 34, 195, '✓ clean', 10, '#1e7e3e', 'font-weight="700"');
+  s += txt(ox + 100, 258, 'violations fixed iteratively', 10, '#5c6b7a');
+  s += txt(ox + 100, 272, 'toward a DRC-clean result', 10, '#5c6b7a');
+  s += `</svg>`;
+  document.getElementById('fig4').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

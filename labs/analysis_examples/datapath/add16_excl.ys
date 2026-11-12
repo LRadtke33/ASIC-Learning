@@ -1,0 +1,10 @@
+
+read_verilog add16.v
+hierarchy -check -top add16
+proc; flatten
+opt; memory; opt; fsm; opt
+techmap; opt
+abc -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+clean
+stat -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+write_verilog -noattr add16_excl_mapped.v

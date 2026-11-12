@@ -1,0 +1,36 @@
+SBY 16:26:45 [gray4_bug] Removing directory '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_bug'.
+SBY 16:26:45 [gray4_bug] Copy '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_bug.v' to '/workspace/learn/learning/labs/analysis_examples/verification/formal/gray4_bug/src/gray4_bug.v'.
+SBY 16:26:45 [gray4_bug] engine_0: smtbmc z3
+SBY 16:26:45 [gray4_bug] base: starting process "cd gray4_bug/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 16:26:45 [gray4_bug] base: finished (returncode=0)
+SBY 16:26:45 [gray4_bug] prep: starting process "cd gray4_bug/model; yosys -ql design_prep.log design_prep.ys"
+SBY 16:26:45 [gray4_bug] prep: finished (returncode=0)
+SBY 16:26:45 [gray4_bug] smt2: starting process "cd gray4_bug/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 16:26:45 [gray4_bug] smt2: finished (returncode=0)
+SBY 16:26:45 [gray4_bug] engine_0: starting process "cd gray4_bug; yosys-smtbmc -s z3 --presat --noprogress -t 12  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Solver: z3
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assumptions in step 0..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assertions in step 0..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assumptions in step 1..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assertions in step 1..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assumptions in step 2..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assertions in step 2..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assumptions in step 3..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assertions in step 3..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assumptions in step 4..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Checking assertions in step 4..
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  BMC failed!
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Assert failed in gray4: gray4_bug.v:22.13-22.60 (_witness_.check_assert_gray4_bug_v_22_15)
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Writing trace to VCD file: engine_0/trace.vcd
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace_tb.v
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Writing trace to constraints file: engine_0/trace.smtc
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace.yw
+SBY 16:26:45 [gray4_bug] engine_0: ##   0:00:00  Status: failed
+SBY 16:26:45 [gray4_bug] engine_0: finished (returncode=1)
+SBY 16:26:45 [gray4_bug] engine_0: Status returned by engine: FAIL
+SBY 16:26:45 [gray4_bug] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:45 [gray4_bug] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 16:26:45 [gray4_bug] summary: engine_0 (smtbmc z3) returned FAIL
+SBY 16:26:45 [gray4_bug] summary: counterexample trace: gray4_bug/engine_0/trace.vcd
+SBY 16:26:45 [gray4_bug] summary:   failed assertion gray4._witness_.check_assert_gray4_bug_v_22_15 at gray4_bug.v:22.13-22.60 step 4
+SBY 16:26:45 [gray4_bug] DONE (FAIL, rc=2)

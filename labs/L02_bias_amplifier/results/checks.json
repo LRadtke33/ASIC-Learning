@@ -1,0 +1,10 @@
+{
+  "all_cases_exited_successfully": true,
+  "startup_zero_state_stays_low": true,
+  "startup_kick_reaches_high": true,
+  "rearmed_startup_recovers": true,
+  "timed_startup_does_not_recover": true,
+  "dc_derivative_matches_ac_within_2pct": true,
+  "larger_load_reduces_bandwidth": true,
+  "calibrated_bias_within_1mV": true
+}

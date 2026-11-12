@@ -1,0 +1,23 @@
+* L02: equal-device NMOS current mirror; original teaching testbench.
+* All w/l/ad/as/pd/ps values below use the selected SKY130 wrapper's micron convention.
+* The assumed 0.29-um diffusion extension is illustrative, not checked GDS.
+.lib "../../common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-6 abstol=1e-12 vntol=1e-9
+VDD vdd 0 1.8
+IREF vdd vb 20u
+XMREF vb vb 0 0 sky130_fd_pr__nfet_01v8 w=5 l=1.0 ad=1.45 as=1.45 pd=10.58 ps=10.58
+XMOUT out vb 0 0 sky130_fd_pr__nfet_01v8 w=5 l=1.0 ad=1.45 as=1.45 pd=10.58 ps=10.58
+VTEST out 0 0.9
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=15
+dc VTEST 0 1.8 0.005
+let vout=v(out)
+let vgate=v(vb)
+let iout=-i(vtest)
+wrdata mirror_long.dat vout vgate iout
+quit
+.endc
+.end

@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Multi-Corner STA: OCV, CRPR &amp; Hold Cells</title><link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><main id="main-content"><nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 45 / 84 · Part V, Digital implementation</p>
+<h1>Multi-Corner STA: OCV, CRPR &amp; Hold Cells</h1>
+<p class="subtitle">One 10&nbsp;ns SKY130 design, timed at every LibreLane corner, with a real OpenSTA path at the slowest setup and the fastest hold, on-chip variation, clock reconvergence, and the delay cells that repaired hold.</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> The nine-corner slack table, the annotated setup and hold paths, the clock latency and CRPR figures, and the post-route <span class="nowrap">f<sub>max</sub></span> are OpenSTA 2.7.0 reports from LibreLane 3.0.17 run <code>RUN_2026-11-11_16-09-06</code> of the bundled 32-bit SPM multiplier, after RC extraction, on sky130_fd_sc_hd. The post-CTS three-corner and 10% OCV numbers are a separate OpenSTA run on the same design’s post-CTS netlist, without SPEF. Delay-cell times are Liberty lookups at 0.05&nbsp;ns slew and 5&nbsp;fF. Signal-integrity delta-delay was <em>not</em> reported in this run and is labelled where the discussion is conceptual. Recorded files live in <code>labs/analysis_examples/multicorner_sta/</code>.</p>
+
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Read a nine-corner SKY130 STA table and say why setup is worst at max-RC slow-slow and hold is worst at min-RC fast-fast.</li>
+<li>Walk a real annotated OpenSTA path, including a hold-delay cell that costs setup slack.</li>
+<li>Apply on-chip variation derates and clock-reconvergence pessimism (CRPR), and say what POCV would add.</li>
+<li>Choose a HD delay cell for hold repair and estimate what it costs at ss versus ff.</li>
+</ul></div>
+
+<aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Multi-corner STA is <a href="design_flow.html#step-8">step 8, extraction and timing signoff</a>. Hold buffers are inserted after <a href="design_flow.html#step-6">step 6, clock-tree synthesis</a> and refined during routing repair. The single-path arithmetic is <a href="timed_path.html">lesson 42</a>; the tree those clocks came from is <a href="clock_tree.html">lesson 35</a>.</dd><dt>Tools</dt><dd>OpenSTA (<code>report_checks</code>, <code>set_timing_derate</code>, <code>write_sdf</code>); OpenROAD <code>repair_timing</code>; LibreLane’s <code>STAPostPNR</code> step. Commercial: PrimeTime, Tempus.</dd><dt>Why it matters</dt><dd>A chip that is clean at typical 25&nbsp;°C 1.8&nbsp;V can still fail in the cold, in the heat, or on a fast lot. Signoff is a matrix of corners, not a single number.</dd></dl></aside>
+
+<h2 id="section-1">1. One corner is not a chip</h2>
+<p>A Liberty file is characterised at one process, voltage and temperature. The SKY130 HD library used in this course ships (among others) a typical file at 25&nbsp;°C and 1.80&nbsp;V (<code>tt_025C_1v80</code>), a slow file at 100&nbsp;°C and 1.60&nbsp;V (<code>ss_100C_1v60</code>), and a fast file at −40&nbsp;°C and 1.95&nbsp;V (<code>ff_n40C_1v95</code>). After routing, extraction adds three interconnect corners — <em>min</em>, <em>nom</em> and <em>max</em> RC — so LibreLane’s signoff view is a three-by-three matrix: nine corners.</p>
+<p>That matrix is called multi-corner, multi-mode STA (MCMM) when you also have more than one functional mode (scan shift, a slow test clock, a gated-clock sleep mode). This lesson uses a single 10&nbsp;ns functional mode and varies only the corners. The teaching pattern is stable across tools:</p>
+<ul>
+<li><strong>Setup</strong> is a maximum-delay check. It is almost always worst at slow cells and maximum interconnect (here, <code>max_ss</code>).</li>
+<li><strong>Hold</strong> is a minimum-delay check. It is almost always worst at fast cells and minimum interconnect (here, <code>min_ff</code>).</li>
+</ul>
+<p>Before extraction, the min, nom and max RC views are identical — there is no SPEF yet, so LibreLane skips the duplicates. After RCX they differ, usually by tens of picoseconds on a small block and by much more on a long routed net.</p>
+
+<h2 id="section-2">2. Nine corners on a real SKY130 block</h2>
+<p>The design is LibreLane’s bundled 32-bit SPM multiplier, the same block whose clock tree was measured in <a href="clock_tree.html">lesson 35</a>. The period is 10&nbsp;ns; signoff clock uncertainty is 0.10&nbsp;ns; the clock is propagated through the tree; parasitics come from OpenROAD RCX. Every corner <em>met</em> (worst negative slack is 0, total negative slack is 0). The number that changes is the <em>worst slack</em> — how much margin is left.</p>
+
+<figure role="img" aria-labelledby="fig-corners-cap">
+<svg viewBox="0 0 720 340" width="720" height="340" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="720" height="340" fill="#fbfaf6"/>
+  <text x="360" y="24" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a1a">Post-route worst slack, nine SKY130 HD corners (SPM, 10 ns)</text>
+  <text x="360" y="44" text-anchor="middle" font-size="11" fill="#444">OpenSTA 2.7.0, LibreLane STAPostPNR, run RUN_2026-11-11_16-09-06.  All nine MET.</text>
+  <!-- setup bars: scale 0-8 ns, baseline y=200, height = slack/8*130 -->
+  <text x="70" y="62" font-size="11" font-weight="600" fill="#1a365d">Setup WS (ns)</text>
+  <line x1="60" y1="200" x2="700" y2="200" stroke="#ccc" stroke-width="1"/>
+  <line x1="60" y1="70" x2="60" y2="200" stroke="#ccc"/>
+  <!-- 8,6,4,2,0 -->
+  <text x="54" y="74" text-anchor="end" font-size="9" fill="#666">8</text>
+  <text x="54" y="106.5" text-anchor="end" font-size="9" fill="#666">6</text>
+  <text x="54" y="139" text-anchor="end" font-size="9" fill="#666">4</text>
+  <text x="54" y="171.5" text-anchor="end" font-size="9" fill="#666">2</text>
+  <text x="54" y="204" text-anchor="end" font-size="9" fill="#666">0</text>
+  <line x1="60" y1="70" x2="700" y2="70" stroke="#eee"/>
+  <line x1="60" y1="102.5" x2="700" y2="102.5" stroke="#eee"/>
+  <line x1="60" y1="135" x2="700" y2="135" stroke="#eee"/>
+  <line x1="60" y1="167.5" x2="700" y2="167.5" stroke="#eee"/>
+<rect x="80" y="141.6" width="28" height="58.4" fill="#9b2c2c"/>
+<text x="94" y="137.6" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">3.59</text>
+<text x="94" y="216" text-anchor="middle" font-size="9" fill="#333">max_ss</text>
+<rect x="148" y="141.0" width="28" height="59.0" fill="#2c5282"/>
+<text x="162" y="137.0" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">3.63</text>
+<text x="162" y="216" text-anchor="middle" font-size="9" fill="#333">nom_ss</text>
+<rect x="216" y="140.1" width="28" height="59.9" fill="#2c5282"/>
+<text x="230" y="136.1" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">3.69</text>
+<text x="230" y="216" text-anchor="middle" font-size="9" fill="#333">min_ss</text>
+<rect x="284" y="106.8" width="28" height="93.2" fill="#2c5282"/>
+<text x="298" y="102.8" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">5.73</text>
+<text x="298" y="216" text-anchor="middle" font-size="9" fill="#333">max_tt</text>
+<rect x="352" y="106.5" width="28" height="93.5" fill="#2c5282"/>
+<text x="366" y="102.5" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">5.76</text>
+<text x="366" y="216" text-anchor="middle" font-size="9" fill="#333">nom_tt</text>
+<rect x="420" y="106.0" width="28" height="94.0" fill="#2c5282"/>
+<text x="434" y="102.0" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">5.78</text>
+<text x="434" y="216" text-anchor="middle" font-size="9" fill="#333">min_tt</text>
+<rect x="488" y="94.5" width="28" height="105.5" fill="#2c5282"/>
+<text x="502" y="90.5" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">6.49</text>
+<text x="502" y="216" text-anchor="middle" font-size="9" fill="#333">max_ff</text>
+<rect x="556" y="94.2" width="28" height="105.8" fill="#2c5282"/>
+<text x="570" y="90.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">6.51</text>
+<text x="570" y="216" text-anchor="middle" font-size="9" fill="#333">nom_ff</text>
+<rect x="624" y="93.9" width="28" height="106.1" fill="#2c5282"/>
+<text x="638" y="89.9" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">6.53</text>
+<text x="638" y="216" text-anchor="middle" font-size="9" fill="#333">min_ff</text>
+  <text x="200" y="234" font-size="10" fill="#9b2c2c" font-weight="600">← worst setup (max_ss)</text>
+  <text x="70" y="242" font-size="11" font-weight="600" fill="#1a365d">Hold WS (ns)</text>
+  <line x1="60" y1="320" x2="700" y2="320" stroke="#ccc"/>
+  <line x1="60" y1="250" x2="60" y2="320" stroke="#ccc"/>
+  <text x="54" y="254" text-anchor="end" font-size="9" fill="#666">1.2</text>
+  <text x="54" y="287" text-anchor="end" font-size="9" fill="#666">0.6</text>
+  <text x="54" y="324" text-anchor="end" font-size="9" fill="#666">0</text>
+<rect x="80" y="257.7" width="28" height="62.3" fill="#276749"/>
+<text x="94" y="253.7" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">1.07</text>
+<rect x="148" y="257.9" width="28" height="62.1" fill="#276749"/>
+<text x="162" y="253.9" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">1.06</text>
+<rect x="216" y="257.9" width="28" height="62.1" fill="#276749"/>
+<text x="230" y="253.9" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">1.06</text>
+<rect x="284" y="293.1" width="28" height="26.9" fill="#276749"/>
+<text x="298" y="289.1" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.46</text>
+<rect x="352" y="293.2" width="28" height="26.8" fill="#276749"/>
+<text x="366" y="289.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.46</text>
+<rect x="420" y="293.2" width="28" height="26.8" fill="#276749"/>
+<text x="434" y="289.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.46</text>
+<rect x="488" y="305.2" width="28" height="14.8" fill="#276749"/>
+<text x="502" y="301.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.25</text>
+<rect x="556" y="305.2" width="28" height="14.8" fill="#276749"/>
+<text x="570" y="301.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.25</text>
+<rect x="624" y="305.2" width="28" height="14.8" fill="#9b2c2c"/>
+<text x="638" y="301.2" text-anchor="middle" font-size="9" font-weight="600" fill="#1a1a1a">0.25</text>
+  <text x="530" y="236" font-size="10" fill="#9b2c2c" font-weight="600">worst hold (min_ff) →</text>
+</svg>
+<figcaption id="fig-corners-cap">Figure 1. Post-route worst slacks at all nine LibreLane sky130A corners. Setup (top, ns) is tightest at <code>max_ss</code>; hold (bottom, ns) is tightest at <code>min_ff</code>. The process-voltage-temperature swing is about 3&nbsp;ns of setup; the RC swing at a given PVT is 40–100&nbsp;ps on this small block.</figcaption>
+</figure>
+
+<table>
+<caption>Table 1. Post-route OpenSTA worst slack (WS) at every corner. WNS and TNS are 0 everywhere — every check MET. Values from the per-corner <code>ws.max.rpt</code> / <code>ws.min.rpt</code> files.</caption>
+<thead><tr><th>RC × PVT</th><th>ss 100&nbsp;°C 1.60&nbsp;V</th><th>tt 25&nbsp;°C 1.80&nbsp;V</th><th>ff −40&nbsp;°C 1.95&nbsp;V</th></tr></thead>
+<tbody>
+<tr><th>max RC, setup / hold</th><td><strong>3.591 / 1.067</strong></td><td>5.732 / 0.461</td><td>6.493 / 0.254</td></tr>
+<tr><th>nom RC, setup / hold</th><td>3.634 / 1.064</td><td>5.755 / 0.460</td><td>6.509 / 0.254</td></tr>
+<tr><th>min RC, setup / hold</th><td>3.688 / 1.064</td><td>5.783 / 0.459</td><td><strong>6.528 / 0.253</strong></td></tr>
+</tbody>
+</table>
+<p>At <code>max_ss</code>, OpenSTA also reported a minimum period of 4.01&nbsp;ns, so <span class="nowrap">f<sub>max</sub></span> = 249&nbsp;MHz — a honest signoff number at the worst setup corner, not a typical-corner estimate. The same design, mid-place-and-route, without SPEF, looked much faster; parasitics and a fully propagated clock ate most of that optimism, as <a href="clock_tree.html">lesson 35</a> already started to show.</p>
+
+<h2 id="section-3">3. The worst setup path, annotated</h2>
+<p>The worst setup path at <code>max_ss</code> is not a flop-to-flop path. It starts at input port <code>x</code> (2.00&nbsp;ns of external input delay) and ends at flop <code>_290_</code>, a <code>sky130_fd_sc_hd__dfrtp_2</code>. Arrival is 6.641&nbsp;ns; required time is 10.232&nbsp;ns; slack is 3.591&nbsp;ns, MET. Two things on that path are worth sitting with.</p>
+<p>First, three <code>clkdlybuf4s25_1</code> cells sit on the <em>data</em> input — they are used here as delay/slew cells on an input cone, not as the clock tree. Together they contribute more than 2&nbsp;ns at ss. Second, right in front of the capturing flop’s D pin is a hold-repair cell:</p>
+<pre>hold66/A  sky130_fd_sc_hd__dlygate4sd3_1
+hold66/X  delay 1.187 ns    arrival 6.641 ns    →  _290_/D</pre>
+<p>That 1.187&nbsp;ns is there because earlier in the flow, OpenROAD inserted 33 <code>dlygate4sd3_1</code> cells to repair hold. Hold is now comfortable; this particular cell is paying for that comfort on the worst setup path. The rest of the required-time side is ordinary: propagated clock 0.623&nbsp;ns to the capture flop, 0.100&nbsp;ns of uncertainty, 0.290&nbsp;ns of library setup, and — because this is an input path, not two flops sharing a tree — CRPR of 0.</p>
+
+<figure role="img" aria-labelledby="fig-path-cap">
+<svg viewBox="0 0 740 200" width="740" height="200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="740" height="200" fill="#fbfaf6"/>
+  <text x="370" y="20" text-anchor="middle" font-size="13" font-weight="600" fill="#1a1a1a">max_ss setup path (OpenSTA, slack 3.591 ns MET)</text>
+  <!-- boxes -->
+  <rect x="16" y="50" width="70" height="44" rx="4" fill="#edf2f7" stroke="#2c5282"/>
+  <text x="51" y="70" text-anchor="middle" font-size="10" font-weight="600">x (in)</text>
+  <text x="51" y="84" text-anchor="middle" font-size="9">+2.00 ns</text>
+  <rect x="106" y="50" width="120" height="44" rx="4" fill="#feebc8" stroke="#c05621"/>
+  <text x="166" y="68" text-anchor="middle" font-size="9" font-weight="600">3× clkdlybuf4s25</text>
+  <text x="166" y="82" text-anchor="middle" font-size="9">+ input clkbuf_4</text>
+  <rect x="246" y="50" width="110" height="44" rx="4" fill="#edf2f7" stroke="#2c5282"/>
+  <text x="301" y="68" text-anchor="middle" font-size="9" font-weight="600">a21o, nand2,</text>
+  <text x="301" y="82" text-anchor="middle" font-size="9">xnor2</text>
+  <rect x="376" y="50" width="130" height="44" rx="4" fill="#fed7d7" stroke="#9b2c2c"/>
+  <text x="441" y="68" text-anchor="middle" font-size="9" font-weight="600">dlygate4sd3_1</text>
+  <text x="441" y="82" text-anchor="middle" font-size="9">hold66  +1.187 ns</text>
+  <rect x="526" y="50" width="90" height="44" rx="4" fill="#edf2f7" stroke="#2c5282"/>
+  <text x="571" y="70" text-anchor="middle" font-size="10" font-weight="600">_290_ D</text>
+  <text x="571" y="84" text-anchor="middle" font-size="9">dfrtp_2</text>
+  <!-- arrows -->
+  <path d="M86 72 H104" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M226 72 H244" stroke="#1a1a1a" stroke-width="1.5"/>
+  <path d="M356 72 H374" stroke="#1a1a1a" stroke-width="1.5"/>
+  <path d="M506 72 H524" stroke="#1a1a1a" stroke-width="1.5"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#1a1a1a"/></marker></defs>
+  <!-- clock -->
+  <rect x="526" y="118" width="90" height="36" rx="4" fill="#e6fffa" stroke="#276749"/>
+  <text x="571" y="140" text-anchor="middle" font-size="9">CLK  +0.623 ns</text>
+  <text x="480" y="140" text-anchor="end" font-size="9" fill="#276749">clock tree</text>
+  <line x1="571" y1="118" x2="571" y2="94" stroke="#276749" stroke-dasharray="3,2"/>
+  <text x="20" y="168" font-size="11" fill="#1a1a1a">Arrival 6.641 ns  ·  Required 10.232 ns  ·  uncertainty 0.100  ·  library setup 0.290</text>
+  <text x="20" y="184" font-size="11" fill="#1a1a1a">CRPR 0 (input path)  ·  slack 3.591 ns MET</text>
+</svg>
+<figcaption id="fig-path-cap">Figure 2. The worst setup path at <code>max_ss</code>, drawn from the OpenSTA annotated report. The red cell is hold repair: 1.187&nbsp;ns of delay that exists only because hold needed it.</figcaption>
+</figure>
+
+<h2 id="section-4">4. The worst hold path, and the delay cells that fixed it</h2>
+<p>At <code>min_ff</code> the worst hold path is flop <code>_265_</code> to flop <code>_264_</code>, both <code>dfrtp_2</code>. Data arrives at 0.585&nbsp;ns; the required time is 0.332&nbsp;ns (capture clock 0.273&nbsp;ns, plus 0.100&nbsp;ns uncertainty, minus 0.016&nbsp;ns of CRPR, minus 0.025&nbsp;ns of library hold). Slack is 0.253&nbsp;ns, MET. Launch and capture share the root of the tree (<code>clkbuf_0_clk</code>, a <code>clkbuf_16</code>) and then split into different leaves — that shared root is what CRPR will credit, in section 6.</p>
+<p>Hold was not always this comfortable. The same design, before place-and-route, at the ff Liberty corner with an ideal clock, had only 46&nbsp;ps of hold slack. After clock-tree synthesis OpenROAD’s <code>repair_timing</code> inserted 33 <code>sky130_fd_sc_hd__dlygate4sd3_1</code> cells on short data paths. Post-CTS OpenSTA (no SPEF) then reported 98&nbsp;ps of ff hold slack; after routing and extraction, min-ff hold is 253&nbsp;ps. Setup, over the same three stages, went the other way: pre-PNR ss 5.22&nbsp;ns, post-CTS 3.97&nbsp;ns, post-route max-ss 3.59&nbsp;ns.</p>
+
+<table>
+<caption>Table 2. HD delay and clock-delay cells, Liberty cell delay at 0.05&nbsp;ns input slew and 5&nbsp;fF load, plus cell area. Lookups from the bundled <code>tt_025C_1v80</code>, <code>ss_100C_1v60</code> and <code>ff_n40C_1v95</code> files. A <code>buf_1</code> is included so the delay cells can be compared with an ordinary buffer.</caption>
+<thead><tr><th>Cell</th><th>tt rise / fall (ns)</th><th>ss rise / fall (ns)</th><th>ff rise / fall (ns)</th><th>Area (µm²)</th></tr></thead>
+<tbody>
+<tr><td><code>dlygate4sd1_1</code></td><td>0.205 / 0.239</td><td>0.385 / 0.485</td><td>0.138 / 0.158</td><td>8.76</td></tr>
+<tr><td><code>dlygate4sd2_1</code></td><td>0.222 / 0.256</td><td>0.420 / 0.524</td><td>0.149 / 0.170</td><td>8.76</td></tr>
+<tr><td><code>dlygate4sd3_1</code></td><td>0.554 / 0.566</td><td>1.064 / 1.149</td><td>0.388 / 0.378</td><td>10.01</td></tr>
+<tr><td><code>dlymetal6s2s_1</code></td><td>0.113 / 0.145</td><td>0.186 / 0.287</td><td>0.081 / 0.099</td><td>12.51</td></tr>
+<tr><td><code>dlymetal6s4s_1</code></td><td>0.191 / 0.259</td><td>0.331 / 0.535</td><td>0.132 / 0.169</td><td>12.51</td></tr>
+<tr><td><code>dlymetal6s6s_1</code></td><td>0.259 / 0.365</td><td>0.461 / 0.770</td><td>0.176 / 0.235</td><td>12.51</td></tr>
+<tr><td><code>clkdlybuf4s15_1</code></td><td>0.190 / 0.195</td><td>0.340 / 0.348</td><td>0.129 / 0.135</td><td>10.01</td></tr>
+<tr><td><code>clkdlybuf4s18_1</code></td><td>0.204 / 0.209</td><td>0.360 / 0.367</td><td>0.140 / 0.145</td><td>10.01</td></tr>
+<tr><td><code>clkdlybuf4s25_1</code></td><td>0.260 / 0.258</td><td>0.478 / 0.473</td><td>0.175 / 0.175</td><td>10.01</td></tr>
+<tr><td><code>clkdlybuf4s50_1</code></td><td>0.485 / 0.435</td><td>0.811 / 0.726</td><td>0.328 / 0.293</td><td>10.01</td></tr>
+<tr><td><code>buf_1</code></td><td>0.100 / 0.100</td><td>0.171 / 0.171</td><td>0.069 / 0.072</td><td>3.75</td></tr>
+</tbody>
+</table>
+<p>Two practical observations. The <code>dlygate4sd3</code> that OpenROAD chose is the slowest of the gate-delay family: about 0.55&nbsp;ns at tt and more than a nanosecond at ss — which is exactly the 1.187&nbsp;ns we just saw on the worst setup path (ss, with a real load, is in that range). The <code>clkdlybuf4s*</code> family is intended for the clock network (balanced rise and fall, designed as a clock buffer); putting one on a data path, as the input cone of SPM does, still delays the signal, but it is a different cell for a different job. A plain <code>buf_1</code> is a poor hold fixer: at ff, where hold is tight, it only adds about 70&nbsp;ps, and at ss it still adds 171&nbsp;ps that setup has to pay for.</p>
+<p><strong>Useful skew</strong> is the other hold (and setup) lever: deliberately lengthening the capture clock or shortening the launch clock. That moves slack from one check to the other without adding data delay. The 33 cells on this design were data-path delay cells, not a useful-skew campaign. Useful skew is worth considering when a hold path and a setup path share a flop and you would rather slide the clock than pile delay on the data.</p>
+
+<h2 id="section-5">5. On-chip variation, derates, and a measured 10% OCV</h2>
+<p>A Liberty corner is a global PVT. Two gates on the same die, at the same nominal ss, are not identical: one may sit a little slower, one a little faster. On-chip variation (OCV) is how STA accounts for that without a new characterisation. The simplest form is a <em>timing derate</em>: late paths are multiplied by a factor greater than one, early paths by a factor less than one.</p>
+<pre>set_timing_derate -late  1.10
+set_timing_derate -early 0.90</pre>
+<p>For a setup check, data and the launch clock are late (slower — less slack), and the capture clock is early (faster — also less slack). For a hold check the assignments flip: data and launch are early, capture is late. OpenSTA applies those factors to cell (and, if asked, net) delays.</p>
+<p>On this SPM, a post-CTS OpenSTA run without SPEF, at tt, reported setup 5.864&nbsp;ns and hold 0.302&nbsp;ns with no derate. The same run with a 10% derate (<code>-early 0.90 -late 1.10</code>) gave setup 5.749&nbsp;ns and hold 0.260&nbsp;ns — 115&nbsp;ps and 42&nbsp;ps of slack consumed by OCV, respectively. A 5% derate was also attempted; it produced slacks identical to the no-derate run, so it is <em>not</em> reported as a measured 5% result. The 10% figures are the ones that clearly applied.</p>
+<p>Clock uncertainty is a coarser knob sitting in the SDC (<code>set_clock_uncertainty</code>). It is a single margin, in nanoseconds, subtracted from every setup required time and added to every hold required time. It is the usual home for PLL jitter, plus a little extra conservatism. It is not a substitute for a derate: uncertainty does not scale with path depth, and a long data path has more opportunity for on-chip variation than a short one. Signoff on this run used 0.10&nbsp;ns of uncertainty; you can see it as a line of its own in both annotated paths.</p>
+
+<h2 id="section-6">6. CRPR: taking back shared pessimism</h2>
+<p>Look at that 10% derate on a flop-to-flop path. The launch clock is derated late and the capture clock is derated early — even the buffers those two clocks <em>share</em>, at the root of the tree. Those shared buffers cannot be both slow and fast at the same instant. Clock reconvergence pessimism removal (CRPR, also called CPPR) finds the common part of the two clock paths and credits the contradictory derate back.</p>
+
+<figure role="img" aria-labelledby="fig-crpr-cap">
+<svg viewBox="0 0 700 210" width="700" height="210" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+  <rect width="700" height="210" fill="#fbfaf6"/>
+  <text x="350" y="20" text-anchor="middle" font-size="13" font-weight="600">A shared root cannot be both late and early</text>
+  <rect x="40" y="50" width="120" height="40" rx="4" fill="#feebc8" stroke="#c05621"/>
+  <text x="100" y="68" text-anchor="middle" font-size="10" font-weight="600">clkbuf_0_clk</text>
+  <text x="100" y="82" text-anchor="middle" font-size="9">shared root</text>
+  <line x1="160" y1="70" x2="230" y2="50" stroke="#1a1a1a"/>
+  <line x1="160" y1="70" x2="230" y2="110" stroke="#1a1a1a"/>
+  <rect x="230" y="32" width="130" height="36" rx="4" fill="#bee3f8" stroke="#2c5282"/>
+  <text x="295" y="54" text-anchor="middle" font-size="10">leaf, launch</text>
+  <rect x="230" y="96" width="130" height="36" rx="4" fill="#c6f6d5" stroke="#276749"/>
+  <text x="295" y="118" text-anchor="middle" font-size="10">leaf, capture</text>
+  <rect x="400" y="32" width="90" height="36" rx="4" fill="#edf2f7" stroke="#2c5282"/>
+  <text x="445" y="54" text-anchor="middle" font-size="10">launch FF</text>
+  <rect x="400" y="96" width="90" height="36" rx="4" fill="#edf2f7" stroke="#276749"/>
+  <text x="445" y="118" text-anchor="middle" font-size="10">capture FF</text>
+  <line x1="360" y1="50" x2="400" y2="50" stroke="#1a1a1a"/>
+  <line x1="360" y1="114" x2="400" y2="114" stroke="#1a1a1a"/>
+  <path d="M445 68 V96" stroke="#9b2c2c" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="500" y="88" font-size="10" fill="#9b2c2c">data path</text>
+  <text x="40" y="165" font-size="11">Setup with OCV: launch clock late, capture clock early.  CRPR credits the shared root</text>
+  <text x="40" y="182" font-size="11">so it is not derated in both directions.  On this SPM, nom_tt setup CRPR was 22.4 ps;</text>
+  <text x="40" y="199" font-size="11">the min_ff hold path in section 4 was credited 15.6 ps.</text>
+</svg>
+<figcaption id="fig-crpr-cap">Figure 3. CRPR in a two-leaf clock tree. The orange root is common to launch and capture; only the blue and green leaves can honestly be derated in opposite directions.</figcaption>
+</figure>
+
+<p>The OpenSTA setup-skew report at <code>nom_tt</code> writes this explicitly:</p>
+<pre>Clock clk
+  0.399 ns   source latency
+− 0.356 ns   target latency
+  0.100 ns   clock uncertainty
+− 0.022 ns   CRPR
+────────────
+  0.121 ns   setup skew</pre>
+<p>That −0.022&nbsp;ns is 22.4&nbsp;ps of reconvergence credit. On the annotated min-ff hold path, the same idea appears as “clock reconvergence pessimism −0.0156&nbsp;ns.” A larger tree with a longer shared trunk credits more; two clocks that never meet (a generated clock, a muxed clock, a hard macro pin) credit nothing.</p>
+<p><strong>Advanced OCV, POCV and LVF</strong> replace a single derate with a per-cell statistical width. Liberty Variation Format (LVF) tables give a delay distribution at each slew/load point; parametric OCV (POCV) walks that distribution through the path and combines stages as a root-sum-square rather than a stacked worst case. OpenSTA can consume LVF when the Liberty file has it. The public SKY130 HD Liberty used in this course is NLDM — no LVF tables — so this run did not do POCV. The idea is still the one you need for a denser node: a 10% flat derate on a 40-stage path is a lot of stacked pessimism, and a statistical model gives some of it back.</p>
+
+<h2 id="section-7">7. Signal integrity — what this run did not measure</h2>
+<p>A neighbour net that switches at the same moment as your victim adds (or subtracts) charge through the coupling capacitance. STA calls the result a <em>delta-delay</em>: setup uses the direction that makes the victim slower, hold the direction that makes it faster. The coupling is in the SPEF (<code>CC</code> capacitors); a SI-aware timer turns those into a worst-case delta given the aggressor’s switching window.</p>
+<p>LibreLane’s STAPostPNR reports for this SPM run did not include an SI delta-delay. The numbers in Table&nbsp;1 are therefore cell and interconnect delay without a crosstalk adjustment. On a small, sparse multiplier that may be a small omission; on a wide bus over a long metal-1 or metal-2 run it is not. If you need a number, turn SI on in the timer you sign off with and read the delta, or treat this paragraph as a checklist item, not a measurement.</p>
+
+<h2 id="section-8">8. A worked derate and CRPR calculation</h2>
+<p>This calculation is a self-contained example of the arithmetic, not a reconstruction of the SPM slack. Take a flop-to-flop path at a 10&nbsp;ns period:</p>
+<ul>
+<li>Data path (cell + net, underrated) 4.00&nbsp;ns</li>
+<li>Launch clock network 0.40&nbsp;ns, capture clock network 0.35&nbsp;ns, of which 0.30&nbsp;ns is shared</li>
+<li>Library setup 0.12&nbsp;ns, clock uncertainty 0.10&nbsp;ns</li>
+<li>OCV late 1.10, early 0.90</li>
+</ul>
+<p>Without CRPR, setup arrival is the late launch plus late data: 1.10 × (0.40 + 4.00) = 4.84&nbsp;ns. Required time is the period, plus early capture, minus uncertainty, minus setup: 10.00 + 0.90 × 0.35 − 0.10 − 0.12 = 10.095&nbsp;ns. Slack is 10.095 − 4.84 = 5.255&nbsp;ns.</p>
+<p>CRPR looks at the shared 0.30&nbsp;ns, which was derated late on the launch side (+0.10 × 0.30 = +30&nbsp;ps) and early on the capture side (−0.10 × 0.30 = −30&nbsp;ps) — 60&nbsp;ps of contradictory pessimism. Crediting all 60&nbsp;ps raises slack to 5.315&nbsp;ns. (OpenSTA’s reported CRPR is exactly this credit, with a sign convention that depends on whether it is folded into skew or listed on its own; match the report, don’t force the sign.)</p>
+<p>For hold, swap late and early, drop the period, and use the library hold time. The same shared 0.30&nbsp;ns is again the CRPR term. A short data path with a large derate is where CRPR matters most: without it you will insert delay cells you do not need, and you will pay for them at ss as section 3 showed.</p>
+
+<h2 id="section-9">9. A signoff checklist</h2>
+<ul>
+<li>Every Liberty PVT you claim, crossed with every extracted RC corner. On LibreLane sky130A that is the nine in Table&nbsp;1. Do not sign off only at tt.</li>
+<li>A propagated clock, not an ideal one, once the tree exists. Ideal-clock hold is optimistic; ideal-clock setup can be optimistic or pessimistic depending on the skew.</li>
+<li>An OCV derate or a POCV/LVF model, plus CRPR. Record the factors. If a derate doesn’t move slack, treat it as unapplied, not as “OCV had no effect.”</li>
+<li>Clock uncertainty that matches the PLL and the board, not a leftover default.</li>
+<li>Recovery and removal on asynchronous resets (the same Liberty arcs already used in <a href="cdc_reset.html">lesson 39</a>), and a minimum pulse width.</li>
+<li>Hold repair you can account for: which cell, how many, and what they cost at the slow corner. Prefer a delay cell with similar rise and fall, and consider useful skew before stacking <code>dlygate4sd3</code> on a path that is already tight at ss.</li>
+<li>SI if the tool and the SPEF support it; if not, say so.</li>
+<li>The SDF you will hand to gate-level simulation (<a href="functional_verification.html">lesson 46</a>) should come from the same corner you care about — typically max-ss for setup-style delay, min-ff when you are hunting hold races.</li>
+</ul>
+
+<details class="checkpoint"><summary>Check your understanding — after a clean pre-PNR STA, post-CTS hold is violated at ff and setup slack has shrunk at ss. What happened, and what is the first thing to inspect?</summary><p>The clock is no longer ideal: real insertion delay and skew have appeared, and short data paths that used to have leftover hold margin no longer do. Inspect the hold paths and the cells <code>repair_timing</code> wants to insert. Then look at the worst ss setup path — every delay cell you accept will show up there, at roughly the ss column of Table&nbsp;2.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — a 10% late/early derate is applied, but the two flops share 200&nbsp;ps of clock tree. Roughly how much setup slack does CRPR give back?</summary><p>The shared 200&nbsp;ps was derated 10% late on launch (+20&nbsp;ps) and 10% early on capture (−20&nbsp;ps), a contradictory 40&nbsp;ps. CRPR credits that 40&nbsp;ps, raising setup slack by about 0.040&nbsp;ns. The exact credit is in the OpenSTA skew report’s CRPR line.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — you need about 400&nbsp;ps more hold slack at ff, and the same path has 800&nbsp;ps of setup slack at ss. Which HD cell in Table&nbsp;2 is a reasonable first choice, and why might <code>dlygate4sd3_1</code> be the wrong one?</summary><p><code>dlygate4sd3_1</code> adds about 0.38&nbsp;ns at ff — close to the 400&nbsp;ps you need — but more than a nanosecond at ss, which would consume the 800&nbsp;ps of setup slack and then some. A <code>dlygate4sd1_1</code> (0.14&nbsp;ns ff, 0.39–0.49&nbsp;ns ss) or a <code>dlymetal6s4s_1</code> is a smaller, safer first step; two smaller cells, or a useful-skew move, may be better than one large one.</p></details>
+
+<div class="lesson-footer"><a href="datapath_arithmetic.html"><small>← Previous</small>Datapath &amp; Arithmetic</a><a href="functional_verification.html"><small>Next →</small>Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html" aria-current="page">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</body></html>

@@ -1,0 +1,13 @@
+{
+  "tool": "Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)",
+  "library_url": "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+  "library_sha256": "ec0e1067a35c8bf20b11e58d1e8ac53326067e4dac84a125cc1b917a3518d0d9",
+  "mapping": {
+    "sky130_fd_sc_hd__edfxtp_1": 2,
+    "sky130_fd_sc_hd__xor2_1": 2
+  },
+  "total_cells": 4,
+  "library_cell_area_sum": 77.5744,
+  "equivalence": "PASS: two output bits proven against the Liberty Boolean/sequential model",
+  "scope": "Executed synthesis and functional equivalence only. No SDC-driven optimization, STA, placement, routing, clock-tree, or power estimation was run."
+}

@@ -1,0 +1,148 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decap Cells</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 52 / 84 · Part VI, Physical cells and the floorplan</p><h1>Decap Cells</h1>
+  <p class="subtitle">A decap cell is a MOS capacitor between the power rails, dropped into empty sites. The channel gets longer as the cell gets wider. The Liberty file used here does not publish a femtofarad.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> Outlines are the decap LEF files. Devices and lengths are the schematic spice. The missing capacitance is <code>decap_4</code> at <code>tt_025C_1v80</code>. The flow settings are from the open_pdks LibreLane configuration (formerly OpenLane). Lesson 47 already introduced the family.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain how a decap cell uses a MOS transistor as a capacitor between the rails.</li><li>Read the SKY130 decap family: 3 to 12 sites wide, with longer channels in wider cells.</li><li>Size decoupling from charge first, then check impedance and leakage.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-7">step 7, routing</a> fills empty sites with decap cells; <a href="design_flow.html#step-8">step 8, extraction and timing</a> checks the supply.</dd><dt>Tools</dt><dd>OpenROAD’s <code>filler_placement</code> places them and <code>analyze_power_grid</code> checks voltage drop. Commercial: Innovus, Voltus.</dd><dt>Why it matters</dt><dd>Capacitance on the die supplies fast current demands that the package cannot.</dd></dl></aside><h2 id="section-1">1. Empty sites can hold a capacitor instead of a spacer</h2>
+  <p>
+    A fill cell (<a href="fill_cells.html">lesson 47</a>) continues the row and
+    has no devices. A <strong>decap</strong> cell occupies the same kind of
+    gap and puts a capacitor between <code>VPWR</code> and <code>VGND</code>.
+    The capacitor is two MOSFETs used as capacitors, not a drawn metal-to-metal
+    cap. Charge on the rails has a local reservoir when a gate switches
+    (<a href="power_grid.html">lesson 14</a>,
+    <a href="electromigration.html">lesson 30</a>).
+  </p>
+  <p>
+    The family is <code>decap_3</code>, <code>decap_4</code>, <code>decap_6</code>,
+    <code>decap_8</code>, and <code>decap_12</code>. Class is <code>CORE</code>,
+    not <code>SPACER</code>. Site is <code>unithd</code>. There is no
+    <code>decap_1</code> and no <code>decap_2</code> in the cells checked.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two MOS capacitors in parallel; PMOS source drain body at power, NMOS gate at power" font-family="system-ui,sans-serif">
+<path d="M80 48H660 M80 238H660" stroke="#4a72c4" stroke-width="5" fill="none"></path><text x="35" y="52" font-size="13" fill="#33414f">VPWR</text><text x="35" y="242" font-size="13" fill="#33414f">VGND</text>
+<g stroke="#33414f" stroke-width="2" fill="none"><path d="M230 48V120 M190 120H270 M190 139H270 M230 139V238 M510 48V120 M470 120H550 M470 139H550 M510 139V238"></path></g>
+<g font-size="13" fill="#33414f" text-anchor="start"><text x="240" y="81">PMOS: source, drain, body* → VPWR</text><text x="240" y="169">gate → VGND</text><text x="520" y="81">NMOS: gate → VPWR</text><text x="520" y="169">source, drain, body* → VGND</text><text x="240" y="205">W = 0.87 µm</text><text x="520" y="205">W = 0.55 µm</text></g><g font-size="13" fill="#33414f" text-anchor="middle"><text x="370" y="280">*Normal rail ties: VPB → VPWR, VNB → VGND. Equivalent capacitors, not MOS symbols.</text></g></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Two MOS capacitors between the rails.</strong> The PMOS
+      gate is on <code>VGND</code> and both channel ends are on <code>VPWR</code>.
+      The NMOS gate is on <code>VPWR</code> and both channel ends are on
+      <code>VGND</code>. Widths stay 0.87&nbsp;µm and 0.55&nbsp;µm. The length
+      is what changes.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Wider decap cells have longer channels</h2>
+  <table>
+    <tbody><tr><th>Cell</th><th>Sites</th><th>Width</th><th>Channel length</th><th>Devices</th></tr>
+    <tr><td>decap_3</td><td>3</td><td>1.38 µm</td><td>0.59 µm</td><td class="n" rowspan="5">PMOS 0.87 µm high-Vt<br>NMOS 0.55 µm</td></tr>
+    <tr><td>decap_4</td><td>4</td><td>1.84 µm</td><td>1.05 µm</td></tr>
+    <tr><td>decap_6</td><td>6</td><td>2.76 µm</td><td>1.97 µm</td></tr>
+    <tr><td>decap_8</td><td>8</td><td>3.68 µm</td><td>2.89 µm</td></tr>
+    <tr><td>decap_12</td><td>12</td><td>5.52 µm</td><td>4.73 µm</td></tr>
+  </tbody></table>
+  <p>
+    Every schematic is exactly those two devices. The PMOS line is
+    <code>w=870000u</code>, the NMOS line is <code>w=550000u</code>, and the
+    length goes from <code>l=590000u</code> on <code>decap_3</code> to
+    <code>l=4.73e+06u</code> on <code>decap_12</code>. The <code>u</code> suffix multiplies a SPICE number by 10<sup>−6</sup>: <code>870000u</code> evaluates to <code>0.87</code>. In these published SKY130 subcircuit calls W and L use the wrapper's micrometer convention. Do not copy that convention onto a primitive MOS model or a differently scaled simulator deck without checking its units. Logic length in this library is 0.15&nbsp;µm.
+    These channels are 0.59&nbsp;µm to 4.73&nbsp;µm because the row is only
+    2.72&nbsp;µm tall and the capacitor has to grow sideways.
+  </p>
+  <p>
+    The Liberty file for <code>decap_4</code> at the typical corner records
+    area 5.0048&nbsp;µm², which is 1.84 × 2.72, and cell leakage
+    0.003240044&nbsp;nW. It has power pins and no capacitance attribute. The file gives no capacitance value. A longer
+    channel is a bigger capacitor. The femtofarads come from a device model.
+  </p>
+
+  <h2 id="section-3">3. The flow uses the family in two places</h2>
+  <p>
+    The historical OpenLane configuration selected the <code>decap_</code> family and used <code>decap_3</code> at row ends. The current <a href="https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">open_pdks LibreLane configuration</a> uses <code>DECAP_CELLS = sky130_fd_sc_hd__decap*</code> and <code>ENDCAP_CELL = sky130_fd_sc_hd__decap_3</code>. These are flow choices for this library, not proof that arbitrary decaps may serve as arbitrary libraries' endcaps. The gap must fit a legal width and respect tap, well, and rail rules.
+  </p>
+
+  <p>
+      Terminal order in the schematic matches the picture. The PMOS line is
+      drain <code>VPWR</code>, gate <code>VGND</code>, source <code>VPWR</code>,
+      body <code>VPB</code>. The NMOS line is drain <code>VGND</code>, gate
+      <code>VPWR</code>, source <code>VGND</code>, body <code>VNB</code>. Both
+      channel ends of each device sit on the same rail, so the MOSFET is a
+      capacitor from its gate to that rail. The PMOS capacitor hangs on
+      <code>VPWR</code> with its gate at ground. The NMOS capacitor hangs on
+      <code>VGND</code> with its gate at power. From the rails' point of view
+      the two are in parallel between power and ground.
+    </p>
+    <p>
+      <code>decap_4</code> leakage, 0.003240044&nbsp;nW, is close to
+      <code>conb_1</code>'s 0.003240037&nbsp;nW and is not the same cell
+      (<a href="tie_cells.html">lesson 50</a>). The area 5.0048&nbsp;µm² is the
+      outline, 1.84 × 2.72, not a capacitance.
+    </p>
+    <p>
+      A MOS capacitor is bias- and frequency-dependent. These opposite-rail connections put the MOSFETs into inversion when the supply is high enough; source/drain contacts provide the inversion charge. Depletion, startup at low supply, finite channel resistance, and contact resistance can reduce useful capacitance or change its bandwidth. Accumulation is a different charge regime, not an inverted channel. These gates are tied to the opposite rail, so at the
+      1.8&nbsp;V supply they are biased as capacitors. Digital readers need the placement facts: class <code>CORE</code> and the widths in the table. Analog readers need a capacitance, which comes from simulating the device model, not from the Liberty file.
+    </p>
+  
+
+
+    <h2 id="section-4">4. The channel is the second plate</h2>
+  <p>
+    A MOS capacitor in these cells is a transistor whose gate is one plate and whose inverted channel is the other. Source and drain are tied to the rail opposite the gate, which is why the schematic shows a device from <code>VPWR</code> to <code>VGND</code> with the gate on one rail.
+  </p>
+  <p>
+    Plate area grows with width times length. Width is fixed in the family, 0.87&nbsp;µm PMOS and 0.55&nbsp;µm NMOS. Length is the column that changes, from 0.59&nbsp;µm to 4.73&nbsp;µm. At a fixed operating condition, greater gate area generally increases capacitance. Leakage does not follow a universal “longer means leakier” rule: mechanisms depend on area, electric field, device, temperature, and bias. The listed TT Liberty leakage barely changes across this family, so those values do not establish a useful physical leakage-versus-length law. Characterize supply current and admittance with appropriate device models.
+  </p>
+  <figure>
+    <div class="figwrap"><svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Simplified NMOS capacitor cross section with an inversion channel connecting source and drain" font-family="system-ui,sans-serif">
+<rect x="100" y="115" width="540" height="120" fill="#f4e4d4" stroke="#33414f"></rect><rect x="170" y="115" width="85" height="35" fill="#4a72c4"></rect><rect x="485" y="115" width="85" height="35" fill="#4a72c4"></rect><rect x="255" y="115" width="230" height="7" fill="#1e9e50"></rect>
+<rect x="245" y="101" width="250" height="12" fill="#e0edf5" stroke="#6f889c"></rect><rect x="245" y="76" width="250" height="25" fill="#d98b2b"></rect>
+<path d="M210 115V50H160 M530 115V50H580 M370 76V30" fill="none" stroke="#33414f" stroke-width="2"></path>
+<g font-size="13" fill="#33414f" text-anchor="middle"><text x="370" y="24">gate: VPWR</text><text x="145" y="45">VGND</text><text x="600" y="45">VGND</text><text x="210" y="173">n+ source</text><text x="530" y="173">n+ drain</text><text x="370" y="150">inversion channel</text><text x="370" y="205">p-body: VGND via VNB tap</text><text x="370" y="262">Illustrative cross-section; oxide separates gate from channel. Not to scale.</text></g><text x="370" y="110.5" font-size="9" text-anchor="middle" fill="#33414f">gate oxide</text></svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Cross-section of the MOS capacitor. Gate and inverted channel are the plates. The oxide is between them.</strong></figcaption>
+  </figure>
+
+<h2 id="section-5">5. Size decoupling from charge, then check impedance</h2>
+<p><strong>Worked example, not a SKY130 cell specification:</strong> suppose a local load draws an extra 1&nbsp;mA for 1&nbsp;ns before upstream current responds. Holding rail droop below 20&nbsp;mV requires at least <code>C = ΔI·Δt/ΔV = 50&nbsp;pF</code> in an ideal charge-balance model. A decap count cannot be obtained from cell area alone. If characterization at the relevant bias and frequency found 5&nbsp;fF of usable capacitance per candidate cell, the ideal count would be 10,000; that 5&nbsp;fF is a hypothetical input, not a measured decap_4 value.</p>
+<table><tbody><tr><th>Effect</th><th>First estimate</th><th>What it changes</th></tr><tr><td>Stored charge</td><td>ΔV = ΔQ/C</td><td>Droop during current deficit</td></tr><tr><td>Series resistance</td><td>ΔV = ΔI·ESR</td><td>Immediate voltage step and dissipation</td></tr><tr><td>Loop inductance</td><td>ΔV = L·di/dt</td><td>Fast-edge droop, ringing, resonance</td></tr><tr><td>Leakage / bias dependence</td><td>DC and AC characterization</td><td>Standby power and usable capacitance</td></tr></tbody></table>
+<p>Use the capacitor close enough to the switching load that its connection impedance is useful. Check the combined die/package/board impedance; adding capacitance can shift resonances. A capacitor supplies a transient current deficit and later recharges. It cannot remove the steady IR drop of a persistently overloaded supply route.</p>
+<p><strong>Across the boundary:</strong> digital bursts disturb analog supplies and reference returns. Coordinate switching activity, PDN impedance, placement, and analog supply rejection. See <a href="crosstalk_return_paths.html">lesson 83</a>.</p>
+<details class="checkpoint"><summary>Check your understanding: if the current deficit lasts 2 ns instead of 1 ns, what changes?</summary><p>The ideal capacitance doubles to 100 pF for the same 1 mA and 20 mV target. ESR and inductive droop still need separate evaluation. In a real PDN, the upstream source may supply part of that current, so integrate the actual current deficit rather than all load current.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a local load needs 0.5 pC during a supply dip that may not exceed 50 mV. How much capacitance must sit nearby?</summary><p>C = Q/ΔV = 0.5 pC / 50 mV = 10 pF of effective capacitance, close enough that its connection resistance and inductance do not dominate. The capacitance of the decap cells must come from the device model, because the Liberty file gives none.</p></details><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li>Decap cells are MOS capacitors between the rails. Fill cells are spacers with no devices.</li>
+      <li><code>decap_3/4/6/8/12</code> are 3, 4, 6, 8, and 12 sites. Class <code>CORE</code>. Height 2.72&nbsp;µm.</li>
+      <li>Every one has a 0.87&nbsp;µm high-Vt PMOS and a 0.55&nbsp;µm NMOS. Length runs from 0.59&nbsp;µm to 4.73&nbsp;µm.</li>
+      <li><code>decap_4</code> Liberty has area and leakage and no capacitance. No femtofarad is stated here.</li>
+      <li>This HD flow selects the decap family and decap_3 as its endcap; verify the installed flow configuration.</li>
+          <li>Decap capacitance is a MOS gate over an inverted channel. Greater gate area adds capacitance; leakage and high-frequency usefulness need separate characterization.</li>
+    </ul>
+  </div>
+
+<section class="sources"><h2 id="section-7">Sources &amp; scope</h2><p>HD source links are pinned to ac7fb61. Family widths and channel lengths were cross-checked against the published schematics and LEFs. No cell capacitance was simulated. Checked 6 November 2026.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice">HD decap schematic</a> — two transistor connections and W/L values; adjacent family schematics verify the other sizes.</li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.lef">HD decap physical abstract</a> — CORE class, unithd site and dimensions.</li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4__tt_025C_1v80.lib.json">HD decap typical Liberty data</a> — area, power pins and leakage field; no usable rail-capacitance specification.</li><li><a href="https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">open_pdks HD LibreLane configuration</a> — current DECAP_CELLS and ENDCAP_CELL selections; flow-specific.</li><li><a href="https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf">Analog Devices MT-101: Decoupling Techniques</a> — impedance, parasitic R/L and placement principles; package/board examples are not SKY130 cell data.</li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html" aria-current="page">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="antenna.html"><small>← Previous</small>Antenna Diodes</a><a href="spare_eco.html"><small>Next →</small>Spare Cells and ECO</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+
+
+
+
+</body></html>

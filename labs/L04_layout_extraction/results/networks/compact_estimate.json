@@ -1,0 +1,200 @@
+{
+  "id": "compact",
+  "label": "Compact route",
+  "points_um": [
+    [
+      20,
+      40
+    ],
+    [
+      40.0,
+      40.0
+    ],
+    [
+      60.0,
+      40.0
+    ],
+    [
+      80.0,
+      40.0
+    ],
+    [
+      100.0,
+      40.0
+    ],
+    [
+      120.0,
+      40.0
+    ],
+    [
+      140.0,
+      40.0
+    ],
+    [
+      160.0,
+      40.0
+    ],
+    [
+      180.0,
+      40.0
+    ],
+    [
+      200.0,
+      40.0
+    ],
+    [
+      220.0,
+      40.0
+    ]
+  ],
+  "R_ohm": [
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996,
+    2.3499999999999996
+  ],
+  "Cg_F": [
+    1.7696028000000003e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    3.4833288000000008e-15,
+    1.7696028000000003e-15
+  ],
+  "Cc_F": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "elements": [
+    {
+      "from": 0,
+      "to": 1,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 5,
+      "to": 6,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 6,
+      "to": 7,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 7,
+      "to": 8,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 8,
+      "to": 9,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    },
+    {
+      "from": 9,
+      "to": 10,
+      "length_um": 20.0,
+      "R_ohm": 2.3499999999999996,
+      "ground_C_F": 3.4833288000000008e-15,
+      "mutual_C_F": 0.0,
+      "aggressor_overlap_um2": 0.0,
+      "grounded_patch_overlap_um2": 0.0
+    }
+  ],
+  "length_um": 200.0,
+  "width_um": 0.4,
+  "total_R_ohm": 23.499999999999996,
+  "total_ground_C_fF": 34.88916480000001,
+  "total_mutual_C_fF": 0.0,
+  "aggressor_overlap_um2": 0.0,
+  "grounded_patch_overlap_um2": 0.0,
+  "node_count": 11,
+  "load_C_fF": 50.0,
+  "source_R_ohm": 20000.0
+}

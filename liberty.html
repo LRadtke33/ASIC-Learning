@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liberty Files: What a Cell Library Records</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+td.mark {background: #d9e8f8; font-weight: 600;}
+table.dense {font-size: 0.78rem;}
+table.dense th, table.dense td {padding: 3px 6px;}
+.scroll {overflow-x: auto;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 22 / 84 · Part IV, Loads, timing and interconnect</p><h1>Liberty Files: What a Cell Library Records</h1>
+  <p class="subtitle">The text file that records how a standard cell behaves — its function, pin capacitance, timing arcs and power — at one process corner, so that a timer can look up a delay instead of simulating transistors.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The cell throughout is <code>sky130_fd_sc_hd__inv_1</code> at the typical corner <code>tt_025C_1v80</code>: 25°C, 1.80&nbsp;V. Time in the file is nanoseconds. Capacitance is picofarads.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Find a cell’s function, pin capacitance and timing arcs in a Liberty file.</li><li>Explain why each process, voltage and temperature corner is a separate Liberty file.</li><li>Name the extra arc types a flip-flop adds, and what Liberty leaves to analog simulation.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Produced once by library characterization; read by synthesis, placement, clock-tree synthesis and timing in <a href="design_flow.html#step-3">step 3, synthesis</a> to <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>Characterization: Cadence Liberate, Synopsys SiliconSmart, or the open-source CharLib. Readers: Yosys, OpenROAD and OpenSTA.</dd><dt>Why it matters</dt><dd>Every timing and power number the flow reports comes from these files.</dd></dl></aside><aside class="review-note"><p><strong>Source scope.</strong> Exact inverter values and table axes below were rechecked against the archived SkyWater HD repository at revision <code>ac7fb61f06e6</code>. They are nominal library data, not a measured chip specification. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">Inverter data</a> · <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json">units and templates</a>.</p></aside>
+<h2 id="section-1">1. One cell is described three ways</h2>
+  <p>Placement and routing use a <strong>LEF abstract</strong> rather than every layout polygon. Synthesis and timing use <strong>Liberty</strong>. Transistor simulation uses a <strong>SPICE netlist plus device models</strong>, and physical verification uses the actual layout. Library characterization normally includes the cell’s internal parasitics; the exact characterization deck and extraction procedure must be established from the library release, not inferred from a schematic-only netlist.</p>
+  <ul>
+    <li>The <strong>LEF abstract</strong> is the shape: how wide the cell is, where the pins sit, which tracks are blocked. The placer and the router use it.</li>
+    <li>The <strong>Liberty file</strong> is the behavior: what the pin does, how much capacitance it has, and how long the output takes. Synthesis and the timer use it.</li>
+    <li>The <strong>SPICE netlist</strong> is the transistors. That is what was simulated to produce the Liberty tables. Analog work stays here. The timer does not.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Three views of inv_1. Same cell. The layout is
+      the geometry. The Liberty entry is a lookup table measured from that geometry. Area in
+      the Liberty cell is 3.7536&nbsp;µm², which is three sites of 0.46&nbsp;×&nbsp;2.72&nbsp;µm."><text x="360" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#33414f">sky130_fd_sc_hd__inv_1</text><rect x="40" y="48" width="190" height="110" rx="8" fill="#f8efe6" stroke="#c47b2c" stroke-width="2"></rect><text x="135" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#c47b2c">Layout</text><text x="135" y="108" text-anchor="middle" font-size="13" fill="#33414f">GDS / Magic</text><text x="135" y="132" text-anchor="middle" font-size="12" fill="#5c6b7a">polygons</text><rect x="260" y="48" width="190" height="110" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><text x="355" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#3b6fb0">Abstract</text><text x="355" y="108" text-anchor="middle" font-size="13" fill="#33414f">LEF</text><text x="355" y="132" text-anchor="middle" font-size="12" fill="#5c6b7a">sites, pins, blockages</text><rect x="480" y="48" width="190" height="110" rx="8" fill="#f2f7f2" stroke="#1e6b4f" stroke-width="2"></rect><text x="575" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#1e6b4f">Behavior</text><text x="575" y="108" text-anchor="middle" font-size="13" fill="#33414f">Liberty</text><text x="575" y="132" text-anchor="middle" font-size="12" fill="#5c6b7a">caps and delay tables</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Three views of <code>inv_1</code>.</strong> Same cell. The layout is
+      the geometry. The Liberty entry is a lookup table measured from that geometry. Area in
+      the Liberty cell is 3.7536&nbsp;µm², which is three sites of 0.46&nbsp;×&nbsp;2.72&nbsp;µm.
+    </figcaption>
+  </figure>
+
+  <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> The library team produces Liberty files by <em>characterization</em>: a tool simulates each cell in SPICE over a grid of input slews and output loads at each corner and writes the results as tables. Commercial characterizers are Cadence Liberate and Synopsys SiliconSmart; CharLib is an open-source one. As a designer you read these files — Yosys, OpenROAD and OpenSTA all load them — rather than write them.</p></aside><h2 id="section-2">2. What you find inside the cell</h2>
+  <p>
+    A Liberty library is a nest of blocks. The library names the corner and the units. Each
+    cell names its pins. Each output pin has a function and a timing block. For this inverter
+    the function is <code>(!A)</code>: Y is the opposite of A.
+  </p>
+  <p>The timing block identifies the causing input with <code>related_pin</code>. This library uses <code>delay_model : table_lookup</code>: an NLDM (nonlinear delay model) grid of characterized delay and transition values. A timer interpolates within that grid; other Liberty models, including CCS (composite current source), use richer waveform descriptions. <a href="#sources-liberty">[Sources]</a></p>
+
+  <pre>pin (A) {
+  direction : input;
+  capacitance : 0.002302;       /* pF, 2.30 fF */
+  rise_capacitance : 0.002390;
+  fall_capacitance : 0.002214;
+  max_transition : 1.5;          /* ns */
+}
+pin (Y) {
+  direction : output;
+  function : "(!A)";
+  max_capacitance : 0.181284;    /* pF */
+  timing () {
+    related_pin : "A";
+    timing_sense : negative_unate;
+    timing_type : combinational;
+    /* cell_rise table lives here */
+  }
+}</pre>
+
+  <p>
+      The library header, shared by every cell, fixes how to read every number:
+    </p>
+    <ul>
+      <li><code>time_unit : 1ns</code>, <code>capacitive_load_unit (1, pf)</code>, <code>voltage_unit : 1V</code>, <code>leakage_power_unit : 1nW</code>.</li>
+      <li>Delay is measured from the moment the input crosses 50% of VDD to the moment the output crosses 50%. At 1.80&nbsp;V those points are both 0.90&nbsp;V.</li>
+      <li>Slew, called transition in the file, is the time from 20% to 80% (0.36&nbsp;V to 1.44&nbsp;V). <code>slew_derate_from_library</code> is 1.0, so the stored number is that 20–80 time, not a stretched 0–100 time.</li>
+      <li><code>timing_sense : negative_unate</code> means the output moves the opposite way from the input. A buffer is <code>positive_unate</code>. A gate that can go either way, such as an XOR, is <code>non_unate</code>.</li>
+    </ul>
+    <p>
+      The cell also has supply pins <code>VPWR</code> and <code>VGND</code>, and body pins
+      <code>VNB</code> and <code>VPB</code>. In the SPICE netlist the NMOS body is
+      <code>VNB</code> and the PMOS body is <code>VPB</code>. At this corner both wells sit
+      at the rails: <code>VPWR</code> and <code>VPB</code> are 1.8&nbsp;V, <code>VGND</code>
+      and <code>VNB</code> are 0. A digital timer treats them as the supplies. An analog
+      reader recognizes the fourth terminal of each MOSFET.
+    </p>
+    <p>
+      Leakage is stored per input state, in nanowatts. With A high the cell leaks
+      0.01046&nbsp;nW. With A low it leaks 0.000196&nbsp;nW. The cell attribute
+      <code>cell_leakage_power : 0.005327</code> is the average of those two. The same
+      indexes used for delay also hold an energy table (<code>rise_power</code>,
+      <code>fall_power</code>). <code>switching_power_split_model</code> is true, so the
+      energy stored on the load capacitor is split out of the cell's own number, and some
+      of those entries are negative.
+    </p>
+  
+
+
+  <h2 id="section-3">3. A corner is another copy of the same file</h2>
+  <p>A cell name identifies the cell; the library name identifies its characterization condition. <code>sky130_fd_sc_hd__tt_025C_1v80</code> means typical process, 25°C and 1.80 V. <code>ss_100C_1v60</code> and <code>ff_n40C_1v95</code> are familiar slow and fast examples, but the project configuration determines which corners are required. The four files compared below are explicitly named; the comparison does not claim a complete signoff corner set.</p>
+
+  <p>
+      Same question at every corner: input edge 0.01&nbsp;ns, load 9.21&nbsp;fF, straight
+      line between the two neighboring load columns. These are four files that actually
+      ship as plain tables. <code>ff_n40C_1v95</code>, a commonly used fast-corner name, is not one
+      of the four.
+    </p>
+    <table>
+      <tbody><tr><th>Library</th><th>Voltage</th><th>Temp.</th><th>Rise</th><th>Fall</th></tr>
+      <tr><td><code>tt_025C_1v80</code></td><td>1.80 V</td><td>25°C</td><td>71 ps</td><td>44 ps</td></tr>
+      <tr><td><code>ss_100C_1v60</code></td><td>1.60 V</td><td>100°C</td><td>106 ps</td><td>80 ps</td></tr>
+      <tr><td><code>ff_n40C_1v76</code></td><td>1.76 V</td><td>−40°C</td><td>63 ps</td><td>33 ps</td></tr>
+      <tr><td><code>ff_100C_1v95</code></td><td>1.95 V</td><td>100°C</td><td>49 ps</td><td>37 ps</td></tr>
+    </tbody></table>
+    <p>
+      The slow file is slower on both edges. The two fast files disagree about which edge
+      they win. The higher voltage, even at 100°C, wins the rise (the high-Vt PMOS cares
+      a lot about gate voltage). The colder file wins the fall. "The fast corner" is not
+      one speed. It is whichever file you opened, and each arc inside it has its own number.
+    </p>
+    <p>The files record <code>default_arc_mode</code> as <code>worst_edges</code> or <code>best_edges</code>. This is a user-defined attribute in the published header, not a portable instruction to the timing engine to select its analysis corner. Select the intended early/late libraries, operating conditions and derating in the timing flow. The stored tables already contain the characterized result.</p>
+  
+
+
+  <h2 id="section-4">4. A flip-flop has more arc types than an inverter</h2>
+  <p>
+    The inverter arcs in this lesson are combinational: <code>cell_rise</code> and <code>cell_fall</code> for delay, <code>rise_transition</code> and <code>fall_transition</code> for the output edge. A flip-flop adds arcs that are checks, and one arc that is the clock.
+  </p>
+  <p>
+    <code>rising_edge</code> is clock to Q. <code>setup_rising</code> and <code>hold_rising</code> are the two checks on D against that same edge. <code>min_pulse_width</code> is a check on the clock pin alone. <code>timing_sense</code> on Q is <code>non_unate</code>, because Q rises or falls with D. The inverter stays <code>negative_unate</code>. The numbers for those flop arcs are <a href="setup_hold.html">lesson 26</a> and <a href="timing.html">lesson 25</a>.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Arc types on dfxtp_1. Combinational tables stay the inverter's four. These are the extra names.">
+<rect x="300" y="40" width="140" height="90" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="370" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">dfxtp_1</text>
+<text x="370" y="100" text-anchor="middle" font-size="12" fill="#5c6b7a">Q</text>
+<line x1="80" y1="70" x2="300" y2="70" stroke="#4a72c4" stroke-width="2"></line>
+<text x="70" y="66" text-anchor="end" font-size="13" font-weight="700" fill="#4a72c4">CLK</text>
+<text x="180" y="58" text-anchor="middle" font-size="12" fill="#4a72c4">rising_edge</text>
+<line x1="80" y1="150" x2="300" y2="110" stroke="#c0564a" stroke-width="2"></line>
+<text x="70" y="154" text-anchor="end" font-size="13" font-weight="700" fill="#c0564a">D</text>
+<text x="200" y="168" text-anchor="middle" font-size="12" fill="#c0564a">setup, hold</text>
+<line x1="440" y1="85" x2="640" y2="85" stroke="#1e9e50" stroke-width="2"></line>
+<text x="660" y="80" text-anchor="start" font-size="13" font-weight="700" fill="#1e9e50">Q</text>
+<text x="540" y="70" text-anchor="middle" font-size="12" fill="#1e9e50">clock to Q</text>
+<text x="370" y="180" text-anchor="middle" font-size="13" fill="#33414f">min_pulse_width sits on CLK alone</text>
+<text x="370" y="204" text-anchor="middle" font-size="12" fill="#5c6b7a">Q is non_unate: the output edge follows D, not a fixed flip</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Arc types on <code>dfxtp_1</code>. Combinational tables stay the inverter's four. These are the extra names.</strong></figcaption>
+  </figure>
+
+<h2 id="section-5">5. The analog–digital handoff</h2><p>An analog designer should provide a realistic input edge, supply range and output load. A digital designer should return the actual clock, activity and routed capacitance. A clean 0/1 functional simulation has none of that information. Pin capacitance is an abstraction of nonlinear charge, and an NLDM lookup does not by itself model arbitrary supply droop, crosstalk or a waveform with ringing.</p>
+<details class="checkpoint"><summary>Check your understanding — you must check hold at the fast corner. Can the timer reuse the typical Liberty file at a higher voltage?</summary><p>No. Each corner is a separate file, characterized at its own process, voltage and temperature. Load the fast-corner file the flow specifies — <code>ff_n40C_1v76</code> in this library — and check that its name and conditions match the corner you intend to sign off.</p></details><details class="checkpoint"><summary>Check your understanding — does the Liberty file tell you where pin A of <code>inv_1</code> is?</summary><p>No. Liberty describes behavior: function, pin capacitance, timing and power. The pin shapes and the cell outline are in the LEF, and the transistors are in the SPICE netlist.</p></details><div class="takeaways"><h2 id="section-6">Key takeaways</h2><ul><li>Liberty is the behavior view of a cell: function, pin capacitance, and timing tables. LEF is the shape. SPICE is a circuit view; characterization may also include internal extracted parasitics and a specific measurement setup.</li><li>Units for this library: nanoseconds, picofarads, volts, nanowatts of leakage. Delay is 50% to 50%. Slew is 20% to 80%, and <code>slew_derate_from_library</code> is 1.0.</li><li>A corner is a separate library file. The slow file used here is <code>ss_100C_1v60</code>. A fast file is not automatically faster on every edge.</li><li>A flop adds <code>rising_edge</code>, <code>setup_rising</code>, <code>hold_rising</code>, and <code>min_pulse_width</code>. Its Q pin is <code>non_unate</code>.</li></ul></div><section class="sources" id="sources-liberty"><h2 id="section-7">Sources &amp; scope</h2><p>Technical review: 6 November 2026. SKY130 links are pinned to HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. Numerical interpolations are calculations from those tables.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">SKY130 inv_1 timing and pin data</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json">Library units, thresholds and templates</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json">Typical operating conditions and ramp waveform</a></li><li><a href="https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf">Liberty Reference Manual, library and timing attributes</a></li><li><a href="https://opensta.readthedocs.io/en/latest/">OpenSTA documentation: delay calculation and timing analysis</a></li></ol></section><section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_inverter_characterization.html">Compare measured delay with Liberty</a></li><li><a href="rtl_synthesis_constraints.html">Connect Liberty to synthesis and constraints</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html" aria-current="page">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="loads.html"><small>← Previous</small>Loads</a><a href="liberty_tables.html"><small>Next →</small>Reading Liberty Timing Tables</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 13}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  const cards = [
+    [40, 'Layout', 'GDS / Magic', 'polygons', '#f8efe6', '#c47b2c'],
+    [260, 'Abstract', 'LEF', 'sites, pins, blockages', '#f4f7fb', '#3b6fb0'],
+    [480, 'Behavior', 'Liberty', 'caps and delay tables', '#f2f7f2', '#1e6b4f']
+  ];
+  let s = `<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += txt(360, 28, 'sky130_fd_sc_hd__inv_1', {b: true, s: 15});
+  cards.forEach(c => {
+    s += `<rect x="${c[0]}" y="48" width="190" height="110" rx="8" fill="${c[4]}" stroke="${c[5]}" stroke-width="2"/>`;
+    s += txt(c[0] + 95, 82, c[1], {b: true, s: 16, c: c[5]});
+    s += txt(c[0] + 95, 108, c[2], {s: 13});
+    s += txt(c[0] + 95, 132, c[3], {s: 12, c: '#5c6b7a'});
+  });
+  s += `</svg>`;
+  {const e=document.getElementById('fig1'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  const xOf = f => 70 + (f / 11) * 620;
+  const yOf = p => 250 - (p / 90) * 210;
+  const loads = [0.500, 1.33517, 3.56533, 9.52062];
+  const rise = [20.3433, 25.5806, 38.8749, 72.8467];
+  const fall = [14.3656, 17.4314, 25.2454, 45.4996];
+  let s = `<svg viewBox="0 0 740 310" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<line x1="70" y1="40" x2="70" y2="250" stroke="#c5d0dc" stroke-width="1.5"/>`;
+  s += `<line x1="70" y1="250" x2="700" y2="250" stroke="#c5d0dc" stroke-width="1.5"/>`;
+  [0, 20, 40, 60, 80].forEach(p => {
+    const y = yOf(p);
+    s += `<line x1="64" y1="${y}" x2="700" y2="${y}" stroke="#eef2f6"/>`;
+    s += txt(58, y + 4, String(p), {a: 'end', s: 11, c: '#7a8794'});
+  });
+  [0, 2, 4, 6, 8, 10].forEach(f => {
+    const x = xOf(f);
+    s += `<line x1="${x}" y1="250" x2="${x}" y2="256" stroke="#7a8794"/>`;
+    s += txt(x, 272, String(f), {s: 11, c: '#7a8794'});
+  });
+  s += txt(18, 145, 'ps', {s: 12, c: '#7a8794'});
+  s += txt(380, 294, 'load (fF)   input slew 0.01 ns', {s: 12, c: '#5c6b7a'});
+  const risePts = loads.map((f, i) => `${xOf(f).toFixed(1)},${yOf(rise[i]).toFixed(1)}`).join(' ');
+  const fallPts = loads.map((f, i) => `${xOf(f).toFixed(1)},${yOf(fall[i]).toFixed(1)}`).join(' ');
+  s += `<polyline fill="none" stroke="#c47b2c" stroke-width="2" points="${risePts}"/>`;
+  s += `<polyline fill="none" stroke="#3b6fb0" stroke-width="2" points="${fallPts}"/>`;
+  loads.forEach((f, i) => {
+    s += `<rect x="${xOf(f) - 4}" y="${yOf(rise[i]) - 4}" width="8" height="8" fill="#c47b2c"/>`;
+    s += `<rect x="${xOf(f) - 4}" y="${yOf(fall[i]) - 4}" width="8" height="8" fill="#3b6fb0"/>`;
+  });
+  const mx = xOf(9.208), myR = yOf(71.063), myF = yOf(44.436);
+  s += `<circle cx="${mx.toFixed(1)}" cy="${myR.toFixed(1)}" r="6" fill="#fff" stroke="#c47b2c" stroke-width="2.5"/>`;
+  s += `<circle cx="${mx.toFixed(1)}" cy="${myF.toFixed(1)}" r="6" fill="#fff" stroke="#3b6fb0" stroke-width="2.5"/>`;
+  s += txt(mx - 8, myR - 10, '71.06 ps', {a: 'end', s: 12, b: true, c: '#c47b2c'});
+  s += txt(mx - 8, myF + 16, '44.44 ps', {a: 'end', s: 12, b: true, c: '#3b6fb0'});
+  s += txt(560, 52, 'cell_rise', {a: 'start', s: 12, b: true, c: '#c47b2c'});
+  s += txt(560, 70, 'cell_fall', {a: 'start', s: 12, b: true, c: '#3b6fb0'});
+  s += `</svg>`;
+  {const e=document.getElementById('fig2'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const x0 = 200, y0 = 56, w = 360, h = 150;
+  s += `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"/>`;
+  const tx = 0.383124, ty = 0.408825;
+  const px = x0 + ty * w, py = y0 + tx * h;
+  s += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="7" fill="#c47b2c"/>`;
+  s += txt(px + 12, py + 4, '0.054767 ns', {a: 'start', s: 13, b: true, c: '#c47b2c'});
+  const corners = [
+    [x0, y0, '0.0388749 ns', 'slew 0.0100', 'end', 'start'],
+    [x0 + w, y0, '0.0728467 ns', 'slew 0.0100', 'start', 'start'],
+    [x0, y0 + h, '0.0439316 ns', 'slew 0.0231', 'end', 'end'],
+    [x0 + w, y0 + h, '0.078324 ns', 'slew 0.0231', 'start', 'end']
+  ];
+  corners.forEach(c => {
+    s += `<circle cx="${c[0]}" cy="${c[1]}" r="5" fill="#3b6fb0"/>`;
+  });
+  s += txt(x0 - 10, y0 - 8, '0.0388749', {a: 'end', s: 12, b: true});
+  s += txt(x0 - 10, y0 + 10, 'slew 0.01 ns', {a: 'end', s: 11, c: '#5c6b7a'});
+  s += txt(x0 + w + 10, y0 - 8, '0.0728467', {a: 'start', s: 12, b: true});
+  s += txt(x0 + w + 10, y0 + 10, 'slew 0.01 ns', {a: 'start', s: 11, c: '#5c6b7a'});
+  s += txt(x0 - 10, y0 + h - 6, '0.0439316', {a: 'end', s: 12, b: true});
+  s += txt(x0 - 10, y0 + h + 12, 'slew 0.02305 ns', {a: 'end', s: 11, c: '#5c6b7a'});
+  s += txt(x0 + w + 10, y0 + h - 6, '0.078324', {a: 'start', s: 12, b: true});
+  s += txt(x0 + w + 10, y0 + h + 12, 'slew 0.02305 ns', {a: 'start', s: 11, c: '#5c6b7a'});
+  s += txt(x0, 250, 'load 0.003565 pF', {s: 12});
+  s += txt(x0 + w, 250, 'load 0.009521 pF', {s: 12});
+  s += txt(370, 272, 'cell_rise corners, ns. Dot is the interpolated delay.', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  {const e=document.getElementById('fig3'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="70" width="200" height="90" rx="8" fill="#f8efe6" stroke="#c47b2c" stroke-width="2"/>`;
+  s += `<rect x="500" y="70" width="200" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"/>`;
+  s += txt(140, 98, 'inv_1', {b: true, s: 16});
+  s += txt(140, 120, 'cell_rise 0.07285 ns', {s: 12});
+  s += txt(140, 140, 'rise slew 0.08768 ns', {s: 12, c: '#c47b2c'});
+  s += txt(600, 98, 'inv_1', {b: true, s: 16});
+  s += txt(600, 120, 'cell_fall 0.07437 ns', {s: 12, b: true, c: '#3b6fb0'});
+  s += txt(600, 140, 'line between two rows', {s: 12, c: '#5c6b7a'});
+  s += `<line x1="240" y1="115" x2="490" y2="115" stroke="#33414f" stroke-width="2" marker-end="url(#arrL)"/>`;
+  s += txt(365, 100, 'output slew becomes', {s: 12});
+  s += txt(365, 148, 'the next input slew', {s: 12});
+  s += txt(140, 52, 'input slew 0.01 ns', {s: 12, c: '#5c6b7a'});
+  s += txt(140, 184, 'load 0.009521 pF', {s: 12, c: '#5c6b7a'});
+  s += txt(600, 52, 'input slew 0.08768 ns', {s: 12, c: '#5c6b7a'});
+  s += txt(600, 184, 'same load column', {s: 12, c: '#5c6b7a'});
+  s += `<defs><marker id="arrL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#33414f"/></marker></defs>`;
+  s += `</svg>`;
+  {const e=document.getElementById('fig4'); if(e) e.innerHTML = s;}
+})();
+</script>
+
+
+</body></html>

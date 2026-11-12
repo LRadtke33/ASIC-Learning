@@ -1,0 +1,5 @@
+
+read_liberty -lib /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+read_verilog rca16.v
+hierarchy -check -top rca16
+stat -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib

@@ -1,0 +1,310 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routing Resistance and Parasitics</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 28 / 84 · Part IV, Loads, timing and interconnect</p><h1>Routing Resistance and Parasitics</h1>
+  <p class="subtitle">A routed wire is a resistor and a capacitor. On SKY130 the short metal is mostly the capacitor. A long run of local interconnect is both.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The numbers are from <code>sky130_fd_sc_hd.tlef</code>. Capacitance in that file is in picofarads, resistance in ohms, lengths in microns. 0.001&nbsp;pF is 1&nbsp;fF.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Derive first-order resistance and capacitance per micrometer from the tech LEF.</li><li>Decide when a wire is effectively a capacitor and when its resistance matters.</li><li>Use the pi model and an Elmore estimate for a resistive route.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-8">step 8, extraction and timing</a> for digital blocks and <a href="design_flow.html#step-a4">step A4, verification</a> for analog blocks.</dd><dt>Tools</dt><dd>OpenRCX writes SPEF for the timer; Magic extracts SPICE for analog simulation. Commercial: StarRC, Quantus, Calibre xRC.</dd><dt>Why it matters</dt><dd>On long nets, wire resistance and capacitance can exceed the delay of the gates.</dd></dl></aside><h2 id="section-1">1. A wire is distributed resistance and capacitance, not one load number</h2>
+  <p>
+    A timer looks up delay from one capacitance on the output
+    (<a href="loads.html">lesson 21</a>, <a href="liberty_tables.html">lesson 23</a>).
+    That number is real, and it is incomplete. The metal that connects the driver to the
+    next gate has resistance along its length and capacitance to everything around it.
+    Those are the <strong>parasitics</strong>: pieces of R and C that were not in the
+    schematic, added by the route.
+  </p>
+  <p>
+    Draw the wire as a chain. Each short piece has a resistor in series and a capacitor
+    to the AC ground of the chip. A gate input hangs on the end as one more capacitor,
+    the pin cap from the Liberty file. If the resistors are tiny, the chain collapses
+    back into the single capacitor lesson 21 used. If a resistor is large, the far end
+    of the wire moves later than the near end, and the edge slows down on the way
+    (<a href="timing.html">lesson 25</a>).
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — The same net, two ways. Left: the timer's view, one
+      capacitor. Right: the wire split into series resistors with capacitors along it,
+      plus the gate at the end. Short met1 behaves like the left picture. Long
+      li1 needs the right picture."><text x="160" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">timer</text><line x1="40" y1="70" x2="280" y2="70" stroke="#33414f" stroke-width="2"></line><text x="50" y="62" text-anchor="start" font-size="11" fill="#33414f">driver</text><line x1="160" y1="70" x2="160" y2="100" stroke="#33414f" stroke-width="2"></line><line x1="140" y1="100" x2="180" y2="100" stroke="#1e9e50" stroke-width="3"></line><line x1="140" y1="112" x2="180" y2="112" stroke="#1e9e50" stroke-width="3"></line><line x1="160" y1="112" x2="160" y2="150" stroke="#33414f" stroke-width="2"></line><line x1="140" y1="150" x2="180" y2="150" stroke="#33414f" stroke-width="2"></line><line x1="150" y1="156" x2="170" y2="156" stroke="#33414f" stroke-width="2"></line><line x1="156" y1="162" x2="164" y2="162" stroke="#33414f" stroke-width="2"></line><text x="200" y="110" text-anchor="start" font-size="13" font-weight="700" fill="#1e9e50">Cload</text><text x="160" y="190" text-anchor="middle" font-size="12" fill="#5c6b7a">one number</text><text x="520" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">the wire</text><line x1="360" y1="70" x2="680" y2="70" stroke="#4a72c4" stroke-width="2.5"></line><text x="440" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">R</text><line x1="400" y1="70" x2="400" y2="108" stroke="#33414f" stroke-width="2"></line><line x1="384" y1="108" x2="416" y2="108" stroke="#1e9e50" stroke-width="3"></line><line x1="384" y1="118" x2="416" y2="118" stroke="#1e9e50" stroke-width="3"></line><line x1="400" y1="118" x2="400" y2="145" stroke="#33414f" stroke-width="2"></line><text x="520" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">R</text><line x1="480" y1="70" x2="480" y2="108" stroke="#33414f" stroke-width="2"></line><line x1="464" y1="108" x2="496" y2="108" stroke="#1e9e50" stroke-width="3"></line><line x1="464" y1="118" x2="496" y2="118" stroke="#1e9e50" stroke-width="3"></line><line x1="480" y1="118" x2="480" y2="145" stroke="#33414f" stroke-width="2"></line><text x="600" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">R</text><line x1="560" y1="70" x2="560" y2="108" stroke="#33414f" stroke-width="2"></line><line x1="544" y1="108" x2="576" y2="108" stroke="#1e9e50" stroke-width="3"></line><line x1="544" y1="118" x2="576" y2="118" stroke="#1e9e50" stroke-width="3"></line><line x1="560" y1="118" x2="560" y2="145" stroke="#33414f" stroke-width="2"></line><line x1="640" y1="70" x2="640" y2="108" stroke="#33414f" stroke-width="2"></line><line x1="624" y1="108" x2="656" y2="108" stroke="#1e9e50" stroke-width="3"></line><line x1="624" y1="118" x2="656" y2="118" stroke="#1e9e50" stroke-width="3"></line><line x1="640" y1="118" x2="640" y2="145" stroke="#33414f" stroke-width="2"></line><line x1="380" y1="145" x2="660" y2="145" stroke="#33414f" stroke-width="2"></line><text x="520" y="162" text-anchor="middle" font-size="11" fill="#7a8794">ground</text><rect x="668" y="58" width="36" height="24" rx="3" fill="#fff" stroke="#33414f"></rect><text x="686" y="74" text-anchor="middle" font-size="10" fill="#33414f">gate</text><text x="520" y="190" text-anchor="middle" font-size="12" fill="#5c6b7a">R along the wire, C at each piece</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — The same net, two ways.</strong> Left: the timer's view, one
+      capacitor. Right: the wire split into series resistors with capacitors along it,
+      plus the gate at the end. Short met1 behaves like the left picture. Long
+      <code>li1</code> needs the right picture.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Derive first-order R and C per micrometer from the tech LEF</h2>
+  <p>
+    You do not start from a field solver to get a first number. For a long, straight, uniform wire, three technology-LEF fields give a first estimate. They do not describe the full surrounding geometry:
+  </p>
+  <ul>
+    <li><code>RESISTANCE RPERSQ</code> — ohms per square. A square is a length of wire equal to its own width.</li>
+    <li><code>CAPACITANCE CPERSQDIST</code> — picofarads per square micrometer of drawn metal. That is the plate, the area term.</li>
+    <li><code>EDGECAPACITANCE</code> — picofarads per micrometer of edge. A wire has two edges, so count it twice. That is the sidewall, the fringe.</li>
+  </ul>
+  <p>
+    Minimum width is the <code>WIDTH</code> on the same layer. Per micrometer of a
+    minimum wire:
+  </p>
+  <p style="text-align:center">
+    <code>C′ ≈ CPERSQDIST × width + 2 × EDGECAPACITANCE</code> (pF/µm)<br>
+    <code>R′ = RPERSQ / width</code> (Ω/µm); <code>C = C′L</code>, <code>R = R′L</code>
+  </p>
+  <p>
+    met1 is the one to check by hand, because lesson 21 already used it.
+    <code>WIDTH 0.14</code>, <code>CPERSQDIST 25.7784e-6</code> pF/µm²,
+    <code>EDGECAPACITANCE 40.567e-6</code> pF/µm, <code>RPERSQ 0.125</code>.
+    The area term is 25.7784e-6 × 0.14 = 0.00361&nbsp;fF/µm. The two edges are
+    0.0811&nbsp;fF/µm. Almost all of the capacitance is the edge, not the plate.
+    Together, 0.0847&nbsp;fF/µm. Resistance is 0.125 / 0.14 = 0.893&nbsp;Ω/µm.
+  </p>
+
+  <table>
+    <tbody><tr>
+      <th>Layer</th><th>Direction</th><th>Width (µm)</th><th>Pitch (µm)</th>
+      <th>fF/µm</th><th>Ω/µm</th><th>Sheet, Ω/sq</th><th>Thickness (µm)</th>
+    </tr>
+    <tr><td>li1</td><td>vertical</td><td>0.17</td><td>0.46 × 0.34</td><td>0.088</td><td>71.8</td><td>12.2</td><td>0.10</td></tr>
+    <tr class="active"><td>met1</td><td>horizontal</td><td>0.14</td><td>0.34</td><td>0.085</td><td>0.893</td><td>0.125</td><td>0.35</td></tr>
+    <tr><td>met2</td><td>vertical</td><td>0.14</td><td>0.46</td><td>0.078</td><td>0.893</td><td>0.125</td><td>0.35</td></tr>
+    <tr><td>met3</td><td>horizontal</td><td>0.30</td><td>0.68</td><td>0.086</td><td>0.157</td><td>0.047</td><td>0.80</td></tr>
+    <tr><td>met4</td><td>vertical</td><td>0.30</td><td>0.92</td><td>0.076</td><td>0.157</td><td>0.047</td><td>0.80</td></tr>
+    <tr><td>met5</td><td>horizontal</td><td>1.60</td><td>3.40</td><td>0.088</td><td>0.018</td><td>0.0285</td><td>1.20</td></tr>
+  </tbody></table>
+  <p>
+    Capacitance per micrometer barely changes from <code>li1</code> to met5. Resistance
+    does. <code>li1</code> is about 80 times more resistive per micrometer than minimum
+    met1, and about 4,000 times met5. Thickness is quoted from the same LEF so you
+    can see why the sheet resistance falls. The file does not give a resistivity, so this
+    table does not derive one.
+  </p>
+
+  <p>
+      <code>li1</code> worked the same way: width 0.17&nbsp;µm,
+      <code>CPERSQDIST 36.9866e-6</code>, <code>EDGECAPACITANCE 40.697e-6</code>,
+      <code>RPERSQ 12.2</code>. Area cap 0.00629&nbsp;fF/µm, two edges 0.0814&nbsp;fF/µm,
+      total 0.0877&nbsp;fF/µm. Resistance 12.2 / 0.17 = 71.8&nbsp;Ω/µm. The pitch
+      <code>0.46 0.34</code> on a vertical layer is the x pitch, then the y pitch.
+      0.46&nbsp;µm is also the standard-cell site width, so one vertical <code>li1</code>
+      pitch lines up with each site.
+    </p>
+    <p>
+      The area-plus-two-edges number is a wire alone. It does not know the neighbor
+      on the next track. A sign-off extraction adds coupling capacitors to those
+      neighbors. The tech-LEF number is the right size for a lesson and for a router's
+      first estimate. It is not the capacitor an analog net gets after the wires beside
+      it are known.
+    </p>
+    <p>
+      <code>UNITS</code> in the file: capacitance picofarads, resistance ohms, database
+      1000 units per micron. There is no current unit in that block. Current limits are
+      the next lesson, and the unit there is the comment on each line.
+    </p>
+  
+
+
+  <h2 id="section-3">3. A short met1 route is a capacitor. A long li1 route is not.</h2>
+  <p>
+    One <code>inv_1</code> input is 2.30&nbsp;fF. Divided by 0.0847&nbsp;fF/µm, that is
+    27&nbsp;µm of minimum met1. At 0.893&nbsp;Ω/µm the resistance is about 24&nbsp;Ω.
+    Multiply 24&nbsp;Ω by 2.30&nbsp;fF and the time is under a tenth of a picosecond.
+    The gate delay in lesson 25 is tens of picoseconds. On a hop this short, adding the
+    wire means adding femtofarads to the load column and ignoring the resistance.
+  </p>
+  <p>
+    A longer <code>li1</code> route is a different object. Two hundred micrometers
+    is 200 × 71.8&nbsp;Ω/µm = 14.35&nbsp;kΩ, and 200 × 0.0877&nbsp;fF/µm = 17.5&nbsp;fF.
+    The product is 252&nbsp;ps. Lesson 21 rounded that same wire to about 14&nbsp;kΩ,
+    18&nbsp;fF, and 250&nbsp;ps. Either way it is longer than the <code>inv_1</code>
+    rise delay of 0.073&nbsp;ns into 9.5&nbsp;fF (lesson 25). A route that stays on local
+    interconnect for a long run is a resistor and a capacitor. The single load number
+    misses the resistor.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Two wires, same process. Twenty-seven micrometers of
+      minimum met1 matches one inverter input and adds about 24&nbsp;Ω. Two hundred
+      micrometers of minimum li1 is 14.35&nbsp;kΩ and 17.5&nbsp;fF. The
+      product R×C is a size, not the delay a timer prints."><rect x="40" y="24" width="300" height="150" rx="8" fill="#f7f9fb" stroke="#4a72c4" stroke-width="2"></rect><text x="190" y="52" text-anchor="middle" font-size="15" font-weight="700" fill="#4a72c4">27 µm of met1</text><text x="190" y="84" text-anchor="middle" font-size="14" fill="#33414f">about 2.3 fF</text><text x="190" y="110" text-anchor="middle" font-size="14" fill="#33414f">about 24 Ω</text><text x="190" y="136" text-anchor="middle" font-size="14" fill="#33414f">R×C under 0.1 ps</text><rect x="400" y="24" width="300" height="150" rx="8" fill="#f7f9fb" stroke="#7a4ea3" stroke-width="2"></rect><text x="550" y="52" text-anchor="middle" font-size="15" font-weight="700" fill="#7a4ea3">200 µm of li1</text><text x="550" y="84" text-anchor="middle" font-size="14" fill="#33414f">17.5 fF</text><text x="550" y="110" text-anchor="middle" font-size="14" fill="#33414f">14.35 kΩ</text><text x="550" y="136" text-anchor="middle" font-size="14" fill="#33414f">R×C = 252 ps</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — Two wires, same process.</strong> Twenty-seven micrometers of
+      minimum met1 matches one inverter input and adds about 24&nbsp;Ω. Two hundred
+      micrometers of minimum <code>li1</code> is 14.35&nbsp;kΩ and 17.5&nbsp;fF. The
+      product R×C is a size, not the delay a timer prints.
+    </figcaption>
+  </figure>
+
+  <p>
+      For an ideal source driving a uniform RC wire with no end load, <strong>the Elmore first moment is RC/2</strong>, about 126&nbsp;ps here. It is not the 50% propagation delay: the distributed-wire 50% step delay is approximately 0.38RC under those assumptions. With driver resistance R<sub>d</sub>, wire R<sub>w</sub>/C<sub>w</sub>, and end load C<sub>L</sub>, a useful Elmore estimate is <code>τ<sub>E</sub> = R<sub>d</sub>(C<sub>w</sub>+C<sub>L</sub>) + R<sub>w</sub>(C<sub>w</sub>/2+C<sub>L</sub>)</code>. The end load is charged through both the driver and the wire. The <a href="https://digicoll.lib.berkeley.edu/record/134469/files/EECS-2006-126.pdf">distributed-wire propagation model</a> distinguishes the 50% delay from the Elmore first moment. A timer uses its own waveform/delay model; do not simply add this complete estimate to a Liberty delay, which would count driver loading twice.
+    </p>
+    <p>
+      The same product on longer wires, minimum width, lumped R×C of the whole run:
+      1&nbsp;mm of <code>li1</code> is 71.8&nbsp;kΩ and 88&nbsp;fF, product 6.3&nbsp;ns.
+      1&nbsp;mm of met1 is 893&nbsp;Ω and 85&nbsp;fF, product 76&nbsp;ps.
+      1&nbsp;mm of met5 is 18&nbsp;Ω and 88&nbsp;fF, product 1.6&nbsp;ps.
+      Upper metal reduces distributed resistance, but driver impedance, vias, coupling, and edge rate still decide whether a lumped capacitor is adequate. Very fast or package-scale paths may also require inductance and transmission-line models.
+      These three products use the table above. They are not extracted nets.
+    </p>
+  
+
+
+  <h2 id="section-4">4. What you hand the timer</h2>
+  <p>
+    For a lumped load, pin caps plus wire cap form the load used with a <code>total_output_net_capacitance</code> lookup dimension. Resistive interconnect can require an <em>effective</em> load calculation and waveform propagation; the sum alone is not always what the driver dynamically sees. That is the whole job when the route is short metal. When the
+    route is resistive, the timer needs the chain from Figure 1, not a fatter capacitor.
+    Extraction writes that chain (a SPEF file is the usual name). The Liberty table
+    still answers "how does this cell behave into a load." It does not contain the wire.
+  </p>
+  <p>
+    Slew travels with the wire. A resistive run stretches the edge, and the next gate
+    is looked up at that slower input slew, not at the driver's own 20–80 time. Lesson 25 already did that handoff from one inverter to the next with no wire in between.
+    A long <code>li1</code> wire is a third stage in that handoff, with no cell name on it.
+  </p>
+
+  <p>
+      Vias have resistance too, but this tech LEF does not publish a resistance on the
+      cut layers. The layer list above is the routing layers only. A via array between
+      met1 and met2 is a current question as well as a resistance question; the
+      current side is <a href="electromigration.html">lesson 30</a>.
+    </p>
+    <p>
+      Analog and digital readers split the same file differently. The digital timer
+      wants the extra femtofarads, and the resistance only once it moves the arrival.
+      The analog reader often needs coupling and DC voltage error; the digital reader also needs coupling-induced noise and delay changes when aggressors switch. Both start from
+      the three LEF lines. Neither should treat 0.085&nbsp;fF/µm as the finished
+      capacitor of a wire that has neighbors.
+    </p>
+  
+
+
+    <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> After routing, OpenRCX computes each net’s resistance and capacitance from the routed shapes and writes a SPEF file, which OpenSTA reads before it reports timing. LibreLane does this in its RCX and STAPostPNR steps. For analog blocks, Magic extracts a SPICE netlist with the parasitics instead.</p><pre>extract_parasitics -ext_model_file &lt;rcx_rules_file&gt;
+write_spef top.spef
+read_spef top.spef
+report_checks</pre></aside><h2 id="section-5">5. The pi model splits the wire capacitance in half</h2>
+  <p>
+    A simple reduced representation for a straight wire is the pi model: half the capacitance at the near end, the resistance in the middle, half the capacitance at the far end. Elmore delay at the far end, with no extra load, is the resistance times the far half. For a uniform wire that is <code>RC/2</code>.
+  </p>
+  <p>
+    Use the table in section 2 on 100&nbsp;µm of minimum <code>li1</code>: 71.8&nbsp;Ω/µm and 0.088&nbsp;fF/µm. Resistance is 7180&nbsp;Ω. Capacitance is 8.8&nbsp;fF, so each half is 4.4&nbsp;fF. Elmore delay is 7180&nbsp;Ω × 4.4&nbsp;fF = 31.6&nbsp;ps. That is the sheet estimate for a straight wire. A real route adds neighbors, vias, and the gate load, and final timing combines the extracted network with the library timing model, source slew, corners, and timing constraints.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Pi model of 100&nbsp;µm of minimum li1. 31.6&nbsp;ps is RC/2 from the section 2 per-micrometre numbers.">
+<text x="80" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">in</text>
+<line x1="100" y1="70" x2="220" y2="70" stroke="#33414f" stroke-width="2"></line>
+<line x1="160" y1="70" x2="160" y2="100" stroke="#33414f" stroke-width="2"></line>
+<line x1="140" y1="100" x2="180" y2="100" stroke="#33414f" stroke-width="2"></line>
+<line x1="140" y1="112" x2="180" y2="112" stroke="#33414f" stroke-width="2"></line>
+<text x="160" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">C/2</text>
+<text x="160" y="154" text-anchor="middle" font-size="12" fill="#5c6b7a">4.4 fF</text>
+<rect x="220" y="58" width="200" height="24" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="320" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">R = 7180 Ω</text>
+<line x1="420" y1="70" x2="560" y2="70" stroke="#33414f" stroke-width="2"></line>
+<line x1="500" y1="70" x2="500" y2="100" stroke="#33414f" stroke-width="2"></line>
+<line x1="480" y1="100" x2="520" y2="100" stroke="#33414f" stroke-width="2"></line>
+<line x1="480" y1="112" x2="520" y2="112" stroke="#33414f" stroke-width="2"></line>
+<text x="500" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">C/2</text>
+<text x="500" y="154" text-anchor="middle" font-size="12" fill="#5c6b7a">4.4 fF</text>
+<text x="600" y="74" text-anchor="start" font-size="13" fill="#33414f">far end</text>
+<text x="370" y="190" text-anchor="middle" font-size="13" fill="#33414f">100 µm of minimum li1, from the table in section 2</text>
+<text x="370" y="212" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Elmore delay = R times the far half = 31.6 ps</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 3 — Pi model of 100&nbsp;µm of minimum <code>li1</code>. 31.6&nbsp;ps is <code>RC/2</code> from the section 2 per-micrometer numbers.</strong></figcaption>
+  </figure>
+
+<h2 id="section-6">6. Worked example: the same wire fails two different budgets</h2>
+<p>For 100&nbsp;µm of minimum met1, the table gives <code>R<sub>w</sub> = 89.3&nbsp;Ω</code> and <code>C<sub>w</sub> = 8.47&nbsp;fF</code>. Assume a 1&nbsp;kΩ linear driver and a 10&nbsp;fF end load, purely for calculation. Then <code>τ<sub>E</sub> ≈ 18.47&nbsp;ps + 1.27&nbsp;ps = 19.74&nbsp;ps</code>. This first moment is a screening metric; it is not a characterized cell delay.</p>
+<p>If the same geometry instead carries 100&nbsp;µA of analog bias current, its DC drop is <code>IR = 8.93&nbsp;mV</code>. That current is an additional assumption: a CMOS input load does not continuously draw 100&nbsp;µA. A wire can be unimportant for a digital timing budget and important for an analog voltage budget.</p>
+<table><tbody><tr><th>Question</th><th>Model needed</th><th>Common omission</th></tr><tr><td>Can a logic edge arrive in time?</td><td>Driver model + distributed R/C + receiver threshold</td><td>Far-end slew and switching neighbors</td></tr><tr><td>Is a bias/reference accurate?</td><td>DC current × path resistance, including return</td><td>Vias and temperature dependence</td></tr><tr><td>Will a quiet node see a glitch?</td><td>Mutual capacitance + victim impedance</td><td>Grounding every coupling capacitor</td></tr></tbody></table>
+<p><a href="https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html">OpenRCX</a> extracts resistance, ground capacitance, and coupling based on calibrated rules and wire context. SPEF is common for digital timing; a simulator-compatible extracted SPICE or DSPF (Detailed Standard Parasitic Format) view is common for transistor-level work. File format alone does not guarantee preservation of hierarchical probe names. Inspect the extraction options and name map, then check connectivity against the source design.</p>
+<details class="checkpoint"><summary>Check your understanding: if wire length doubles, what scales by four?</summary><p>For unchanged width and surroundings, wire R and wire C each double, so the unloaded wire's RC product and Elmore RC/2 term become four times larger. The term R<sub>w</sub>C<sub>L</sub> only doubles when the end load stays fixed. Driver loading also changes, so total path delay does not generally scale by four.</p></details>
+<details class="checkpoint"><summary>Check your understanding — is 200 µm of minimum-width li1 just a capacitive load?</summary><p>No. This lesson’s numbers give that wire 14.35 kΩ and 17.5 fF, an RC product of about 252 ps — larger than typical gate delays. It needs a resistive, extracted model, or a move to a metal layer.</p></details><p><a href="delay_physics.html">Lesson 29</a> carries these per-micrometer values into a complete delay budget for one net: SKY130 device current, contact and via cuts, the distributed wire and the receiving gate’s capacitance, followed by fanout, FO4 and repeaters.</p><div class="takeaways">
+    <h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>A wire is series resistance plus capacitance along it. The timer's one capacitor is that picture after the resistance stopped mattering.</li>
+      <li>Per micrometer, C ≈ (area × width) + two edges, and R ≈ sheet resistance / width. met1 minimum is 0.085&nbsp;fF/µm and 0.893&nbsp;Ω/µm.</li>
+      <li>Capacitance per micrometer is similar on every layer here. Resistance is not. <code>li1</code> is 71.8&nbsp;Ω/µm. met5 is 0.018&nbsp;Ω/µm.</li>
+      <li>27&nbsp;µm of met1 is one <code>inv_1</code> input and about 24&nbsp;Ω. 200&nbsp;µm of <code>li1</code> is 14.35&nbsp;kΩ and 17.5&nbsp;fF, product 252&nbsp;ps.</li>
+      <li>Short metal updates the Liberty load column. A resistive route needs the extracted chain. The table does not contain the wire.</li>
+          <li>The pi model puts <code>C/2</code> at each end of <code>R</code>. On 100&nbsp;µm of minimum <code>li1</code> the Elmore estimate is 31.6&nbsp;ps.</li>
+    </ul>
+  </div>
+<section class="sources"><h2 id="section-8">Sources &amp; scope</h2><p>LEF values are nominal teaching inputs, not temperature-qualified signoff extraction. C′ omits short-wire end effects and explicit neighbor coupling; R′ assumes uniform cross-section. Checked 6 November 2026.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">SKY130 HD technology LEF</a> — verified routing-layer R, C, pitch, width, and thickness; revision ac7fb61.</li><li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html">SKY130 extraction rules</a> — process extraction scope, including contacts and modeled device contributions.</li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html">OpenRCX documentation</a> — calibrated extraction, coupling, SPEF, and via-resistance options.</li><li><a href="https://digicoll.lib.berkeley.edu/record/134469/files/EECS-2006-126.pdf">UC Berkeley interconnect research</a> — distributed-wire propagation model; the hand calculations here are explicitly derived.</li></ol></section><section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_layout_extraction.html">Generate and simulate a geometry-derived RC network</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html" aria-current="page">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="latch_time_borrowing.html"><small>← Previous</small>Latch-Based Design &amp; Time Borrowing</a><a href="delay_physics.html"><small>Next →</small>Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // left: single C
+  s += txt(160, 28, 'timer', {b: true, s: 14});
+  s += `<line x1="40" y1="70" x2="280" y2="70" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(50, 62, 'driver', {a: 'start', s: 11});
+  s += `<line x1="160" y1="70" x2="160" y2="100" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="140" y1="100" x2="180" y2="100" stroke="${CAP}" stroke-width="3"/>`;
+  s += `<line x1="140" y1="112" x2="180" y2="112" stroke="${CAP}" stroke-width="3"/>`;
+  s += `<line x1="160" y1="112" x2="160" y2="150" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="140" y1="150" x2="180" y2="150" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="150" y1="156" x2="170" y2="156" stroke="${DK}" stroke-width="2"/>`;
+  s += `<line x1="156" y1="162" x2="164" y2="162" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(200, 110, 'Cload', {a: 'start', s: 13, c: CAP, b: true});
+  s += txt(160, 190, 'one number', {s: 12, c: '#5c6b7a'});
+
+  // right: ladder
+  s += txt(520, 28, 'the wire', {b: true, s: 14});
+  const xs = [400, 480, 560, 640];
+  s += `<line x1="360" y1="70" x2="680" y2="70" stroke="${MET}" stroke-width="2.5"/>`;
+  xs.forEach((x, i) => {
+    if (i < 3) {
+      s += txt((x + xs[i + 1]) / 2, 62, 'R', {s: 12, c: MET, b: true});
+    }
+    s += `<line x1="${x}" y1="70" x2="${x}" y2="108" stroke="${DK}" stroke-width="2"/>`;
+    s += `<line x1="${x - 16}" y1="108" x2="${x + 16}" y2="108" stroke="${CAP}" stroke-width="3"/>`;
+    s += `<line x1="${x - 16}" y1="118" x2="${x + 16}" y2="118" stroke="${CAP}" stroke-width="3"/>`;
+    s += `<line x1="${x}" y1="118" x2="${x}" y2="145" stroke="${DK}" stroke-width="2"/>`;
+  });
+  s += `<line x1="380" y1="145" x2="660" y2="145" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(520, 162, 'ground', {s: 11, c: '#7a8794'});
+  s += `<rect x="668" y="58" width="36" height="24" rx="3" fill="#fff" stroke="${DK}"/>`;
+  s += txt(686, 74, 'gate', {s: 10});
+  s += txt(520, 190, 'R along the wire, C at each piece', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function card(x, title, lines, color) {
+    s += `<rect x="${x}" y="24" width="300" height="150" rx="8" fill="#f7f9fb" stroke="${color}" stroke-width="2"/>`;
+    s += txt(x + 150, 52, title, {b: true, s: 15, c: color});
+    lines.forEach((ln, i) => s += txt(x + 150, 84 + i * 26, ln, {s: 14}));
+  }
+  card(40, '27 µm of met1', ['about 2.3 fF', 'about 24 Ω', 'R×C under 0.1 ps'], MET);
+  card(400, '200 µm of li1', ['17.5 fF', '14.35 kΩ', 'R×C = 252 ps'], LI);
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

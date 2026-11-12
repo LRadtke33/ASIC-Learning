@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 6 — RTL to GDS on SKY130</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script><style>.scope-note{background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 18px;margin:1.2em 0}img{border:1px solid #d7dfe8}</style></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+<h1>Lab 6 — RTL to GDS on SKY130 (LibreLane, SPM)</h1>
+<p class="subtitle">Run a full LibreLane 3.0.17 flow on the bundled 32-bit sequential multiplier, read the placement, routing and signoff metrics, and compare a 30/45/60 utilization sweep.</p>
+<p class="scope-note"><strong>Recorded evidence.</strong> All figures in the result tables were produced on this machine on 11 November 2026, America/Chicago, with LibreLane 3.0.17, OpenROAD, OpenSTA 2.7.0, Magic 8.3.623, KLayout and Netgen, PDK sky130A (ciel <code>8afc8346a57fe1ab7934ba5a6056ea8b43078e71</code>), library sky130_fd_sc_hd. The 45% run <code>RUN_2026-11-11_16-09-06</code> completed 80/80 steps, including GDS, DRC, XOR and LVS. The 30% and 60% runs (<code>util30</code>, <code>util60</code>) used <code>--override-config FP_CORE_UTIL=…</code> and stopped after <code>Odb.ReportWireLength</code>; they have no GDS. Copies of metrics, reports and the render live in <code>labs/analysis_examples/rtl_to_gds/</code>. The design sources used are in <code>labs/L06_rtl_to_gds/</code>.</p>
+
+<div class="objectives"><p><strong>What you will do</strong></p><ul>
+<li>Launch LibreLane with <code>--manual-pdk</code> on the SPM, at 45% core utilization and a 10&nbsp;ns clock.</li>
+<li>Read back die size, GPL overflow, repair-buffer counts, routing DRC iterations, layer wirelength and post-route slacks.</li>
+<li>Optional: repeat through detailed routing at 30% and 60% and fill the comparison table. Recorded results are already provided.</li>
+</ul></div>
+
+<h2 id="section-1">1. The design</h2>
+<p>The DUT is LibreLane’s bundled SPM, a 32-bit sequential multiplier, <code>DESIGN_NAME: spm</code>, <code>CLOCK_PERIOD: 10</code>, <code>CLOCK_PORT: clk</code>, <code>FP_CORE_UTIL: 45</code>. The Verilog and SDC in <code>labs/L06_rtl_to_gds/src/</code> are copies of that bundled design. This lab does not invent a new netlist; it records a complete GDS path on a design the flow already knows how to finish.</p>
+
+<h2 id="section-2">2. Command</h2>
+<p>With the PDK at <code>$PDK_ROOT/sky130A</code> and LibreLane 3.0.17 on your <code>PATH</code> (the course environment uses <code>llane_shell</code> and always passes <code>--manual-pdk</code>):</p>
+<pre>librelane --manual-pdk --pdk-root "$PDK_ROOT" --pdk sky130A \
+    --run-tag my_spm \
+    config.yaml</pre>
+<p>The <code>config.yaml</code> in the lab folder is the one that was run (45% for sky130, 10&nbsp;ns). To reproduce only the utilization sweep, without GDS:</p>
+<pre>librelane --manual-pdk --pdk-root "$PDK_ROOT" --pdk sky130A \
+    --run-tag util30 \
+    --override-config FP_CORE_UTIL=30 \
+    --to Odb.ReportWireLength \
+    config.yaml</pre>
+<p>The same with <code>FP_CORE_UTIL=60</code> and a unique <code>--run-tag</code>. Do not reuse the 45% tag. Parallel runs can exhaust a small machine; sequential is safer. A full 45% path through routing on this design finished on the order of a few minutes; the signoff append (Magic.StreamOut through Manufacturability) took about 18 seconds in the recorded continuation.</p>
+
+<h2 id="section-3">3. Recorded 45% results — from RTL to GDS</h2>
+<p>The 45% run completed with “Flow complete”, 80/80 steps, and this KLayout render of the final GDS:</p>
+<figure>
+<div class="figwrap">
+<img src="labs/analysis_examples/rtl_to_gds/spm_45_render.png" alt="KLayout render of the placed and routed SPM at 45 percent utilization, showing standard-cell rows, metal routes and pins." width="700" height="777" style="max-width:100%;height:auto">
+</div>
+<figcaption><strong>Figure 1 — KLayout render of <code>spm</code>, 45% utilization, 1,000 × 1,110 pixels, from <code>57-klayout-render/spm.png</code> (283,536 bytes), 11 November 2026, America/Chicago.</strong></figcaption>
+</figure>
+
+<table>
+<thead><tr><th>Item</th><th>Recorded value</th></tr></thead>
+<tbody>
+<tr><td>Die</td><td>96.6 × 107.32&nbsp;µm, area 10,367.1&nbsp;µm²</td></tr>
+<tr><td>Core</td><td>(5.520, 10.880)–(91.080, 95.200)&nbsp;µm, area 7,214.42&nbsp;µm², 31 unithd rows</td></tr>
+<tr><td>GPL</td><td><code>global_placement -density 0.573812 -routability_driven</code>; util 52.040%; overflow 0.8623 → 0.0990 in 397 iterations; HPWL 1,778.559 → 3,827.500&nbsp;µm; 16×16 bins 5.348 × 5.270&nbsp;µm; routability overflow 0, weighted congestion 0.8653</td></tr>
+<tr><td>repair_design</td><td>34 input + 1 output <code>clkdlybuf4s25_1</code>; 2 slew and 2 fanout violations; 25 buffers on 2 nets; margins 20% slew/cap</td></tr>
+<tr><td>Detailed placement</td><td>Displacement 0 at this step; HPWL 5,294.5 → legalized 5,583.9 → optimized 5,294.5&nbsp;µm</td></tr>
+<tr><td>Global route</td><td>met1–met5; total usage 15.60%, overflow 0; met2 31.54%; WL 10,695&nbsp;µm; 2,057 vias</td></tr>
+<tr><td>Detailed route</td><td>DRC 19 → 4 → 0; final WL 6,508&nbsp;µm (met1 2,524, met2 3,846, met3 29, met4 108, met5 0); 1,991 single-cut vias; longest net <code>net60</code> 173.355&nbsp;µm; antenna 0</td></tr>
+<tr><td>Fill / final util</td><td>803 fill cells, area 2,667.56&nbsp;µm²; 423 stdcells, area 4,546.86&nbsp;µm²; utilization 0.630246; 33 hold <code>dlygate4sd3_1</code>, 9 <code>clkbuf_16</code>, 64 <code>dfrtp_2</code></td></tr>
+<tr><td>Post-route STA</td><td>Worst setup 3.590931&nbsp;ns MET at max_ss; worst hold 0.253127&nbsp;ns MET at min_ff; WNS/TNS 0; slew/cap/fanout 0; see <a href="multicorner_sta.html">lesson 45</a></td></tr>
+<tr><td>GDS</td><td>Magic 702,348 bytes; KLayout 386,238 bytes</td></tr>
+<tr><td>Magic DRC</td><td><code>[INFO] COUNT: 0</code></td></tr>
+<tr><td>KLayout DRC</td><td>257 rules, every count 0; <code>klayout__drc_error__count: 0</code></td></tr>
+<tr><td>XOR</td><td>Total XOR differences: 0; <code>design__xor_difference__count: 0</code></td></tr>
+<tr><td>LVS</td><td>328 devices, 361 nets each side; “Circuits match uniquely.”</td></tr>
+<tr><td>IllegalOverlap</td><td>0</td></tr>
+<tr><td>Antenna</td><td>0 nets, 0 pins, 0 diodes — details in <a href="antenna.html">lesson 51</a></td></tr>
+<tr><td>Manufacturability</td><td>Antenna Passed, LVS Passed, DRC Passed</td></tr>
+</tbody>
+</table>
+
+<h2 id="section-4">4. Utilization sweep (30 / 45 / 60)</h2>
+<p>The comparison is discussed in <a href="placement.html">lesson 58</a> and <a href="routing_timing_closure.html">lesson 59</a>. The compact table, from <code>labs/analysis_examples/rtl_to_gds/utilization_sweep.json</code> and the three <code>metrics.json</code> files:</p>
+<table>
+<thead><tr><th>FP_CORE_UTIL</th><th>30</th><th>45</th><th>60</th></tr></thead>
+<tbody>
+<tr><td>Die area (µm²)</td><td>14,658.3</td><td>10,367.1</td><td>8,161.52</td></tr>
+<tr><td>GPL util / target density</td><td>34.540% / 0.42147</td><td>52.040% / 0.573812</td><td>69.349% / 0.722268</td></tr>
+<tr><td>GRT usage (met2)</td><td>11.71% (23.27%)</td><td>15.60% (31.54%)</td><td>24.70% (43.28%)</td></tr>
+<tr><td>DRT DRC iterations</td><td>43 → 16 → 0</td><td>19 → 4 → 0</td><td>95 → 15 → 21 → 0</td></tr>
+<tr><td>Final route DRC</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>DRT WL (µm)</td><td>6,613</td><td>6,508</td><td>7,613</td></tr>
+<tr><td>Longest net (µm)</td><td>185.66</td><td>173.355</td><td>139.72</td></tr>
+<tr><td>DRT vias</td><td>1,980</td><td>1,991</td><td>2,136</td></tr>
+<tr><td>Final instance util</td><td>0.424646</td><td>0.630246</td><td>0.825627</td></tr>
+<tr><td>GDS / Magic / KLayout / LVS</td><td>not run</td><td>all Passed</td><td>not run</td></tr>
+</tbody>
+</table>
+<p>45% is the shortest wirelength. 60% is the most congested and the only run whose DRC error count rose mid-loop, but it still closed. 30% and 60% were not taken through GDS, so no DRC/LVS claim is made for those two databases beyond the router’s own <code>route__drc_errors = 0</code>.</p>
+
+<h2 id="section-5">5. What to hand in</h2>
+<p>If you re-run the flow: the run tag, the resolved <code>FP_CORE_UTIL</code> and GPL <code>-density</code> line, the final <code>route__drc_errors</code> and <code>route__wirelength</code>, and — for a full run — the manufacturability report and the LVS “Final result” line. Compare your numbers with the tables above; a different LibreLane or PDK revision will not match to the last picosecond. State the versions. For a written discussion, explain why 45% wirelength was shorter than 30% on this netlist, using the die-size and congestion columns, as in lesson 58.</p>
+
+<p>Related lessons: <a href="placement.html">58. Placement</a>, <a href="routing_timing_closure.html">59. Routing</a>, <a href="multicorner_sta.html">45. Multi-corner STA</a>, <a href="physical_signoff.html">62. Physical signoff</a>.</p>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</main></body></html>

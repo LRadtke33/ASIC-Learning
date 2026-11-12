@@ -1,0 +1,477 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Flip-Flop From the Inside</title>
+<style>
+.legend {display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #33414f; margin: 8px 0 0;}
+.legend span {display: inline-flex; align-items: center; gap: 6px;}
+.sw {display: inline-block; width: 20px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.25);}
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 20 / 84 · Part III, Standard-cell layout</p><h1>A Flip-Flop From the Inside</h1>
+  <p class="subtitle">The teaching flip-flop from lesson 13, opened up, and the SkyWater cell beside it: 16 sites, 24 transistors.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Trace a master–slave flip-flop through its layout from left to right.</li><li>Read clock-phase generation and gated feedback in polygons.</li><li>Relate the teaching flop to SKY130’s <code>dfxtp_1</code>: 16 sites and 24 transistors.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Library design; the flip-flop’s timing is then used in every timing run from <a href="design_flow.html#step-3">step 3, synthesis</a> to <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>ngspice to simulate the flop; a characterization tool turns the results into the Liberty data that OpenSTA reads.</dd><dt>Why it matters</dt><dd>Flip-flops set clock-to-Q delay, setup and hold: the start and end of every timing path.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>. The schematic and polygon teaching figures are not a traced reconstruction of that SPICE topology. <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. The widest cell in the row</h2>
+  <p>The DFF_X1 in lesson 13 is an illustrative 11-site cell. Here its chosen topology contains two 8T inverting latches, 4T of clock generation and a 4T noninverting output buffer: <strong>24 transistors</strong>. A fixed row height encourages a wider layout, but neither gate count nor poly-finger count determines its site width. The actual SKY130 <code>dfxtp_1</code> discussed below uses a different 24-device netlist and occupies 16 sites.</p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — A conceptual noninverting flip-flop and transistor budget. Clock generation uses two inverters (4T). Each inverting latch has an input transmission gate (2T), forward inverter (2T), and gated feedback inverter (4T): 8T per latch. The two latch inversions cancel. A final noninverting buffer uses two more inverters (4T), for 24T total. The diagram is a teaching topology, not a transistor-for-transistor drawing of dfxtp_1."><rect x="78" y="52" width="190" height="190" fill="none" stroke="#c8d0d8" stroke-width="1.2" stroke-dasharray="6 4" rx="8"></rect><text x="173" y="44" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5c6b7a">master latch (8T)</text><rect x="292" y="52" width="190" height="190" fill="none" stroke="#c8d0d8" stroke-width="1.2" stroke-dasharray="6 4" rx="8"></rect><text x="387" y="44" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5c6b7a">slave latch (8T)</text><text x="30" y="114" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">D</text><line x1="40" y1="110" x2="92" y2="110" stroke="#33414f" stroke-width="2"></line><polygon points="92,99 92,121 114,110" fill="none" stroke="#33414f" stroke-width="1.6"></polygon><polygon points="114,99 114,121 92,110" fill="none" stroke="#33414f" stroke-width="1.6"></polygon><text x="103" y="93" text-anchor="middle" font-size="8.5" fill="#7a8794">clk = 0</text><rect x="88" y="127" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="103" y="139" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><line x1="114" y1="110" x2="152" y2="110" stroke="#33414f" stroke-width="2"></line><circle cx="133" cy="110" r="3" fill="#33414f"></circle><text x="133" y="98" text-anchor="middle" font-size="10" font-weight="700" fill="#a83232">m</text><polygon points="152,97 152,123 176,110" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="180.5" cy="110" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><rect x="149" y="127" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="164" y="139" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><line x1="185" y1="110" x2="306" y2="110" stroke="#33414f" stroke-width="2"></line><circle cx="246" cy="110" r="3" fill="#33414f"></circle><text x="246" y="98" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">mb</text><polygon points="306,99 306,121 328,110" fill="none" stroke="#33414f" stroke-width="1.6"></polygon><polygon points="328,99 328,121 306,110" fill="none" stroke="#33414f" stroke-width="1.6"></polygon><text x="317" y="93" text-anchor="middle" font-size="8.5" fill="#7a8794">clk = 1</text><rect x="302" y="127" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="317" y="139" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><line x1="328" y1="110" x2="366" y2="110" stroke="#33414f" stroke-width="2"></line><circle cx="347" cy="110" r="3" fill="#33414f"></circle><text x="347" y="98" text-anchor="middle" font-size="10" font-weight="700" fill="#a83232">s</text><polygon points="366,97 366,123 390,110" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="394.5" cy="110" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><rect x="363" y="127" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="378" y="139" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><line x1="399" y1="110" x2="520" y2="110" stroke="#33414f" stroke-width="2"></line><circle cx="460" cy="110" r="3" fill="#33414f"></circle><polygon points="520,97 520,123 544,110" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="548.5" cy="110" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="553" y1="110" x2="575" y2="110" stroke="#33414f" stroke-width="2"></line><polygon points="575,97 575,123 599,110" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="603.5" cy="110" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><text x="587" y="140" text-anchor="middle" font-size="9" fill="#7a8794">buffer</text><rect x="545" y="127" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="560" y="139" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">4T</text><line x1="608" y1="110" x2="654" y2="110" stroke="#33414f" stroke-width="2"></line><text x="668" y="114" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Q</text><line x1="246" y1="110" x2="246" y2="196" stroke="#33414f" stroke-width="2"></line><line x1="246" y1="196" x2="216" y2="196" stroke="#33414f" stroke-width="2"></line><polygon points="216,183 216,209 192,196" fill="#fdf3e7" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="187.5" cy="196" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="204" y1="189" x2="204" y2="176" stroke="#33414f" stroke-width="1.2"></line><text x="204" y="170" text-anchor="middle" font-size="8.5" fill="#7a8794">clk = 1</text><rect x="189" y="213" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="204" y="225" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">4T</text><line x1="188" y1="196" x2="133" y2="196" stroke="#33414f" stroke-width="2"></line><line x1="133" y1="196" x2="133" y2="110" stroke="#33414f" stroke-width="2"></line><line x1="460" y1="110" x2="460" y2="196" stroke="#33414f" stroke-width="2"></line><line x1="460" y1="196" x2="430" y2="196" stroke="#33414f" stroke-width="2"></line><polygon points="430,183 430,209 406,196" fill="#fdf3e7" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="401.5" cy="196" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="418" y1="189" x2="418" y2="176" stroke="#33414f" stroke-width="1.2"></line><text x="418" y="170" text-anchor="middle" font-size="8.5" fill="#7a8794">clk = 0</text><rect x="403" y="213" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="418" y="225" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">4T</text><line x1="402" y1="196" x2="347" y2="196" stroke="#33414f" stroke-width="2"></line><line x1="347" y1="196" x2="347" y2="110" stroke="#33414f" stroke-width="2"></line><text x="52" y="292" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">CK</text><line x1="66" y1="288" x2="96" y2="288" stroke="#33414f" stroke-width="2"></line><polygon points="96,275 96,301 120,288" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="124.5" cy="288" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="129" y1="288" x2="162" y2="288" stroke="#33414f" stroke-width="2"></line><text x="146" y="278" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">clk̄</text><polygon points="162,275 162,301 186,288" fill="#f2f5f9" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="190.5" cy="288" r="4.5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="195" y1="288" x2="224" y2="288" stroke="#33414f" stroke-width="2"></line><text x="212" y="278" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">clk</text><rect x="131" y="301" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="146" y="313" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><rect x="197" y="301" width="30" height="16" fill="#eef2f6" rx="4"></rect><text x="212" y="313" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5c6b7a">2T</text><text x="320" y="292" text-anchor="start" font-size="10" font-style="italic" fill="#7a8794">clock inverters — clk and clk̄ fan out to every t-gate and keeper</text><rect x="560" y="250" width="130" height="30" fill="#f2f7f2" stroke="#cfe3cf" rx="6"></rect><text x="625" y="269" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1e7e3e">24 transistors</text></svg></div>
+    <figcaption><strong>Figure 1 — A conceptual noninverting flip-flop and transistor budget.</strong> Clock generation uses two inverters (4T). Each inverting latch has an input transmission gate (2T), forward inverter (2T), and gated feedback inverter (4T): 8T per latch. The two latch inversions cancel. A final <em>noninverting</em> buffer uses two more inverters (4T), for 24T total. The diagram is a teaching topology, not a transistor-for-transistor drawing of dfxtp_1.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. The floorplan: a story told left to right</h2>
+  <p>A library designer floorplans the cell to control internal wire length, diffusion sharing, gate placement and access. Figure 2 is a conceptual zone map with an illustrative 11-site outline. Gate count does not determine site count: folding, diffusion breaks, tap strategy and local routing all contribute. The real dfxtp_1 below uses sixteen HD sites.</p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 700 345" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Conceptual cell zone map. Clock generation, master, slave and output stages are shown in a readable left-to-right order. Real layout may rearrange them to share diffusion and shorten nets. A gated keeper is disabled during writing; it need not always be overpowered. Output sizing depends on the required load and timing."><rect x="45.6" y="56.15" width="602.8000000000001" height="101.75000000000001" fill="#f3efce" stroke="#b5a642" stroke-width="1.2" stroke-dasharray="5 4"></rect><rect x="50" y="60" width="594" height="15.400000000000002" fill="#4a72c4" opacity="0.78"></rect><rect x="50" y="252.50000000000003" width="594" height="15.400000000000002" fill="#4a72c4" opacity="0.78"></rect><rect x="77.5" y="83.65" width="484.00000000000006" height="49.50000000000001" fill="#8fbf6f" opacity="0.8" stroke="#5e8f43"></rect><rect x="77.5" y="193.65" width="484.00000000000006" height="41.25" fill="#8fbf6f" opacity="0.8" stroke="#5e8f43"></rect><rect x="572.5" y="78.7" width="46.75000000000001" height="61.60000000000001" fill="#8fbf6f" opacity="0.8" stroke="#5e8f43"></rect><rect x="572.5" y="187.60000000000002" width="46.75000000000001" height="52.800000000000004" fill="#8fbf6f" opacity="0.8" stroke="#5e8f43"></rect><rect x="94.55000000000001" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="144.05" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="193.55" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="243.05" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="292.55" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="342.05" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="391.55" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="441.05" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="490.55" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="540.05" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="589.5500000000001" y="72.65" width="9.9" height="173.25" fill="#d95252" opacity="0.55"></rect><rect x="74.75" y="71" width="99.00000000000001" height="177.10000000000002" fill="#cfe3f7" opacity="0.45" stroke="#cfe3f7"></rect><line x1="124.25" y1="273.9" x2="124.25" y2="279.9" stroke="#98a4b0" stroke-width="1"></line><text x="124.25" y="289.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">clock invs</text><rect x="173.75" y="71" width="99.00000000000001" height="177.10000000000002" fill="#d7ecd0" opacity="0.45" stroke="#d7ecd0"></rect><line x1="223.25" y1="273.9" x2="223.25" y2="297.9" stroke="#98a4b0" stroke-width="1"></line><text x="223.25" y="307.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">input TG + master inv</text><rect x="272.75" y="71" width="99.00000000000001" height="177.10000000000002" fill="#f7ddc9" opacity="0.45" stroke="#f7ddc9"></rect><line x1="322.25" y1="273.9" x2="322.25" y2="279.9" stroke="#98a4b0" stroke-width="1"></line><text x="322.25" y="289.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">master keeper</text><rect x="371.75" y="71" width="99.00000000000001" height="177.10000000000002" fill="#f5efc5" opacity="0.45" stroke="#f5efc5"></rect><line x1="421.25000000000006" y1="273.9" x2="421.25000000000006" y2="297.9" stroke="#98a4b0" stroke-width="1"></line><text x="421.25000000000006" y="307.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">slave TG + inv</text><rect x="470.75000000000006" y="71" width="99.00000000000001" height="177.10000000000002" fill="#f2cfd8" opacity="0.45" stroke="#f2cfd8"></rect><line x1="520.25" y1="273.9" x2="520.25" y2="279.9" stroke="#98a4b0" stroke-width="1"></line><text x="520.25" y="289.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">slave keeper</text><rect x="569.75" y="71" width="49.50000000000001" height="177.10000000000002" fill="#e7d9f2" opacity="0.45" stroke="#e7d9f2"></rect><line x1="594.5" y1="273.9" x2="594.5" y2="297.9" stroke="#98a4b0" stroke-width="1"></line><text x="594.5" y="307.9" text-anchor="middle" font-size="10" font-weight="700" fill="#33414f">Q driver</text><rect x="50" y="60" width="594" height="207.9" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="6 4"></rect><rect x="172.10000000000002" y="155.15" width="19.8" height="16.5" fill="#4a72c4"></rect><text x="182" y="166.9" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">D</text><rect x="95.1" y="155.15" width="19.8" height="16.5" fill="#4a72c4"></rect><text x="105" y="166.9" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">CK</text><rect x="590.1" y="155.15" width="19.8" height="16.5" fill="#4a72c4"></rect><text x="600" y="166.9" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">Q</text><line x1="50" y1="267.9" x2="50" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="99.5" y1="267.9" x2="99.5" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="149" y1="267.9" x2="149" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="198.5" y1="267.9" x2="198.5" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="248.00000000000003" y1="267.9" x2="248.00000000000003" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="297.5" y1="267.9" x2="297.5" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="347" y1="267.9" x2="347" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="396.5" y1="267.9" x2="396.5" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="446.00000000000006" y1="267.9" x2="446.00000000000006" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="495.50000000000006" y1="267.9" x2="495.50000000000006" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="545" y1="267.9" x2="545" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="594.5" y1="267.9" x2="594.5" y2="273.9" stroke="#6b7683" stroke-width="1"></line><line x1="644" y1="267.9" x2="644" y2="273.9" stroke="#6b7683" stroke-width="1"></line><text x="347" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#33414f">Conceptual zones — signal flows left to right</text><text x="595.6" y="50" text-anchor="middle" font-size="8.5" fill="#2c4a1e">tallest diffusion ↓</text></svg></div>
+    <figcaption><strong>Figure 2 — Conceptual cell zone map.</strong> Clock generation, master, slave and output stages are shown in a readable left-to-right order. Real layout may rearrange them to share diffusion and shorten nets. A gated keeper is disabled during writing; it need not always be overpowered. Output sizing depends on the required load and timing.</figcaption>
+  </figure>
+
+  <h2 id="section-3">3. Under the microscope: the master latch in polygons</h2>
+  <p>
+    Here is the master latch — 8 of the 24 transistors — in the drawing style of lessons 16 and
+    18, with three things you haven't seen in polygons yet:
+  </p>
+  <ul>
+    <li><strong>Split fingers.</strong> In an inverter or NAND, one poly finger crosses both
+        diffusions because P and N share a gate signal. In a t-gate or tristate the P and N gates
+        carry <em>different</em> signals (clk vs clk̄), so the finger is split: an upper
+        half-finger over the p-diffusion and a lower one over the n-diffusion, each with its own
+        connection.</li>
+    <li><strong>Un-strapped diffusion.</strong> The t-gate's little diffusion segments touch no
+        rail — no VDD or VSS strap anywhere. That's lesson 12's netlist signature ("devices not
+        anchored to a supply"), now visible as geometry.</li>
+    <li><strong>An M2 hop in the conceptual drawing.</strong> Here mb uses a short M2 jumper to cross m’s M1. It consumes routing area and a spacing halo; the particular drawing places the vias on a nominal track. A real router may use other legal local access patterns. The actual dfxtp_1 abstract discussed below declares no M2 obstruction.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 740 520" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — The conceptual master latch. The drawing arranges an input transmission gate, forward inverter and gated feedback inverter around storage node m. The clock pads connect by name to the clock-generation stage. The picture explains topology; its polygon area, contact stack and M2 hop are not extracted SKY130 geometry. State is maintained by feedback, rather than by assigning a precise physical area to “the bit.”"><line x1="64.75" y1="38" x2="64.75" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="114.25" y1="38" x2="114.25" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="163.75" y1="38" x2="163.75" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="213.25" y1="38" x2="213.25" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="262.75" y1="38" x2="262.75" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="312.25" y1="38" x2="312.25" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="361.75" y1="38" x2="361.75" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="411.25000000000006" y1="38" x2="411.25000000000006" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="460.75000000000006" y1="38" x2="460.75000000000006" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><line x1="510.25000000000006" y1="38" x2="510.25000000000006" y2="496" stroke="#e0862e" stroke-width="0.8" stroke-dasharray="5 5"></line><text x="287.5" y="30" text-anchor="middle" font-size="9.5" fill="#e0862e">M2 routing tracks</text><rect x="29" y="22.299999999999997" width="517" height="203.50000000000003" fill="#f3efce" stroke="#b5a642" stroke-width="1.2" stroke-dasharray="5 4"></rect><rect x="40" y="30" width="495.00000000000006" height="30.800000000000004" fill="#4a72c4" opacity="0.78"></rect><rect x="40" y="415.00000000000006" width="495.00000000000006" height="30.800000000000004" fill="#4a72c4" opacity="0.78"></rect><text x="62" y="49.400000000000006" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">VDD</text><text x="62" y="434.40000000000003" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">VSS</text><rect x="56.5" y="77.30000000000001" width="127.60000000000001" height="99.00000000000001" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="56.5" y="297.3" width="127.60000000000001" height="82.5" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="225.9" y="77.30000000000001" width="292.6" height="99.00000000000001" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="225.9" y="297.3" width="292.6" height="82.5" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="111.5" y="55.3" width="22" height="176" fill="#d95252"></rect><rect x="111.5" y="242.3" width="22" height="159.5" fill="#d95252"></rect><rect x="194" y="55.3" width="22" height="346.5" fill="#d95252" opacity="0.45"></rect><rect x="276.5" y="55.3" width="22" height="346.5" fill="#d95252"></rect><rect x="359" y="55.3" width="22" height="346.5" fill="#d95252"></rect><rect x="441.50000000000006" y="55.3" width="22" height="176" fill="#d95252"></rect><rect x="441.50000000000006" y="242.3" width="22" height="159.5" fill="#d95252"></rect><rect x="102.7" y="175.20000000000002" width="39.6" height="39.6" fill="#d95252"></rect><rect x="102.7" y="258.8" width="39.6" height="39.6" fill="#d95252"></rect><rect x="269.9" y="175.20000000000002" width="39.6" height="81.4" fill="#d95252"></rect><rect x="350.20000000000005" y="217.00000000000003" width="39.6" height="81.4" fill="#d95252"></rect><rect x="432.70000000000005" y="135.60000000000002" width="39.6" height="39.6" fill="#d95252"></rect><rect x="432.70000000000005" y="258.8" width="39.6" height="39.6" fill="#d95252"></rect><rect x="68.6" y="82.80000000000001" width="30.800000000000004" height="297" fill="#4a72c4" opacity="0.78"></rect><rect x="147.8" y="82.80000000000001" width="30.800000000000004" height="297" fill="#4a72c4" opacity="0.78"></rect><rect x="147.8" y="179.60000000000002" width="169.4" height="30.800000000000004" fill="#4a72c4" opacity="0.78"></rect><rect x="230.3" y="82.80000000000001" width="42.900000000000006" height="88" fill="#4a72c4" opacity="0.78"></rect><rect x="230.3" y="258.8" width="42.900000000000006" height="121.00000000000001" fill="#4a72c4" opacity="0.78"></rect><rect x="230.3" y="263.20000000000005" width="159.5" height="30.800000000000004" fill="#4a72c4" opacity="0.78"></rect><rect x="312.8" y="30" width="30.800000000000004" height="140.8" fill="#4a72c4" opacity="0.78"></rect><rect x="312.8" y="302.8" width="30.800000000000004" height="143" fill="#4a72c4" opacity="0.78"></rect><rect x="477.8" y="82.80000000000001" width="37.400000000000006" height="297" fill="#4a72c4" opacity="0.78"></rect><rect x="317.20000000000005" y="179.60000000000002" width="198.00000000000003" height="30.800000000000004" fill="#4a72c4" opacity="0.78"></rect><rect x="255.60000000000002" y="154.3" width="14.3" height="126.50000000000001" fill="#e0862e"></rect><rect x="256.25" y="161" width="13" height="13" fill="#2c3540" stroke="#fff" stroke-width="1.2"></rect><rect x="256.25" y="268.8" width="13" height="13" fill="#2c3540" stroke="#fff" stroke-width="1.2"></rect><rect x="73" y="126.80000000000001" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="73" y="339.1" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="155.5" y="126.80000000000001" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="155.5" y="339.1" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="238.00000000000003" y="126.80000000000001" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="238.00000000000003" y="339.1" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="320.5" y="126.80000000000001" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="320.5" y="339.1" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="485.50000000000006" y="126.80000000000001" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="485.50000000000006" y="339.1" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="282" y="187.3" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><rect x="362.3" y="270.9" width="15.400000000000002" height="15.400000000000002" fill="#2c3540"></rect><text x="84" y="231.3" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">D</text><text x="163.20000000000002" y="231.3" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">m</text><text x="251.20000000000002" y="330.3" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">mb</text><text x="496.50000000000006" y="231.3" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">m</text><text x="122.5" y="201.60000000000002" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">clk</text><text x="122.5" y="285.20000000000005" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">clk̄</text><text x="452.50000000000006" y="162" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">clk̄</text><text x="452.50000000000006" y="285.20000000000005" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">clk</text><rect x="383.20000000000005" y="77.30000000000001" width="56.1" height="99.00000000000001" fill="none" stroke="#a83232" stroke-width="1.3" stroke-dasharray="4 3"></rect><rect x="383.20000000000005" y="297.3" width="56.1" height="82.5" fill="none" stroke="#a83232" stroke-width="1.3" stroke-dasharray="4 3"></rect><line x1="548" y1="70" x2="133.5" y2="115.80000000000001" stroke="#98a4b0" stroke-width="1"></line><circle cx="133.5" cy="115.80000000000001" r="2.5" fill="#98a4b0"></circle><text x="553" y="74" text-anchor="start" font-size="10.2" fill="#33414f">split finger: P gate = clk,</text><text x="553" y="87" text-anchor="start" font-size="10.2" fill="#33414f">N gate = clk̄ — a t-gate</text><line x1="548" y1="125" x2="172" y2="143.3" stroke="#98a4b0" stroke-width="1"></line><circle cx="172" cy="143.3" r="2.5" fill="#98a4b0"></circle><text x="553" y="129" text-anchor="start" font-size="10.2" fill="#33414f">t-gate diffusion touches no rail:</text><text x="553" y="142" text-anchor="start" font-size="10.2" fill="#33414f">lesson 12's signature, in polygons</text><line x1="548" y1="180" x2="205" y2="192.8" stroke="#98a4b0" stroke-width="1"></line><circle cx="205" cy="192.8" r="2.5" fill="#98a4b0"></circle><text x="553" y="184" text-anchor="start" font-size="10.2" fill="#33414f">dummy poly over the</text><text x="553" y="197" text-anchor="start" font-size="10.2" fill="#33414f">diffusion break (lesson 17)</text><line x1="548" y1="235" x2="172" y2="313.8" stroke="#98a4b0" stroke-width="1"></line><circle cx="172" cy="313.8" r="2.5" fill="#98a4b0"></circle><text x="553" y="239" text-anchor="start" font-size="10.2" fill="#33414f">storage node m — the bit</text><text x="553" y="252" text-anchor="start" font-size="10.2" fill="#33414f">physically lives here</text><line x1="548" y1="290" x2="266.6" y2="220.3" stroke="#98a4b0" stroke-width="1"></line><circle cx="266.6" cy="220.3" r="2.5" fill="#98a4b0"></circle><text x="553" y="294" text-anchor="start" font-size="10.2" fill="#33414f">mb hops over m on M2 —</text><text x="553" y="307" text-anchor="start" font-size="10.2" fill="#33414f">vias centered on a track,</text><text x="553" y="320" text-anchor="start" font-size="10.2" fill="#33414f">local routing area consumed</text><line x1="548" y1="355" x2="410.70000000000005" y2="126.80000000000001" stroke="#98a4b0" stroke-width="1"></line><circle cx="410.70000000000005" cy="126.80000000000001" r="2.5" fill="#98a4b0"></circle><text x="553" y="359" text-anchor="start" font-size="10.2" fill="#33414f">keeper tristate: buried nodes</text><text x="553" y="372" text-anchor="start" font-size="10.2" fill="#33414f">between the series gates (lesson 18)</text><line x1="548" y1="410" x2="452.50000000000006" y2="155.4" stroke="#98a4b0" stroke-width="1"></line><circle cx="452.50000000000006" cy="155.4" r="2.5" fill="#98a4b0"></circle><text x="553" y="414" text-anchor="start" font-size="10.2" fill="#33414f">clk / clk̄ pads connect by name</text><text x="553" y="427" text-anchor="start" font-size="10.2" fill="#33414f">to the clock zone (fig. 2)</text><text x="262.75" y="146.3" text-anchor="middle" font-size="9" font-weight="700" fill="#1e7e3e" paint-order="stroke" stroke="#fff" stroke-width="3">✓ on track</text></svg></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#8fbf6f"></span> diffusion</span>
+      <span><span class="sw" style="background:#d95252"></span> poly</span>
+      <span><span class="sw" style="background:#2c3540"></span> contact / via</span>
+      <span><span class="sw" style="background:#4a72c4;opacity:0.8"></span> M1</span>
+      <span><span class="sw" style="background:#e0862e"></span> M2</span>
+    </div>
+    <figcaption><strong>Figure 3 — The conceptual master latch.</strong> The drawing arranges an input transmission gate, forward inverter and gated feedback inverter around storage node m. The clock pads connect by name to the clock-generation stage. The picture explains topology; its polygon area, contact stack and M2 hop are not extracted SKY130 geometry. State is maintained by feedback, rather than by assigning a precise physical area to “the bit.”</figcaption>
+  </figure>
+
+  <h2 id="section-4">4. How to read a flop in the wild</h2>
+  <p>
+    Faced with a real DFF layout or netlist — often 25–30+ transistors once scan or reset
+    features appear — decode it in this order:
+  </p>
+  <ol>
+    <li><strong>Find the clock network.</strong> Trace every device controlled by the external clock and its derived phases. Some flip-flop architectures drive pass/clocked devices directly; do not assume the clock pin sees only inverters.</li>
+    <li>Look for pass devices and clocked stacks. Split gate fingers and signal-to-signal diffusion can be useful clues in this drawing, but confirm each device’s gates, sources, drains and body connections from the real views.</li>
+    <li>Find regenerative storage structures. The chosen master–slave topology has two gated feedback loops; pulsed or other flip-flop architectures need a different analysis.</li>
+    <li><strong>Follow D to Q in Figure 1:</strong> D → input t-gate → m → inverter → slave t-gate → s → inverter → noninverting output buffer → Q. Check the alternating latch phases and the total forward-path polarity.</li>
+    <li><strong>Identify the output stage.</strong> Its devices must drive the external Q load, but “biggest transistor” alone is not a reliable identification rule. Trace the Q net.</li>
+    </ol>
+  <p>Scan and reset functions can be implemented by adding input selection or altering latch/control devices, but the exact architecture varies. A scan cell need not use the illustrated 2:1 transmission-gate mux, and reset need not be a simple inverter-to-NAND/NOR substitution. Trace the selected cell’s netlist and use its characterized functional and timing models; see <a href="scan.html">lesson 40</a>.</p>
+
+<!-- sky130-cell -->
+  <h2 id="section-5">5. The library flip-flop is 16 sites and 24 transistors</h2>
+  <p><code>sky130_fd_sc_hd__dfxtp_1</code> is a positive-edge D flip-flop. Its checked LEF outline is 7.36 × 2.72 µm, or sixteen 0.46 µm sites, and its Liberty area is 20.0192 µm². Its SPICE netlist contains exactly 24 devices: twelve <code>pfet_01v8_hvt</code> and twelve <code>nfet_01v8</code>, all with drawn L = 0.15 µm. The teaching schematic also counts 24 devices, but its conceptual 11-site zone map is not a reconstruction of this cell.</p>
+  <p>
+    The output pair is the same device as <code>inv_1</code>: the PMOS that drives
+    Q is 1.0&nbsp;µm, the NMOS that drives Q is 0.65&nbsp;µm. Q's
+    <code>ANTENNADIFFAREA</code> is 0.429&nbsp;µm², the same number as
+    <code>inv_1</code> pin Y. The clock pair is smaller. The NMOS with its gate on
+    <code>CLK</code> is 0.42&nbsp;µm, and the PMOS with its gate on
+    <code>CLK</code> is 0.64&nbsp;µm. Section 2's picture, a bigger driver at Q
+    and a smaller clock stage, is what this netlist does. The keepers and the
+    pass devices are smaller still: several NMOS are 0.36&nbsp;µm.
+  </p>
+  <p>
+    Pins <code>D</code>, <code>CLK</code>, and <code>Q</code> are on <code>li1</code>.
+    <code>CLK</code> is marked <code>USE CLOCK</code>. The power rails are the same
+    0.48&nbsp;µm met1 stripes as the inverter, run across all 7.36&nbsp;µm.
+    Setup, hold, and clock-to-Q for this cell start in lesson 25. The full tables,
+    the slack arithmetic, and the minimum pulse width are
+    <a href="setup_hold.html">lesson 26</a>. At a 0.01&nbsp;ns
+    edge the falling-D setup is 0.103&nbsp;ns and the rising-D hold is −0.029&nbsp;ns.
+  </p>
+  <p>
+      PMOS widths, twelve devices: 0.42&nbsp;µm seven times, 0.75&nbsp;µm once,
+      1.0&nbsp;µm twice (one of those is the Q pull-up), 0.64&nbsp;µm twice
+      (one of those has its gate on <code>CLK</code>). NMOS widths, twelve devices:
+      0.65&nbsp;µm twice (one is the Q pull-down), 0.64&nbsp;µm once, 0.42&nbsp;µm
+      five times (one has its gate on <code>CLK</code>, one has its gate on
+      <code>D</code>), 0.36&nbsp;µm four times. The other input device on D is a
+      0.42&nbsp;µm PMOS.
+    </p>
+    <p>
+      Antenna areas check those gates. D is 0.126&nbsp;µm², and
+      (0.42 + 0.42) × 0.15 = 0.126. CLK is 0.159&nbsp;µm², and
+      (0.42 + 0.64) × 0.15 = 0.159. The LEF input antenna is the gate area of the
+      transistors that pin touches, the same identity as <code>inv_1</code>.
+    </p>
+    <p>
+      The <code>OBS</code> block is long, and it is only <code>li1</code>,
+      <code>mcon</code>, and <code>met1</code>. Six <code>mcon</code> cuts are
+      listed, plus met1 straps a few micrometers long. There is no
+      <code>met2</code> shape in the obstruction. Figure 3 uses a met2 hop to
+      teach the rule for a cell that needs one. This library cell's abstract does
+      not declare one. Pin caps at the typical corner: CLK 1.794&nbsp;fF, D 1.678&nbsp;fF.
+      Q <code>max_capacitance</code> is 0.162&nbsp;pF.
+    </p>
+  
+
+    <h2 id="section-6">6. The master is open while the clock is low</h2>
+  <p>In the usual rising-edge master–slave arrangement drawn here, the master is transparent during the clock’s low phase and the slave during its high phase. Those phases need not have equal duration. Around the rising transition, the master closes and the slave transfers the stored value, subject to the cell’s timing and clock-shape requirements.</p>
+  <p>That is the conceptual arrangement in section 1; it was not traced device by device from the SkyWater SPICE. The library specifies the external positive-edge behavior: Q takes the sampled D value after a finite clock-to-Q delay when setup, hold, clock pulse-width and other operating requirements are satisfied (<a href="setup_hold.html">lesson 26</a>).</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 214" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Which latch is transparent. Low clock: master open. High clock: slave open, and Q updates.">
+<text x="200" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#3b6fb0">CLK low</text>
+<text x="540" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#c0564a">CLK high</text>
+<rect x="60" y="50" width="150" height="50" rx="4" fill="#e7f0ea" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="135" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">master open</text>
+<rect x="230" y="50" width="150" height="50" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="2"></rect>
+<text x="305" y="80" text-anchor="middle" font-size="13" fill="#5c6b7a">slave shut</text>
+<rect x="420" y="50" width="120" height="50" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="2"></rect>
+<text x="480" y="80" text-anchor="middle" font-size="13" fill="#5c6b7a">master shut</text>
+<rect x="560" y="50" width="130" height="50" rx="4" fill="#e7f0ea" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="625" y="80" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">slave open</text>
+<line x1="135" y1="100" x2="135" y2="140" stroke="#33414f" stroke-width="1.5"></line>
+<line x1="135" y1="140" x2="625" y2="140" stroke="#33414f" stroke-width="1.5"></line>
+<text x="370" y="170" text-anchor="middle" font-size="13" fill="#33414f">Q changes after the rising edge, when the slave opens</text>
+<text x="370" y="196" text-anchor="middle" font-size="12" fill="#5c6b7a">Usual rising-edge arrangement. Lesson 26 is the wait around that edge.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 4 — Transparency in the illustrated positive-edge pair.</strong> The master is open in the low phase and the slave in the high phase. Q presents the sampled value after clock-to-Q delay when timing requirements are met; the diagram omits the finite transition interval.</figcaption>
+  </figure>
+
+<div class="table-scroll"><table><caption>Verified SKY130 HD dfxtp_1 · <a href="#sources">Sources</a></caption><thead><tr><th scope="col">Property</th><th scope="col">Checked value</th><th scope="col">Scope</th></tr></thead><tbody><tr><td>Outline / placement width</td><td>7.36 × 2.72 µm / 16 sites</td><td>HD LEF footprint</td></tr><tr><td>Device count</td><td>12 NMOS + 12 PMOS = 24</td><td>Actual SPICE netlist, not the teaching topology</td></tr><tr><td>Drawn length</td><td>0.15 µm for each device</td><td>Published wrapper geometry</td></tr><tr><td>Nominal D / CLK capacitance</td><td>1.678 / 1.794 fF</td><td>tt_025C_1v80 pin models</td></tr><tr><td>D / CLK / Q pin layer</td><td>li1</td><td>Pin-access abstract</td></tr><tr><td>OBS layers</td><td>li1, mcon, met1</td><td>No met2 obstruction declared</td></tr></tbody></table></div>
+
+<h2 id="worked-pushout">Worked example — setup pushout of <code>dfxtp_1</code>, from ngspice</h2>
+<p>When D arrives with plenty of setup, clock-to-Q is a constant. As D is walked toward the capturing edge, the master latch has less time to resolve, and clock-to-Q stretches — <em>pushout</em>. The curve below is an ngspice 44.2 transient sweep of the same published <code>sky130_fd_sc_hd__dfxtp_1</code> schematic netlist, models, 1.678 fF load (the Liberty D-pin capacitance, standing in for a following stage) and 20 ps 0-to-100% edges used in the metastability record of <a href="cdc_reset.html">lesson 39</a>. Conditions: tt, 25&nbsp;°C, 1.80&nbsp;V, 11 November 2026, America/Chicago. There are no layout parasitics. The offset is D 50% minus CLK 50% (0.90 V); both edges rise. Q starts at 0. Every point on this sweep captured (Q ended above 1.5 V).</p>
+<figure class="diagram" role="img" aria-label="Clock-to-Q of dfxtp_1 versus D-to-CLK offset, flat at 169 picoseconds then rising sharply near minus 30 picoseconds.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="330" fill="#fbfcfd"/>
+  <text x="80" y="24" font-size="15" font-weight="700" fill="#33414f">sky130_fd_sc_hd__dfxtp_1 clock-to-Q vs D–CLK offset</text>
+  <text x="80" y="42" font-size="12" fill="#5c6b7a">ngspice 44.2, tt 25 °C 1.80 V, schematic, 1.678 fF, 20 ps edges — recorded 11 November 2026</text>
+  <line x1="80" y1="260" x2="700" y2="260" stroke="#33414f" stroke-width="1.2"/>
+  <line x1="80" y1="50" x2="80" y2="260" stroke="#33414f" stroke-width="1.2"/>
+  <line x1="571.3" y1="50" x2="571.3" y2="260" stroke="#d7b56d" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <polyline fill="none" stroke="#2b6cb0" stroke-width="2" points="111.0,242.9 266.0,242.9 343.5,242.9 421.0,242.9 452.0,242.9 498.5,242.8 529.5,242.8 545.0,242.8 560.5,242.7 571.3,242.5 583.8,242.2 591.5,242.0 607.0,241.2 622.5,239.7 638.0,237.3 653.5,233.2 661.2,230.0 669.0,225.2 675.2,218.3 678.3,212.3 681.4,201.3 684.5,161.7 686.1,72.9"/>
+  <circle cx="111.0" cy="242.9" r="3" fill="#2b6cb0"/>
+<circle cx="266.0" cy="242.9" r="3" fill="#2b6cb0"/>
+<circle cx="343.5" cy="242.9" r="3" fill="#2b6cb0"/>
+<circle cx="421.0" cy="242.9" r="3" fill="#2b6cb0"/>
+<circle cx="452.0" cy="242.9" r="3" fill="#2b6cb0"/>
+<circle cx="498.5" cy="242.8" r="3" fill="#2b6cb0"/>
+<circle cx="529.5" cy="242.8" r="3" fill="#2b6cb0"/>
+<circle cx="545.0" cy="242.8" r="3" fill="#2b6cb0"/>
+<circle cx="560.5" cy="242.7" r="3" fill="#2b6cb0"/>
+<circle cx="571.3" cy="242.5" r="3" fill="#2b6cb0"/>
+<circle cx="583.8" cy="242.2" r="3" fill="#2b6cb0"/>
+<circle cx="591.5" cy="242.0" r="3" fill="#2b6cb0"/>
+<circle cx="607.0" cy="241.2" r="3" fill="#2b6cb0"/>
+<circle cx="622.5" cy="239.7" r="3" fill="#2b6cb0"/>
+<circle cx="638.0" cy="237.3" r="3" fill="#2b6cb0"/>
+<circle cx="653.5" cy="233.2" r="3" fill="#2b6cb0"/>
+<circle cx="661.2" cy="230.0" r="3" fill="#2b6cb0"/>
+<circle cx="669.0" cy="225.2" r="3" fill="#2b6cb0"/>
+<circle cx="675.2" cy="218.3" r="3" fill="#2b6cb0"/>
+<circle cx="678.3" cy="212.3" r="3" fill="#2b6cb0"/>
+<circle cx="681.4" cy="201.3" r="3" fill="#2b6cb0"/>
+<circle cx="684.5" cy="161.7" r="3" fill="#2b6cb0"/>
+<circle cx="686.1" cy="72.9" r="3" fill="#2b6cb0"/>
+
+  <line x1="111.0" y1="260" x2="111.0" y2="266" stroke="#7a8794"/><text x="111.0" y="280" text-anchor="middle" font-size="11" fill="#5c6b7a">-400</text><line x1="266.0" y1="260" x2="266.0" y2="266" stroke="#7a8794"/><text x="266.0" y="280" text-anchor="middle" font-size="11" fill="#5c6b7a">-300</text><line x1="421.0" y1="260" x2="421.0" y2="266" stroke="#7a8794"/><text x="421.0" y="280" text-anchor="middle" font-size="11" fill="#5c6b7a">-200</text><line x1="571.3" y1="260" x2="571.3" y2="266" stroke="#7a8794"/><text x="571.3" y="280" text-anchor="middle" font-size="11" fill="#b54708">−103</text><text x="571.3" y="294" text-anchor="middle" font-size="10" fill="#b54708">Liberty setup</text><line x1="653.5" y1="260" x2="653.5" y2="266" stroke="#7a8794"/><text x="653.5" y="280" text-anchor="middle" font-size="11" fill="#5c6b7a">-50</text><line x1="686.1" y1="260" x2="686.1" y2="266" stroke="#7a8794"/><text x="686.1" y="280" text-anchor="middle" font-size="11" fill="#5c6b7a">-29</text>
+  <line x1="74" y1="242.8" x2="80" y2="242.8" stroke="#7a8794"/><text x="70" y="242.8" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#5c6b7a">169</text><line x1="74" y1="202.7" x2="80" y2="202.7" stroke="#7a8794"/><text x="70" y="202.7" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#5c6b7a">190</text><line x1="74" y1="164.5" x2="80" y2="164.5" stroke="#7a8794"/><text x="70" y="164.5" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#5c6b7a">210</text><line x1="74" y1="126.4" x2="80" y2="126.4" stroke="#7a8794"/><text x="70" y="126.4" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#5c6b7a">230</text><line x1="74" y1="72.9" x2="80" y2="72.9" stroke="#7a8794"/><text x="70" y="72.9" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#5c6b7a">258</text>
+  <text x="390" y="318" text-anchor="middle" font-size="12" fill="#33414f">D 50% − CLK 50% (ps), more setup to the left</text>
+  <text x="18" y="155" text-anchor="middle" font-size="12" fill="#33414f" transform="rotate(-90 18 155)">clock-to-Q, 50% (ps)</text>
+  <text x="200" y="95" font-size="12" font-weight="600" fill="#1a365d">flat region: 169.0 ps</text>
+</svg>
+<figcaption><strong>Figure — Recorded pushout.</strong> From −400 to −150 ps the clock-to-Q is 168.95–168.99 ps (mean 168.97 ps). At the published Liberty setup of −103 ps it is 169.16 ps, 0.2 ps above that floor. Stretching is obvious from about −60 ps (171.88 ps) and is sharp by −30 ps (211.49 ps) and −29 ps (257.98 ps), still a captured 1. The Liberty 0.103 ns setup is a characterized library number under its own slew and load; this curve is a schematic typical-corner sweep and does not replace it. The last few picoseconds, into the metastable window at about −28.45 ps, are lesson 39.</figcaption>
+</figure>
+<table>
+<thead><tr><th>D−CLK (ps)</th><th>Clock-to-Q (ps)</th><th>Captured?</th></tr></thead>
+<tbody>
+<tr><td>-400</td><td>168.95</td><td>yes</td></tr>
+<tr><td>-200</td><td>168.98</td><td>yes</td></tr>
+<tr><td>-103</td><td>169.16</td><td>yes</td></tr>
+<tr><td>-80</td><td>169.87</td><td>yes</td></tr>
+<tr><td>-60</td><td>171.88</td><td>yes</td></tr>
+<tr><td>-50</td><td>174.03</td><td>yes</td></tr>
+<tr><td>-40</td><td>178.22</td><td>yes</td></tr>
+<tr><td>-36</td><td>181.82</td><td>yes</td></tr>
+<tr><td>-32</td><td>190.77</td><td>yes</td></tr>
+<tr><td>-30</td><td>211.49</td><td>yes</td></tr>
+<tr><td>-29</td><td>257.98</td><td>yes</td></tr>
+
+</tbody>
+</table>
+<p>The data and the decks’ recipe are in <code>labs/analysis_examples/pushout/</code>. The teaching use of the curve is: a path that “meets setup” with only a few tens of picoseconds to spare is already eating into clock-to-Q of the next path, even if Q still reaches a legal 1. That is why the library’s setup time is not the point at which the flop first fails to capture.</p>
+
+<details class="checkpoint"><summary>Worked checkpoint — How much clock-pin load does an eight-flop bank add?</summary><p>For eight identical <code>dfxtp_1</code> cells at the cited nominal corner, the summed clock-pin capacitance is <strong>8 × 1.794 = 14.352 fF</strong>. This excludes clock-wire capacitance, buffer inputs elsewhere on the branch and condition-dependent changes. Their unpadded placement outlines span <strong>8 × 7.36 = 58.88 µm</strong>, or 128 HD sites. Clock-tree design must account for both the physical distribution and the characterized electrical loads.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — in <code>dfxtp_1</code>, which latch is transparent while the clock is low, and when does Q change?</summary><p>The master is transparent while the clock is low, so it follows D; the slave holds the old value. At the rising edge the master closes and the slave opens, and Q takes the captured value after the clock-to-Q delay.</p></details><div class="takeaways">
+    <h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>The corrected teaching flip-flop uses two 8T inverting latches, 4T clock generation and a 4T noninverting output buffer: 24T. Many other flip-flop topologies and counts exist.</li>
+      <li>A fixed row height encourages lateral growth. The 11-site illustration is conceptual; gate/finger count is not equal to site count. The actual dfxtp_1 is 16 sites.</li>
+      <li>Big cells are floorplanned for routing and diffusion sharing. Gated feedback is disabled during write; strength ratios are topology-dependent.</li>
+      <li>New polygon patterns: split fingers where P and N gates carry different signals, and un-strapped diffusion marking t-gates.</li>
+      <li>Internal crossovers can use upper layers and consume routing capacity. The checked dfxtp_1 LEF has li1/mcon/met1 obstructions and no met2 obstruction.</li>
+      <li>The stored bit depends on physical storage nodes and regenerative feedback. Scan and reset versions may add a mux or alter feedback/control devices; check the actual cell topology and timing rather than assuming every variant shares one skeleton.</li>
+      <li><code>dfxtp_1</code> is 16 sites and 24 transistors. The Q pair matches <code>inv_1</code>. The LEF obstruction has no met2.</li>
+          <li>In the usual rising-edge pair the master is transparent while the clock is low and the slave is transparent while the clock is high.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-8">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.spice">DFXTP SPICE: 24 devices</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef">DFXTP LEF: 7.36×2.72 µm</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json">DFXTP nominal timing/constraint tables</a></li><li><a href="https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/cells/dfxtp/README.html">DFXTP functional definition</a></li>
+<li>Recorded setup-region clk-to-Q pushout: <code>labs/analysis_examples/pushout/</code> — ngspice 44.2, <code>sky130_fd_sc_hd__dfxtp_1</code>, course models, tt 25&nbsp;°C 1.80&nbsp;V, 1.678&nbsp;fF load, 20&nbsp;ps edges. Twenty-three offsets from −400&nbsp;ps to −29&nbsp;ps. This is a functional-offset sweep, not the femtosecond-scale metastability resolve of lesson 39, and it does not replace the Liberty setup of 0.103&nbsp;ns.</li></ul></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html" aria-current="page">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="pin_access.html"><small>← Previous</small>Pin Access &amp; Porosity</a><a href="loads.html"><small>Next →</small>Loads</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const NWELL = '#f3efce', NWELLB = '#b5a642', DIFF = '#8fbf6f', DIFFB = '#5e8f43',
+      POLY = '#d95252', CONT = '#2c3540', M1 = '#4a72c4', M2 = '#e0862e', DK = '#33414f',
+      HI = '#d9534f', LO = '#3b6fb0';
+
+const wr = (x1, y1, x2, y2, c, w, dash) =>
+  `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || DK}" stroke-width="${w || 2}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 11}" ${o.b ? 'font-weight="700"' : ''} ${o.i ? 'font-style="italic"' : ''} fill="${o.c || DK}">${t}</text>`;
+const rect = (x, y, w, h, fill, extra) =>
+  `<rect x="${x}" y="${y}" width="${w}" height="${h}" ${fill} ${extra || ''}/>`;
+const dt = (x, y) => `<circle cx="${x}" cy="${y}" r="3" fill="${DK}"/>`;
+
+// ---------- Figure 1: the circuit with transistor counts ----------
+(function () {
+  let s = `<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const Y = 110;
+  function inv(x, y, name) {
+    let t = `<polygon points="${x},${y - 13} ${x},${y + 13} ${x + 24},${y}" fill="#f2f5f9" stroke="${DK}" stroke-width="1.6"/>`;
+    t += `<circle cx="${x + 28.5}" cy="${y}" r="4.5" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+    if (name) t += txt(x + 12, y + 30, name, { s: 9, c: '#7a8794' });
+    return t;
+  }
+  function tg(x, y, phase) {
+    let t = `<polygon points="${x},${y - 11} ${x},${y + 11} ${x + 22},${y}" fill="none" stroke="${DK}" stroke-width="1.6"/>`;
+    t += `<polygon points="${x + 22},${y - 11} ${x + 22},${y + 11} ${x},${y}" fill="none" stroke="${DK}" stroke-width="1.6"/>`;
+    t += txt(x + 11, y - 17, phase, { s: 8.5, c: '#7a8794' });
+    return t;
+  }
+  function tri(x, y, phase) {  // tristate keeper, pointing left
+    let t = `<polygon points="${x + 24},${y - 13} ${x + 24},${y + 13} ${x},${y}" fill="#fdf3e7" stroke="${DK}" stroke-width="1.6"/>`;
+    t += `<circle cx="${x - 4.5}" cy="${y}" r="4.5" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+    t += wr(x + 12, y - 7, x + 12, y - 20, DK, 1.2);
+    t += txt(x + 12, y - 26, phase, { s: 8.5, c: '#7a8794' });
+    return t;
+  }
+  const badge = (x, y, n) => rect(x - 15, y - 11, 30, 16, `fill="#eef2f6"`, `rx="4"`) + txt(x, y + 1, n, { s: 9.5, b: 1, c: '#5c6b7a' });
+
+  // group boxes
+  s += rect(78, 52, 190, 190, `fill="none"`, `stroke="#c8d0d8" stroke-width="1.2" stroke-dasharray="6 4" rx="8"`);
+  s += txt(173, 44, 'master latch (8T)', { s: 10.5, b: 1, c: '#5c6b7a' });
+  s += rect(292, 52, 190, 190, `fill="none"`, `stroke="#c8d0d8" stroke-width="1.2" stroke-dasharray="6 4" rx="8"`);
+  s += txt(387, 44, 'slave latch (8T)', { s: 10.5, b: 1, c: '#5c6b7a' });
+
+  // main chain
+  s += txt(30, Y + 4, 'D', { b: 1, s: 13 });
+  s += wr(40, Y, 92, Y);
+  s += tg(92, Y, 'clk = 0') + badge(103, Y + 28, '2T');
+  s += wr(114, Y, 152, Y) + dt(133, Y) + txt(133, Y - 12, 'm', { s: 10, b: 1, c: '#a83232' });
+  s += inv(152, Y) + badge(164, Y + 28, '2T');
+  s += wr(185, Y, 306, Y) + dt(246, Y) + txt(246, Y - 12, 'mb', { s: 10, b: 1 });
+  s += tg(306, Y, 'clk = 1') + badge(317, Y + 28, '2T');
+  s += wr(328, Y, 366, Y) + dt(347, Y) + txt(347, Y - 12, 's', { s: 10, b: 1, c: '#a83232' });
+  s += inv(366, Y) + badge(378, Y + 28, '2T');
+  s += wr(399, Y, 520, Y) + dt(460, Y);
+  s += inv(520, Y) + wr(553,Y,575,Y) + inv(575,Y,'buffer') + badge(560,Y+28,'4T');
+  s += wr(608, Y, 654, Y);
+  s += txt(668, Y + 4, 'Q', { b: 1, s: 13 });
+
+  // master keeper loop: mb -> down -> tristate left -> up to m
+  s += wr(246, Y, 246, 196) + wr(246, 196, 216, 196);
+  s += tri(192, 196, 'clk = 1') + badge(204, 224, '4T');
+  s += wr(188, 196, 133, 196) + wr(133, 196, 133, Y);
+  // slave keeper loop: q_int (460) -> down -> tristate left -> up to s
+  s += wr(460, Y, 460, 196) + wr(460, 196, 430, 196);
+  s += tri(406, 196, 'clk = 0') + badge(418, 224, '4T');
+  s += wr(402, 196, 347, 196) + wr(347, 196, 347, Y);
+
+  // clock generation
+  s += txt(52, 292, 'CK', { b: 1, s: 12 });
+  s += wr(66, 288, 96, 288);
+  s += inv(96, 288) + wr(129, 288, 162, 288);
+  s += txt(146, 278, 'clk&#772;', { s: 10, b: 1 });
+  s += inv(162, 288) + wr(195, 288, 224, 288);
+  s += txt(212, 278, 'clk', { s: 10, b: 1 });
+  s += badge(146, 312, '2T') + badge(212, 312, '2T');
+  s += txt(320, 292, 'clock inverters — clk and clk&#772; fan out to every t-gate and keeper', { a: 'start', s: 10, c: '#7a8794', i: 1 });
+
+  s += rect(560, 250, 130, 30, `fill="#f2f7f2"`, `stroke="#cfe3cf" rx="6"`);
+  s += txt(625, 269, '24 transistors', { s: 11.5, b: 1, c: '#1e7e3e' });
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: zone map of the whole cell ----------
+(function () {
+  const k = 0.55, ox = 50, MT = 60, CWc = 1080, CHc = 378;
+  const fx = x => ox + x * k;
+  const fy = (y, h) => MT + (CHc - y - h) * k;
+  const r = (x, y, w, h, fill, extra) =>
+    `<rect x="${fx(x)}" y="${fy(y, h)}" width="${w * k}" height="${h * k}" ${fill} ${extra || ''}/>`;
+  let s = `<svg viewBox="0 0 700 345" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // template
+  s += r(-8, 200, CWc + 16, 185, `fill="${NWELL}"`, `stroke="${NWELLB}" stroke-width="1.2" stroke-dasharray="5 4"`);
+  s += r(0, 350, CWc, 28, `fill="${M1}" opacity="0.78"`);
+  s += r(0, 0, CWc, 28, `fill="${M1}" opacity="0.78"`);
+  // diffusion strips (Q driver zone taller)
+  s += r(50, 245, 880, 90, `fill="${DIFF}" opacity="0.8"`, `stroke="${DIFFB}"`);
+  s += r(50, 60, 880, 75, `fill="${DIFF}" opacity="0.8"`, `stroke="${DIFFB}"`);
+  s += r(950, 232, 85, 112, `fill="${DIFF}" opacity="0.8"`, `stroke="${DIFFB}"`);
+  s += r(950, 50, 85, 96, `fill="${DIFF}" opacity="0.8"`, `stroke="${DIFFB}"`);
+  // poly fingers
+  for (let i = 0; i < 11; i++)
+    s += r(90 * (i + 1) - 9, 40, 18, 315, `fill="${POLY}" opacity="0.55"`);
+  // zones
+  const zones = [
+    [45, 180, '#cfe3f7', 'clock invs'],
+    [225, 180, '#d7ecd0', 'input TG + master inv'],
+    [405, 180, '#f7ddc9', 'master keeper'],
+    [585, 180, '#f5efc5', 'slave TG + inv'],
+    [765, 180, '#f2cfd8', 'slave keeper'],
+    [945, 90, '#e7d9f2', 'Q driver'],
+  ];
+  zones.forEach(([zx, zw, col, name], i) => {
+    s += r(zx, 36, zw, 322, `fill="${col}" opacity="0.45"`, `stroke="${col}"`);
+    const tx = fx(zx + zw / 2), ty = MT + CHc * k + (i % 2 ? 40 : 22);
+    s += wr(tx, MT + CHc * k + 6, tx, ty - 10, '#98a4b0', 1);
+    s += txt(tx, ty, name, { s: 10, b: 1 });
+  });
+  // cell boundary + pins
+  s += `<rect x="${fx(0)}" y="${fy(0, CHc)}" width="${CWc * k}" height="${CHc * k}" fill="none" stroke="#6b7683" stroke-width="1.2" stroke-dasharray="6 4"/>`;
+  for (const [px, name] of [[240, 'D'], [100, 'CK'], [1000, 'Q']]) {
+    s += r(px - 18, 175, 36, 30, `fill="${M1}"`);
+    s += txt(fx(px), fy(190, 0) + 3.5, name, { s: 9.5, b: 1, c: '#fff' });
+  }
+  // site ticks
+  for (let i = 0; i <= 12; i++)
+    s += wr(fx(i * 90), MT + CHc * k, fx(i * 90), MT + CHc * k + 6, '#6b7683', 1);
+  s += txt(fx(540), 30, 'Conceptual zones — signal flows left to right', { s: 11, b: 1 });
+  s += txt(fx(992), 50, 'tallest diffusion ↓', { s: 8.5, c: '#2c4a1e' });
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: the master latch in polygons ----------
+(function () {
+  const k = 1.1, ox = 40, MT = 30;
+  const fx = x => ox + x * k;
+  const fy = (y, h) => MT + (378 - y - h) * k;
+  const r = (x, y, w, h, fill, extra) =>
+    `<rect x="${fx(x)}" y="${fy(y, h)}" width="${w * k}" height="${h * k}" ${fill} ${extra || ''}/>`;
+  let s = `<svg viewBox="0 0 740 520" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  // M2 tracks for context
+  for (let t = 22.5; t <= 427.5; t += 45)
+    s += wr(fx(t), 38, fx(t), 496, M2, 0.8, '5 5') ;
+  s += txt(fx(225), 30, 'M2 routing tracks', { s: 9.5, c: M2 });
+
+  // n-well + rails
+  s += r(-10, 200, 470, 185, `fill="${NWELL}"`, `stroke="${NWELLB}" stroke-width="1.2" stroke-dasharray="5 4"`);
+  s += r(0, 350, 450, 28, `fill="${M1}" opacity="0.78"`);
+  s += r(0, 0, 450, 28, `fill="${M1}" opacity="0.78"`);
+  s += txt(fx(20), fy(364, 0) + 4, 'VDD', { s: 9.5, b: 1, c: '#fff' });
+  s += txt(fx(20), fy(14, 0) + 4, 'VSS', { s: 9.5, b: 1, c: '#fff' });
+
+  // diffusion: segment A (t-gate, un-strapped) + break + segment B
+  s += r(15, 245, 116, 90, `fill="${DIFF}"`, `stroke="${DIFFB}"`);
+  s += r(15, 60, 116, 75, `fill="${DIFF}"`, `stroke="${DIFFB}"`);
+  s += r(169, 245, 266, 90, `fill="${DIFF}"`, `stroke="${DIFFB}"`);
+  s += r(169, 60, 266, 75, `fill="${DIFF}"`, `stroke="${DIFFB}"`);
+
+  // poly: f1 split (t-gate), f2 dummy, f3 full (m), f4 full (mb), f5 split (keeper enables)
+  s += r(65, 195, 20, 160, `fill="${POLY}"`);                       // f1 upper (gate clk)
+  s += r(65, 40, 20, 145, `fill="${POLY}"`);                        // f1 lower (gate clkb)
+  s += r(140, 40, 20, 315, `fill="${POLY}" opacity="0.45"`);        // f2 dummy
+  s += r(215, 40, 20, 315, `fill="${POLY}"`);                       // f3 (gate m)
+  s += r(290, 40, 20, 315, `fill="${POLY}"`);                       // f4 (gate mb)
+  s += r(365, 195, 20, 160, `fill="${POLY}"`);                      // f5 upper (clkb): keeper on for CLK high
+  s += r(365, 40, 20, 145, `fill="${POLY}"`);                       // f5 lower (clk): keeper on for CLK high
+  // poly pads
+  s += r(57, 210, 36, 36, `fill="${POLY}"`);                        // f1 clk pad
+  s += r(57, 134, 36, 36, `fill="${POLY}"`);                        // f1 clkb pad
+  s += r(209, 172, 36, 74, `fill="${POLY}"`);                       // f3 pad (m)
+  s += r(282, 134, 36, 74, `fill="${POLY}"`);                       // f4 pad (mb)
+  s += r(357, 246, 36, 36, `fill="${POLY}"`);                       // f5 clk pad
+  s += r(357, 134, 36, 36, `fill="${POLY}"`);                       // f5 clkb pad
+
+  // M1
+  s += r(26, 60, 28, 270, `fill="${M1}" opacity="0.78"`);           // D strap
+  s += r(98, 60, 28, 270, `fill="${M1}" opacity="0.78"`);           // m strap (c1) — the storage node
+  s += r(98, 214, 154, 28, `fill="${M1}" opacity="0.78"`);          // m horizontal to f3 pad
+  s += r(173, 250, 39, 80, `fill="${M1}" opacity="0.78"`);          // mb top strap (pdiff drain)
+  s += r(173, 60, 39, 110, `fill="${M1}" opacity="0.78"`);          // mb bottom strap
+  s += r(173, 138, 145, 28, `fill="${M1}" opacity="0.78"`);         // mb horizontal to f4 pad
+  s += r(248, 250, 28, 128, `fill="${M1}" opacity="0.78"`);         // VDD strap (c3)
+  s += r(248, 0, 28, 130, `fill="${M1}" opacity="0.78"`);           // VSS strap (c3)
+  s += r(398, 60, 34, 270, `fill="${M1}" opacity="0.78"`);          // keeper output back to m (c4)
+  s += r(252, 214, 180, 28, `fill="${M1}" opacity="0.78"`);         // m continues over f4/f5 poly to c4
+
+  // M2 jumper: mb hops over m's M1, on track x = 202.5
+  s += r(196, 150, 13, 115, `fill="${M2}"`);
+  for (const vy of [253, 155])
+    s += `<rect x="${fx(202.5) - 6.5}" y="${fy(vy, 0) - 6.5}" width="13" height="13" fill="${CONT}" stroke="#fff" stroke-width="1.2"/>`;
+
+  // contacts (diffusion columns c0,c1,c2,c3,c4 + poly)
+  for (const cx of [37, 112, 187, 262, 412]) {
+    s += r(cx - 7, 276, 14, 14, `fill="${CONT}"`);
+    s += r(cx - 7, 83, 14, 14, `fill="${CONT}"`);
+  }
+  s += r(220, 221, 14, 14, `fill="${CONT}"`);                       // f3 pad ← m
+  s += r(293, 145, 14, 14, `fill="${CONT}"`);                       // f4 pad ← mb
+
+  // labels
+  s += txt(fx(40), fy(195, 0), 'D', { s: 11, b: 1, c: '#fff' });
+  s += txt(fx(112), fy(195, 0), 'm', { s: 11, b: 1, c: '#fff' });
+  s += txt(fx(192), fy(105, 0), 'mb', { s: 10, b: 1, c: '#fff' });
+  s += txt(fx(415), fy(195, 0), 'm', { s: 11, b: 1, c: '#fff' });
+  s += txt(fx(75), fy(222, 0), 'clk', { s: 9, b: 1, c: '#fff' });
+  s += txt(fx(75), fy(146, 0), 'clk&#772;', { s: 9, b: 1, c: '#fff' });
+  s += txt(fx(375), fy(258, 0), 'clk&#772;', { s: 9, b: 1, c: '#fff' });
+  s += txt(fx(375), fy(146, 0), 'clk', { s: 9, b: 1, c: '#fff' });
+  // buried node highlight
+  s += r(312, 245, 51, 90, `fill="none"`, `stroke="#a83232" stroke-width="1.3" stroke-dasharray="4 3"`);
+  s += r(312, 60, 51, 75, `fill="none"`, `stroke="#a83232" stroke-width="1.3" stroke-dasharray="4 3"`);
+
+  // annotations, right side
+  const notes = [
+    [70,  ['split finger: P gate = clk,', 'N gate = clk&#772; — a t-gate'],        fx(85), fy(300, 0)],
+    [125, ['t-gate diffusion touches no rail:', 'lesson 12&#39;s signature, in polygons'], fx(120), fy(275, 0)],
+    [180, ['dummy poly over the', 'diffusion break (lesson 17)'],                   fx(150), fy(230, 0)],
+    [235, ['storage node m — the bit', 'physically lives here'],                   fx(120), fy(120, 0)],
+    [290, ['mb hops over m on M2 —', 'vias centered on a track,', 'local routing area consumed'], fx(206), fy(205, 0)],
+    [355, ['keeper tristate: buried nodes', 'between the series gates (lesson 18)'], fx(337), fy(290, 0)],
+    [410, ['clk / clk&#772; pads connect by name', 'to the clock zone (fig. 2)'],  fx(375), fy(264, 0)],
+  ];
+  for (const [ny, lines, tx2, ty2] of notes) {
+    s += wr(548, ny, tx2, ty2, '#98a4b0', 1);
+    s += `<circle cx="${tx2}" cy="${ty2}" r="2.5" fill="#98a4b0"/>`;
+    lines.forEach((t2, i) => { s += txt(553, ny + 4 + i * 13, t2, { a: 'start', s: 10.2 }); });
+  }
+  s += `<text x="${fx(202.5)}" y="${fy(265, 0) - 8}" text-anchor="middle" font-size="9" font-weight="700" fill="#1e7e3e" paint-order="stroke" stroke="#fff" stroke-width="3">✓ on track</text>`;
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

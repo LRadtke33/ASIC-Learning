@@ -1,0 +1,247 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electromigration</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 30 / 84 · Part IV, Loads, timing and interconnect</p><h1>Electromigration</h1>
+  <p class="subtitle">How current, geometry, temperature, and time affect a wire’s lifetime. The published routing-LEF limits are an example of a reliability check, separate from voltage drop.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The limits are the <code>DCCURRENTDENSITY</code> and <code>ACCURRENTDENSITY</code> lines in <code>sky130_fd_sc_hd.tlef</code>. Each comment says the number is at a junction temperature of 90°C. The <code>UNITS</code> block has no current unit. The source comments explicitly identify mA per micrometer of width, or mA per via. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">[pinned technology LEF]</a> These 90°C entries are not a complete reliability deck for arbitrary temperatures or product lifetimes.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Apply current-density limits per micrometer of width, separately for average and RMS current.</li><li>Keep electromigration, voltage drop and metal-density rules distinct.</li><li>Use Black’s equation to reason about how lifetime depends on current density and temperature.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Power-grid design in <a href="design_flow.html#step-4">step 4, floorplan and power grid</a>, and current checks at signoff in <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>OpenROAD’s <code>analyze_power_grid -enable_em</code> reports the current in each grid segment. Commercial signoff: Voltus, RedHawk.</dd><dt>Why it matters</dt><dd>A wire that passes every timing check can still wear out within the product’s lifetime.</dd></dl></aside><h2 id="section-1">1. The limit is current per width, not current alone</h2>
+  <p>
+    Electromigration is metal atoms drifting under a flow of electrons until the wire
+    opens or a neighbor shorts. The underlying stress is current density through the conductor cross-section.
+    Because a layer has a nominal thickness, this LEF expresses a limit per unit <em>width</em>.
+    For identical cuts with equal current sharing, two parallel vias have twice the tabulated
+    single-cut budget. Real arrays can share unequally, especially near a narrow feed or corner.
+  </p>
+  <p>
+    met1 and met2 are both <code>AVERAGE 2.8</code> mA/µm and <code>RMS 6.1</code>
+    mA/µm. Minimum width is 0.14&nbsp;µm, so a minimum wire is allowed
+    0.14 × 2.8 = 0.39&nbsp;mA average, and 0.14 × 6.1 = 0.85&nbsp;mA RMS.
+    The standard-cell rail is the same metal, drawn 0.48&nbsp;µm tall
+    (<a href="cell_template.html">lesson 17</a>). Its average budget is
+    0.48 × 2.8 = 1.344&nbsp;mA. Its RMS budget is 0.48 × 6.1 = 2.928&nbsp;mA.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Three conductors, three budgets, all at 90°C.
+      Minimum met1, the 0.48&nbsp;µm cell rail, and one met1-to-met2 via.
+      The via number is per cut. Five of those vias add up to 1.45&nbsp;mA, which
+      covers the rail's 1.344&nbsp;mA average only in an ideal equal-sharing calculation.
+      Geometry, current crowding, and the actual reliability rules still need checking."><rect x="50" y="130" width="120" height="20" fill="#4a72c4" opacity="0.85"></rect><text x="110" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">met1, 0.14 µm</text><text x="110" y="192" text-anchor="middle" font-size="12" fill="#5c6b7a">0.39 mA avg</text><rect x="270" y="83" width="120" height="67" fill="#d9534f" opacity="0.85"></rect><text x="330" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">rail, 0.48 µm</text><text x="330" y="192" text-anchor="middle" font-size="12" fill="#5c6b7a">1.344 mA avg</text><rect x="530" y="122" width="28" height="28" fill="#2c3540"></rect><text x="544" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">one via</text><text x="544" y="192" text-anchor="middle" font-size="12" fill="#5c6b7a">0.29 mA</text><text x="370" y="36" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">average current at 90°C</text><text x="370" y="58" text-anchor="middle" font-size="12" fill="#5c6b7a">metal bar height is the drawn width</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Three conductors, three budgets, all at 90°C.</strong>
+      Minimum met1, the 0.48&nbsp;µm cell rail, and one met1-to-met2 via.
+      The via number is per cut. Five of those vias add up to 1.45&nbsp;mA, which
+      covers the rail's 1.344&nbsp;mA average only in an ideal equal-sharing calculation.
+      Geometry, current crowding, and the actual reliability rules still need checking.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Average and RMS are two different checks</h2>
+  <p>
+    <code>DCCURRENTDENSITY AVERAGE</code> is the long-term current, the one that
+    walks metal down the wire over years. A capacitive signal wire has charging and discharging pulses of opposite sign.
+    Logic duty cycle alone does not specify those currents. A nearly zero signed average
+    does not establish reliability: use the foundry’s treatment of each direction, duty cycle,
+    recovery, and self-heating.
+    Heating follows the square of the current, so the file also gives
+    <code>ACCURRENTDENSITY RMS</code> on the routing metals. RMS is larger than the
+    average on every metal in this file: 6.1 against 2.8 on met1, 14.9 against 6.8
+    on met3 and met4, 22.34 against 10.17 on met5.
+  </p>
+  <p>
+    A signal net can pass the average check and fail the RMS check. A DC bias current
+    does the opposite kind of harm: the average is the whole current, so the average
+    limit is the one that binds. The via layers in this file publish only the average.
+    There is no RMS number on <code>mcon</code>, <code>via</code>, <code>via2</code>,
+    <code>via3</code>, or <code>via4</code>, and there is no peak-current line on any layer.
+  </p>
+
+  <p>
+      The full set, copied from the layer each statement sits on. "On a minimum wire"
+      multiplies the per-micrometer limit by that layer's <code>WIDTH</code>. Via rows
+      are already per cut, so that column repeats the limit.
+    </p>
+    <table>
+      <tbody><tr>
+        <th>Layer</th><th>What it connects</th><th>Average</th><th>RMS</th>
+        <th>On a minimum wire</th>
+      </tr>
+      <tr><td>mcon</td><td>li1 to met1</td><td>0.36 mA/via</td><td>—</td><td>0.36 mA</td></tr>
+      <tr class="active"><td>met1</td><td>horizontal metal</td><td>2.8 mA/µm</td><td>6.1 mA/µm</td><td>0.39 / 0.85 mA</td></tr>
+      <tr><td>via</td><td>met1 to met2</td><td>0.29 mA/via</td><td>—</td><td>0.29 mA</td></tr>
+      <tr><td>met2</td><td>vertical metal</td><td>2.8 mA/µm</td><td>6.1 mA/µm</td><td>0.39 / 0.85 mA</td></tr>
+      <tr><td>via2</td><td>met2 to met3</td><td>0.48 mA/via</td><td>—</td><td>0.48 mA</td></tr>
+      <tr><td>met3</td><td>horizontal metal</td><td>6.8 mA/µm</td><td>14.9 mA/µm</td><td>2.04 / 4.47 mA</td></tr>
+      <tr><td>via3</td><td>met3 to met4</td><td>0.48 mA/via</td><td>—</td><td>0.48 mA</td></tr>
+      <tr><td>met4</td><td>vertical metal</td><td>6.8 mA/µm</td><td>14.9 mA/µm</td><td>2.04 / 4.47 mA</td></tr>
+      <tr><td>via4</td><td>met4 to met5</td><td>2.49 mA/via</td><td>—</td><td>2.49 mA</td></tr>
+      <tr><td>met5</td><td>horizontal metal</td><td>10.17 mA/µm</td><td>22.34 mA/µm</td><td>16.3 / 35.7 mA</td></tr>
+    </tbody></table>
+    <p>
+      met3 is allowed more current per micrometer than met1, and it is also drawn
+      wider (0.30&nbsp;µm against 0.14&nbsp;µm), so a minimum met3 wire carries about
+      five times the average current of a minimum met1 wire. met5's minimum width
+      is 1.6&nbsp;µm, which is why 10.17&nbsp;mA/µm becomes 16.3&nbsp;mA on a minimum wire.
+      None of these have been scaled away from 90°C. The file does not give a second
+      temperature.
+    </p>
+  
+
+
+  <h2 id="section-3">3. The cell rail is one shared stripe</h2>
+  <p>
+    Every high-density cell draws the met1 ground rail from y = −0.24&nbsp;µm to
+    y = 0.24&nbsp;µm, and the power rail from y = 2.48&nbsp;µm to y = 2.96&nbsp;µm.
+    Both rectangles are 0.48&nbsp;µm tall, centered on the row boundary. The flipped
+    row next door draws the same rectangle on that shared edge. The two drawings
+    occupy one stripe. The current limit is the limit of that one 0.48&nbsp;µm stripe,
+    1.344&nbsp;mA average.
+  </p>
+  <p>
+    The via that feeds the stripe is often the tighter object. One <code>via</code>
+    (met1 to met2) is 0.29&nbsp;mA average. The rail's 1.344&nbsp;mA needs
+    1.344 / 0.29 = 4.6 of them, so an ideal minimum of five equally loaded cuts, totaling 1.45&nbsp;mA. The cut from
+    local interconnect up to the rail is a different via, <code>mcon</code>, at
+    0.36&nbsp;mA. A single contact inside a cell is not the rail's budget, and the
+    rail's budget is not a license for one contact to carry 1.34&nbsp;mA.
+  </p>
+
+  <p>
+      <code>via</code> width in the same file is 0.15&nbsp;µm and the spacing is
+      0.17&nbsp;µm, so neighboring cuts want about 0.32&nbsp;µm center to center.
+      Five cuts in a row are a couple of micrometers of rail, before enclosure.
+      That is only a count of current. It is not a via array from the design manual,
+      and it says nothing about the grid the strap has to hit
+      (<a href="power_grid.html">lesson 14</a>).
+    </p>
+    <p>
+      RMS on the same rail is 2.93&nbsp;mA. A clocked rail current that averages
+      1.0&nbsp;mA can still fail RMS if the pulses are tall. Average and RMS both
+      have to be computed from the current waveform. The LEF does not do that
+      arithmetic. It only publishes the two ceilings.
+    </p>
+  
+
+
+  <h2 id="section-4">4. This is not IR drop, and it is not the density rule</h2>
+  <p>IR drop is about voltage: current times resistance (<a href="parasitics.html">lesson 28</a>) tells you how many millivolts the far end of a power wire has lost. Electromigration is about lifetime. A short, narrow wire can lose almost no voltage, because it has almost no resistance, and still exceed the current-per-micrometer limit; a long, wide wire can do the reverse, with a legal current density and too little voltage at its far end. Fixing one does not automatically fix the other. Widening a wire helps both, while shortening it reduces only the voltage drop: the width-only LEF calculation gives no extra current budget for a short wire, although a process-qualified short-wire (Blech) rule may.</p>
+  <p>
+    met1 through met4 also carry <code>MAXIMUMDENSITY 70</code>, checked in a
+    window of 700&nbsp;µm by 700&nbsp;µm, stepping 70&nbsp;µm. That caps how much of
+    the window may be covered by the layer. It is a fill rule, a maximum of 70%, not
+    a current. This file does not put that line on <code>li1</code>, on any via, or
+    on met5. It also does not publish a minimum density. Do not read 70% as
+    "fill until you reach 70." Metal fill, as distinct from cell fill, is
+    <a href="metal_fill.html">lesson 61</a>.
+  </p>
+
+  <h2 id="section-5">5. The routing LEF gives no li1 current limit</h2>
+  <p>
+    <code>li1</code> is the resistive layer, 71.8&nbsp;Ω/µm
+    (<a href="parasitics.html">lesson 28</a>). It is the layer a person most wants
+    a current limit for, and the tech LEF used here does not have a
+    <code>DCCURRENTDENSITY</code> line on it. The metals and the vias above do.
+    A number borrowed from another process, or from a slide that says it was scaled
+    from somewhere else, is not this limit. If a design needs a local-interconnect
+    current limit, it has to come from a source this file is not.
+  </p>
+
+    <h2 id="section-6">6. Black's equation is the lifetime model</h2>
+  <p>
+    A common empirical form of Black’s lifetime model for the mean time to failure (MTTF) is <code>MTTF = A j<sup>−n</sup> exp(E<sub>a</sub> / kT)</code>. <code>j</code> is current density. <code>T</code> is absolute temperature. <code>A</code>, <code>n</code>, and <code>Ea</code> are fit to the process. This tech LEF does not publish those fit parameters. It publishes current limits at 90&nbsp;°C; it does not let you infer years of service or extrapolate a 125&nbsp;°C limit. <a href="https://www.itl.nist.gov/div898/handbook/apr/section1/apr153.htm">[NIST reliability model]</a>
+  </p>
+  <p>
+    Foundry decks usually split that limit three ways. Average current is the lifetime of a net that flows one direction, such as a rail. RMS current is the heating of a wire that swings both ways. Peak current is a short pulse. This file has <code>DCCURRENTDENSITY AVERAGE</code> and <code>ACCURRENTDENSITY RMS</code>. It has no peak line. Under qualifying boundary conditions, stress buildup can suppress EM below a critical current-density × length product (the Blech effect). This is not a blanket exemption for every short wire; the relevant threshold and connected interconnect structure must be covered by the reliability methodology.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 224" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — The lifetime equation, and the three current checks. Peak is named because decks use it. This LEF does not give a peak number, an exponent, or a Blech length.">
+<text x="370" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">MTTF = A · j<tspan baseline-shift="super" font-size="11">−n</tspan> · exp(E<tspan baseline-shift="sub" font-size="11">a</tspan> / kT)</text>
+<rect x="40" y="60" width="200" height="80" rx="4" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect>
+<text x="140" y="92" text-anchor="middle" font-size="14" font-weight="700" fill="#4a72c4">average</text>
+<text x="140" y="114" text-anchor="middle" font-size="12" fill="#5c6b7a">lifetime</text>
+<rect x="270" y="60" width="200" height="80" rx="4" fill="#fff" stroke="#c0564a" stroke-width="2"></rect>
+<text x="370" y="92" text-anchor="middle" font-size="14" font-weight="700" fill="#c0564a">RMS</text>
+<text x="370" y="114" text-anchor="middle" font-size="12" fill="#5c6b7a">self-heating</text>
+<rect x="500" y="60" width="200" height="80" rx="4" fill="#f7f9fb" stroke="#d7dfe8" stroke-width="2"></rect>
+<text x="600" y="92" text-anchor="middle" font-size="14" font-weight="700" fill="#5c6b7a">peak</text>
+<text x="600" y="114" text-anchor="middle" font-size="12" fill="#5c6b7a">not in this LEF</text>
+<text x="370" y="180" text-anchor="middle" font-size="13" fill="#33414f">Higher j and higher T both shorten life. This file gives mA per µm at 90°C.</text>
+<text x="370" y="204" text-anchor="middle" font-size="13" fill="#5c6b7a">Short-wire relief needs a qualified j × L rule; none is given here.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — The lifetime equation, and the three current checks. Peak is named because decks use it. This LEF does not give a peak number, an exponent, or a Blech length.</strong></figcaption>
+  </figure>
+
+<h2 id="section-7">7. Worked example: an average-current pass can hide an RMS failure</h2>
+<p>Assume a unidirectional rectangular supply-current pulse of 10&nbsp;mA for 10% of each period and zero otherwise. For duty factor <code>D = 0.10</code>, <code>Iavg = Ipk D = 1.0&nbsp;mA</code> and <code>Irms = Ipk √D = 3.16&nbsp;mA</code>. Compare that waveform with the 0.48&nbsp;µm met1 rail’s quoted 90°C limits:</p>
+<table><thead><tr><th>Check</th><th>Calculated current</th><th>LEF example budget</th><th>Result</th></tr></thead><tbody><tr><td>Average</td><td>1.00&nbsp;mA</td><td>1.344&nbsp;mA</td><td>Pass</td></tr><tr><td>RMS</td><td>3.16&nbsp;mA</td><td>2.928&nbsp;mA</td><td>Fail</td></tr><tr><td>Peak</td><td>10.0&nbsp;mA</td><td>Not provided here</td><td>Unresolved</td></tr></tbody></table>
+<p><strong>Analog ↔ digital:</strong> a steady bias current and a switching bank with the same average current can stress the interconnect differently. Both teams need the actual waveform, local temperature, via path, and lifetime target. Decoupling changes where transient current flows; it does not erase average current through the supply network.</p><details class="checkpoint"><summary>Check your understanding — Does a 90°C pass establish a 125°C lifetime?</summary><p>No. The local metal temperature, activity, lifetime target, and process-qualified derating model are required. Black’s equation describes a trend but cannot manufacture missing process fit parameters.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a 0.14 µm met1 wire carries 0.30 mA average and 0.90 mA RMS. Does it pass the tech LEF limits?</summary><p>The limits are 2.8 mA/µm average and 6.1 mA/µm RMS, so a 0.14 µm wire allows 0.39 mA average and 0.85 mA RMS. The average passes, but the RMS current is too high: widen the wire or reduce the current.</p></details><p><strong>At a macro ring the via is often the limit.</strong> A 1.6 µm met5 strap crossing a 1.74 µm met4 ring side has room for a single 0.8 µm via4 cut, rated at 2.49 mA. The wires on either side of it carry far more, so count cuts at every feed (<a href="floorplan.html#section-7">lesson 50, section 7</a>).</p><div class="takeaways">
+    <p>EM on the power grid, and the fact that LibreLane Classic’s IR script does not pass <code>-enable_em</code>, is taken up in <a href="power_integrity_signoff.html">lesson 63</a>.</p>
+<h2 id="section-8">Key takeaways</h2>
+    <ul>
+      <li>Routing-layer limits in this tech LEF are mA per micrometer of width, at 90°C. Via limits are mA per cut.</li>
+      <li>met1 and met2: 2.8&nbsp;mA/µm average, 6.1&nbsp;mA/µm RMS. A 0.14&nbsp;µm wire is 0.39&nbsp;mA and 0.85&nbsp;mA.</li>
+      <li>The shared cell rail is one 0.48&nbsp;µm met1 stripe: 1.344&nbsp;mA average, 2.928&nbsp;mA RMS. One met1–met2 via is 0.29&nbsp;mA, so the via count binds before the stripe does.</li>
+      <li>Average is the long-term metal movement. RMS is the heating. This file gives RMS on the metals only.</li>
+      <li>IR drop is voltage. Electromigration is lifetime. <code>MAXIMUMDENSITY 70</code> is neither. <code>li1</code> has no current-density line in this file.</li>
+          <li>Black's equation is how lifetime depends on current density and temperature. This LEF gives average and RMS limits at 90&nbsp;°C, and no peak and no Blech length.</li>
+          <li>HCI, BTI, TDDB and self-heating — aging mechanisms that are not electromigration — are <a href="reliability_aging.html">lesson 31</a>. The digital-yield view is <a href="dfm_yield.html">lesson 32</a>.</li>
+    </ul>
+  </div>
+
+<section class="sources" id="sources"><h2 id="section-9">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. The source is HD revision ac7fb61f, not a complete foundry EM signoff deck. Numeric current limits are quoted at 90°C; no higher-temperature derating or lifetime certification is inferred.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF — current limits and temperature comments.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef">Representative HD LEF — met1 rail geometry.</a></li>
+<li><a href="https://www.itl.nist.gov/div898/handbook/apr/section1/apr153.htm">NIST Engineering Statistics Handbook — electromigration lifetime model.</a></li>
+<li><a href="https://doi.org/10.1109/T-ED.1969.16754">J. R. Black (1969), original electromigration paper; bibliographic reference.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html" aria-current="page">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="delay_physics.html"><small>← Previous</small>Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a><a href="reliability_aging.html"><small>Next →</small>Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', RAIL = '#d9534f', VIA = '#2c3540';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // three wires drawn with height proportional to width: 0.14, 0.48, and a via square
+  const base = 150;
+  function wire(x, wPx, label, sub, color) {
+    s += `<rect x="${x}" y="${base - wPx}" width="120" height="${wPx}" fill="${color}" opacity="0.85"/>`;
+    s += txt(x + 60, base + 22, label, {b: true, s: 13});
+    s += txt(x + 60, base + 42, sub, {s: 12, c: '#5c6b7a'});
+  }
+  // scale 140 px per µm so 0.48 µm = 67 px, 0.14 = 20 px
+  wire(50, 20, 'met1, 0.14 µm', '0.39 mA avg', MET);
+  wire(270, 67, 'rail, 0.48 µm', '1.344 mA avg', RAIL);
+  s += `<rect x="530" y="${base - 28}" width="28" height="28" fill="${VIA}"/>`;
+  s += txt(544, base + 22, 'one via', {b: true, s: 13});
+  s += txt(544, base + 42, '0.29 mA', {s: 12, c: '#5c6b7a'});
+  s += txt(370, 36, 'average current at 90°C', {b: true, s: 14});
+  s += txt(370, 58, 'metal bar height is the drawn width', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

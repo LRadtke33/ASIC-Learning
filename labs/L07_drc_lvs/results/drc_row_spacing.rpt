@@ -1,0 +1,10 @@
+cell: sky130_fd_sc_hd__inv_1
+mag: /workspace/learn/learning/labs/L07_drc_lvs/row_spacing/inv_row.mag
+RULE: Metal1 spacing < 0.14um (met1.2)
+----------------------------------------
+  box 0.86 2.34 1.36 2.43 um
+  box 0.72 2.48 1.5 2.57 um
+  box 0.72 2.48 0.86 2.57 um
+  box 1.36 2.48 1.5 2.57 um
+
+COUNT: 4

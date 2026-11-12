@@ -1,0 +1,12 @@
+CONFIG source_period=20 ns readout_period=22 ns readout_phase=4 ns seed=13107
+VCD info: dumpfile wave.vcd opened for output.
+TEST boot: requests blocked while reset or analog-not-ready
+TEST normal: three coherent words
+TEST rapid requests: busy requests rejected without overwriting data
+TEST clock pause: outstanding word survives until readout resumes
+TEST power loss: in-flight word aborted with readout clock stopped
+TEST ready withdrawal: coordinated reset, no stale replay after restart
+TEST external reset: clean empty-channel restart
+RESULT accepted=11 delivered=9 aborted=2 rejected_busy=22 min_latency_ns=47.000 max_latency_ns=217.000
+PASS: all digital protocol assertions and directed tests passed
+<lab>/tb/tb_mixed_signal_integration.sv:266: $finish called at 3620000 (1ps)

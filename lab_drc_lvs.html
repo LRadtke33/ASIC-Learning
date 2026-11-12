@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 7 — DRC and LVS Debug</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script><style>.scope-note{background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 18px;margin:1.2em 0}img{border:1px solid #d7dfe8}</style></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+<h1>Lab 7 — DRC and LVS Debug (Magic, KLayout, Netgen)</h1>
+<p class="subtitle">Take a SKY130 HD inverter, prove a clean row, inject a metal1 spacing error and two LVS faults, then read the same checks on the clean SPM from Lab 6. Antenna is lesson 51, not a second copy.</p>
+<p class="scope-note"><strong>Recorded evidence.</strong> Magic 8.3.623, KLayout with <code>sky130A_mr.drc</code>, and Netgen with <code>sky130A_setup.tcl</code> were run on 11 November 2026, America/Chicago, in the LibreLane nix environment, on the layouts in <code>labs/L07_drc_lvs/</code>. Reports are in <code>labs/L07_drc_lvs/results/</code>. The SPM signoff reports are from LibreLane run <code>RUN_2026-11-11_16-09-06</code>, copied under <code>labs/analysis_examples/rtl_to_gds/</code>. Antenna ratios and diode insertion are not re-done here; they are <a href="antenna.html">lesson 51</a>.</p>
+
+<div class="objectives"><p><strong>What you will do</strong></p><ul>
+<li>See why an isolated standard cell fails nwell and latch-up DRC, and why a tap–inv–tap row does not.</li>
+<li>Inject a 0.05&nbsp;µm metal1 gap and read met1.2 / m1.2 in both DRC engines.</li>
+<li>Extract SPICE with Magic and compare it to the library <code>inv_1</code> in Netgen: a unique match, a short, and a swapped pin.</li>
+<li>Point at the same checks, already clean, in the Lab 6 SPM run.</li>
+</ul></div>
+
+<h2 id="section-1">1. Sources and tools</h2>
+<p>The lab folder <code>labs/L07_drc_lvs/</code> contains:</p>
+<ul>
+<li><code>row_clean/</code> — <code>tap_1</code> + <code>inv_1</code> + <code>tap_1</code> on unithd sites, GDS_FILE properties stripped so Magic uses the painted <code>.mag</code>.</li>
+<li><code>row_spacing/</code> — the same row plus a metal1 rectangle 0.50 × 0.20&nbsp;µm, 0.05&nbsp;µm below the VPWR rail (the m1.2 limit is 0.14&nbsp;µm; the rectangle’s area is above the 0.083&nbsp;µm² m1.6 minimum).</li>
+<li><code>clean/</code>, <code>lvs_short/</code>, <code>lvs_pinswap/</code> — the inverter alone, for extraction: a locali short from A to Y, and the A/Y labels swapped.</li>
+<li><code>ref/inv_1_lib.spice</code> — the library subcircuit (nfet 0.65/0.15, pfet_hvt 1.0/0.15).</li>
+<li><code>run_magic_drc.tcl</code>, <code>run_extract.tcl</code>, <code>run_gds.tcl</code> — the batch scripts that were run.</li>
+</ul>
+<p>Set <code>PDK_ROOT</code> (and <code>PDKPATH</code>) to your sky130A installation. Invoke Magic with the PDK rcfile, non-interactively:</p>
+<pre>export MAG=$PWD/row_clean/inv_row.mag
+export RPT=$PWD/results/drc_row_clean.rpt
+magic -noconsole -dnull -rcfile "$PDK_ROOT/sky130A/libs.tech/magic/sky130A.magicrc" \
+    run_magic_drc.tcl</pre>
+<p>KLayout, after Magic writes a GDS:</p>
+<pre>klayout -b -zz -r "$PDK_ROOT/sky130A/libs.tech/klayout/drc/sky130A_mr.drc" \
+    -rd input=results/row_clean.gds -rd topcell=inv_row \
+    -rd report=results/row_clean_klayout.lyrdb \
+    -rd feol=1 -rd beol=1 -rd floating_metal=0 -rd offgrid=1 -rd seal=0</pre>
+<p>Netgen, after Magic extraction:</p>
+<pre>netgen -batch lvs \
+    "results/extract_clean.spice sky130_fd_sc_hd__inv_1" \
+    "ref/inv_1_lib.spice sky130_fd_sc_hd__inv_1" \
+    "$PDK_ROOT/sky130A/libs.tech/netgen/sky130A_setup.tcl" \
+    results/lvs_clean.rpt</pre>
+
+<h2 id="section-2">2. Recorded DRC results</h2>
+<p>An isolated <code>inv_1</code> (no taps) is not a fair “clean” baseline. Magic reported five errors: nwell.4 (nwell without a metal-connected N+ tap), LU.2 and LU.3 (diffusion-to-tap &lt; 15&nbsp;µm). Abutting <code>tap_1</code> on both sides, on unithd sites, cleared them.</p>
+<table>
+<thead><tr><th>Layout</th><th>Magic 8.3.623</th><th>KLayout (sky130A_mr.drc)</th></tr></thead>
+<tbody>
+<tr><td>Isolated <code>inv_1</code></td><td>COUNT: 5 — nwell.4, LU.2, LU.3</td><td>(not used as the clean baseline)</td></tr>
+<tr><td>tap–inv–tap, no extra metal</td><td>COUNT: 0</td><td>0 items</td></tr>
+<tr><td>tap–inv–tap + 0.05&nbsp;µm m1 gap</td><td>COUNT: 4, all “Metal1 spacing &lt; 0.14um (met1.2)”, boxes at (0.86, 2.34)–(1.36, 2.43)&nbsp;µm and along the rail at y = 2.48–2.57&nbsp;µm</td><td>1 item, category <code>m1.2</code>, edge-pair <code>(0.86,2.43;1.36,2.43)/(1.491,2.48;0.729,2.48)</code></td></tr>
+</tbody>
+</table>
+<p>The marker figure and the reason two engines can disagree on <em>count</em> while agreeing on the <em>rule</em> are in <a href="physical_signoff.html">lesson 62</a>, Figure 2. Reports: <code>results/drc_row_clean.rpt</code>, <code>drc_row_spacing.rpt</code>, <code>row_clean_klayout.lyrdb</code>, <code>row_spacing_klayout.lyrdb</code>.</p>
+
+<h2 id="section-3">3. Recorded LVS results</h2>
+<p>Magic extraction of the clean cell produced:</p>
+<pre>.subckt sky130_fd_sc_hd__inv_1 A VGND VNB VPB VPWR Y
+X0 Y A VGND VNB sky130_fd_pr__nfet_01v8 ... w=0.65 l=0.15
+X1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt ... w=1 l=0.15
+.ends</pre>
+<p>Netgen compared that with the library subcircuit.</p>
+<table>
+<thead><tr><th>Case</th><th>What was done</th><th>Netgen final result (recorded)</th></tr></thead>
+<tbody>
+<tr><td>Clean</td><td>Unmodified <code>inv_1.mag</code></td><td>2 devices, 6 nets both sides. Pin lists equivalent (A, Y, VGND, VNB, VPB, VPWR). <strong>Final result: Circuits match uniquely.</strong></td></tr>
+<tr><td>Short</td><td>A locali rectangle from A to Y. Extracted subckt dropped pin A; both transistor gates sit on Y. Nets 5 vs 6, <strong>Mismatch</strong>.</td><td>Netlists do not match. <strong>Final result: Top level cell failed pin matching.</strong></td></tr>
+<tr><td>Pin swap</td><td>The painted geometry is unchanged; the labels A and Y are exchanged.</td><td>2 devices, 6 nets, “Netlists match uniquely,” but <code>Y | A **Mismatch**</code> and <code>A | Y **Mismatch**</code>. <strong>Final result: Top level cell failed pin matching.</strong></td></tr>
+</tbody>
+</table>
+<p>The pin-swap is the easy one to misread: the transistor graph is fine, the ports are not. Always read down to the “Final result” line. Full reports: <code>results/lvs_clean.rpt</code>, <code>lvs_lvs_short.rpt</code>, <code>lvs_lvs_pinswap.rpt</code>.</p>
+
+<h2 id="section-4">4. The same checks on the Lab 6 SPM</h2>
+<p>After you have seen a failure you can recognize, look at a chip that passed. The 45% SPM of <a href="lab_rtl_to_gds.html">Lab 6</a> ran both DRC engines, XOR, extraction, LVS and the manufacturability wrapper:</p>
+<ul>
+<li>Magic DRC: <code>[INFO] COUNT: 0</code> — <code>labs/analysis_examples/rtl_to_gds/spm_45_drc.magic.rpt</code>.</li>
+<li>KLayout DRC: 257 rules, all 0 — <code>spm_45_drc.klayout.json</code>.</li>
+<li>XOR: Total XOR differences: 0 — <code>spm_45_xor_excerpt.txt</code>.</li>
+<li>Netgen: 328 devices, 361 nets, “Circuits match uniquely.” — <code>spm_45_lvs.netgen.rpt</code>.</li>
+<li>Manufacturability: Antenna Passed, LVS Passed, DRC Passed — <code>spm_45_manufacturability.rpt</code>.</li>
+<li>Antenna counts are 0; the explanation of the check is <a href="antenna.html">lesson 51</a>, not a repeat of that lesson.</li>
+</ul>
+
+<h2 id="section-5">5. What to hand in</h2>
+<p>If you re-run the scripts: the Magic COUNT lines for the clean and spacing rows, the KLayout item count and category, and the Netgen “Final result” line for each of the three LVS cases. If your PDK revision differs, the coordinates may shift slightly; the rule IDs and the unique-match / pin-mismatch distinction should not. State the Magic, KLayout, Netgen and PDK versions.</p>
+
+<p>Related lessons: <a href="physical_signoff.html">62 Physical signoff</a>, <a href="well_taps.html">48 Well taps</a>, <a href="antenna.html">51 Antenna</a>, <a href="metal_fill.html">61 Metal fill</a>, <a href="lab_rtl_to_gds.html">Lab 6</a>.</p>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+</main></body></html>

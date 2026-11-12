@@ -1,0 +1,77 @@
+{
+  "trim": {
+    "assumptions": "Ideal monotonic 6-bit trim; 50 uV step; neutral code 32; no noise or mismatch",
+    "correction_range_uV": [
+      -1600,
+      1550
+    ],
+    "covered_offset_span_uV": [
+      -1550,
+      1600
+    ],
+    "sample_offset_uV": 1260.0,
+    "sample_code": 7,
+    "sample_residual_uV": 10.0,
+    "maximum_abs_inrange_quantization_residual_uV": 25.0,
+    "two_point_voltage_at_code2065_V": 0.8999999999999999,
+    "two_point_slope_mV_per_code": 0.43887147335423204,
+    "temperature_example": "e(T)=1000+8(T\u221225)+0.08(T\u221225)^2 uV, linear endpoint correction at \u221240 and125 C; not PDK data",
+    "remaining_curvature_min_uV": -544.5
+  },
+  "fft": {
+    "signal_origin": "Synthetic numerical example, not a fabricated ADC or SKY130 transistor simulation",
+    "seed": 20261106,
+    "N": 4096,
+    "fs_Hz": 1000000.0,
+    "fundamental_bin": 67,
+    "fin_Hz": 16357.421875,
+    "df_Hz": 244.140625,
+    "input_peak_V": 0.8,
+    "full_scale_span_V": 1.8,
+    "quantizer_bits": 14,
+    "assumed_noise_rms_uV": 200,
+    "harmonic_bins_h2_to_h5": [
+      134,
+      201,
+      268,
+      335
+    ],
+    "SNR_dB": 68.91047469892814,
+    "SINAD_dB": 58.656083662569515,
+    "THD_dBc": -59.08629121835631,
+    "SFDR_dBc": 60.06691693651482,
+    "largest_spur_bin": 134,
+    "signal_dBFS": -1.0230328920054776,
+    "SINAD_equivalent_bits_at_test_amplitude": 9.451176688134472,
+    "measured_noise_rms_uV": 202.79261341342922,
+    "measured_signal_rms_V": 0.565686568380335,
+    "periodic_Hann": {
+      "coherent_gain": 0.5,
+      "ENBW_bins": 1.5,
+      "ENBW_Hz": 366.2109375
+    },
+    "noise_length_comparison": [
+      {
+        "N": 4096,
+        "df_Hz": 244.140625,
+        "integrated_rms_uV": 202.39511983563528,
+        "mean_nonedge_bin_power_dBFS": -103.0617518260412
+      },
+      {
+        "N": 16384,
+        "df_Hz": 61.03515625,
+        "integrated_rms_uV": 200.21508018344343,
+        "mean_nonedge_bin_power_dBFS": -109.17868680514218
+      }
+    ]
+  },
+  "checks": [
+    "Trim residual within half a step inside stated correction range",
+    "FFT bin-power sum equals time-domain mean square",
+    "FFT bin powers agree with independent scipy.signal.periodogram density \u00d7 bin width",
+    "Pure coherent sine has A\u00b2/2 power",
+    "Periodic Hann coherent gain=0.5 and ENBW=1.5 bins"
+  ],
+  "python": "3.12.14",
+  "numpy": "2.3.5"
+}

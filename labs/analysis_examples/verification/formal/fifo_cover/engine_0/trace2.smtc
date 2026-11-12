@@ -1,0 +1,95 @@
+initial
+assume (= [$auto$async2sync.cc:116:execute$430] true)
+assume (= [$auto$async2sync.cc:116:execute$436] true)
+assume (= [$auto$async2sync.cc:116:execute$442] true)
+assume (= [$auto$async2sync.cc:234:execute$374] false)
+assume (= [$auto$async2sync.cc:234:execute$376] false)
+assume (= [_witness_.anyinit_procdff_267] false)
+assume (= [_witness_.anyinit_procdff_268] false)
+assume (= [_witness_.anyinit_procdff_269] #b000)
+assume (= [_witness_.anyinit_procdff_310] #x00)
+assume (= [_witness_.anyinit_procdff_315] #b00)
+assume (= [_witness_.anyinit_procdff_320] #b00)
+assume (= [_witness_.anyinit_procdff_325] #b000)
+assume (= [f_past_valid] false)
+assume (= [mem[0]] #x20)
+assume (= [mem[1]] #x18)
+assume (= [mem[2]] #x20)
+assume (= [mem[3]] #x00)
+
+state 0
+assume (= [clk] false)
+assume (= [din] #x00)
+assume (= [rd] false)
+assume (= [rst_n] false)
+assume (= [wr] false)
+
+state 1
+assume (= [clk] false)
+assume (= [din] #x01)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] true)
+
+state 2
+assume (= [clk] false)
+assume (= [din] #x08)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] true)
+
+state 3
+assume (= [clk] false)
+assume (= [din] #x00)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] true)
+
+state 4
+assume (= [clk] false)
+assume (= [din] #x00)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] true)
+
+state 5
+assume (= [clk] false)
+assume (= [din] #x41)
+assume (= [rd] true)
+assume (= [rst_n] true)
+assume (= [wr] false)
+
+state 6
+assume (= [clk] false)
+assume (= [din] #x10)
+assume (= [rd] true)
+assume (= [rst_n] true)
+assume (= [wr] false)
+
+state 7
+assume (= [clk] false)
+assume (= [din] #x02)
+assume (= [rd] true)
+assume (= [rst_n] true)
+assume (= [wr] false)
+
+state 8
+assume (= [clk] false)
+assume (= [din] #x02)
+assume (= [rd] true)
+assume (= [rst_n] true)
+assume (= [wr] false)
+
+state 9
+assume (= [clk] false)
+assume (= [din] #x20)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] false)
+
+state 10
+assume (= [clk] false)
+assume (= [din] #x00)
+assume (= [rd] false)
+assume (= [rst_n] true)
+assume (= [wr] false)

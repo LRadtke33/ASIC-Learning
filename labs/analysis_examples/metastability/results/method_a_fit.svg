@@ -1,0 +1,59 @@
+<svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Resolve time of sky130_fd_sc_hd__dfxtp_1 versus ln of one over the D-to-clock offset from the metastable point. The 90 percent fit has tau equal to 44.29 picoseconds and R-squared 0.999.">
+  <text x="380" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">sky130_fd_sc_hd__dfxtp_1  ·  Method A  ·  tt, 25 °C, 1.80 V</text>
+  <line x1="80" y1="340.00" x2="700" y2="340.00" stroke="#e4eaef" stroke-width="1"/><text x="70" y="344.00" text-anchor="end" font-size="12" fill="#5c6b7a">200</text><line x1="80" y1="287.59" x2="700" y2="287.59" stroke="#e4eaef" stroke-width="1"/><text x="70" y="291.59" text-anchor="end" font-size="12" fill="#5c6b7a">300</text><line x1="80" y1="235.17" x2="700" y2="235.17" stroke="#e4eaef" stroke-width="1"/><text x="70" y="239.17" text-anchor="end" font-size="12" fill="#5c6b7a">400</text><line x1="80" y1="182.76" x2="700" y2="182.76" stroke="#e4eaef" stroke-width="1"/><text x="70" y="186.76" text-anchor="end" font-size="12" fill="#5c6b7a">500</text><line x1="80" y1="130.34" x2="700" y2="130.34" stroke="#e4eaef" stroke-width="1"/><text x="70" y="134.34" text-anchor="end" font-size="12" fill="#5c6b7a">600</text><line x1="80" y1="77.93" x2="700" y2="77.93" stroke="#e4eaef" stroke-width="1"/><text x="70" y="81.93" text-anchor="end" font-size="12" fill="#5c6b7a">700</text><line x1="80" y1="25.52" x2="700" y2="25.52" stroke="#e4eaef" stroke-width="1"/><text x="70" y="29.52" text-anchor="end" font-size="12" fill="#5c6b7a">800</text><line x1="96.72" y1="36" x2="96.72" y2="340" stroke="#e4eaef" stroke-width="1"/><text x="96.72" y="362" text-anchor="middle" font-size="12" fill="#5c6b7a">28</text><line x1="217.96" y1="36" x2="217.96" y2="340" stroke="#e4eaef" stroke-width="1"/><text x="217.96" y="362" text-anchor="middle" font-size="12" fill="#5c6b7a">30</text><line x1="339.19" y1="36" x2="339.19" y2="340" stroke="#e4eaef" stroke-width="1"/><text x="339.19" y="362" text-anchor="middle" font-size="12" fill="#5c6b7a">32</text><line x1="460.43" y1="36" x2="460.43" y2="340" stroke="#e4eaef" stroke-width="1"/><text x="460.43" y="362" text-anchor="middle" font-size="12" fill="#5c6b7a">34</text><line x1="581.66" y1="36" x2="581.66" y2="340" stroke="#e4eaef" stroke-width="1"/><text x="581.66" y="362" text-anchor="middle" font-size="12" fill="#5c6b7a">36</text>
+  <line x1="80" y1="340" x2="700" y2="340" stroke="#33414f" stroke-width="1.6"/>
+  <line x1="80" y1="36" x2="80" y2="340" stroke="#33414f" stroke-width="1.6"/>
+  <polyline points="98.19,303.03 113.15,297.30 128.12,291.57 143.08,285.84 158.04,280.11 173.01,274.38 187.97,268.65 202.94,262.92 217.90,257.19 232.87,251.45 247.83,245.72 262.80,239.99 277.76,234.26 292.73,228.53 307.69,222.80 322.66,217.07 337.62,211.34 352.59,205.61 367.55,199.88 382.52,194.15 397.48,188.42 412.45,182.69 427.41,176.96 442.38,171.23 457.34,165.50 472.31,159.77 487.27,154.04 502.24,148.31 517.20,142.58 532.17,136.85 547.13,131.12 562.10,125.39 577.06,119.66 592.03,113.93 606.99,108.20 621.96,102.47 636.92,96.74 651.88,91.01 666.85,85.27 681.81,79.54" fill="none" stroke="#2468a0" stroke-width="1.8"/>
+  <polyline points="98.19,314.13 113.15,308.41 128.12,302.68 143.08,296.96 158.04,291.24 173.01,285.51 187.97,279.79 202.94,274.07 217.90,268.35 232.87,262.62 247.83,256.90 262.80,251.18 277.76,245.45 292.73,239.73 307.69,234.01 322.66,228.28 337.62,222.56 352.59,216.84 367.55,211.11 382.52,205.39 397.48,199.67 412.45,193.94 427.41,188.22 442.38,182.50 457.34,176.77 472.31,171.05 487.27,165.33 502.24,159.60 517.20,153.88 532.17,148.16 547.13,142.43 562.10,136.71 577.06,130.99 592.03,125.26 606.99,119.54 621.96,113.82 636.92,108.09 651.88,102.37 666.85,96.65 681.81,90.92" fill="none" stroke="#bb6f33" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <circle cx="116.37" cy="296.83" r="4.2" fill="#2468a0"/>
+<circle cx="158.39" cy="280.16" r="4.2" fill="#2468a0"/>
+<circle cx="189.35" cy="268.03" r="4.2" fill="#2468a0"/>
+<circle cx="213.93" cy="258.57" r="4.2" fill="#2468a0"/>
+<circle cx="244.90" cy="246.73" r="4.2" fill="#2468a0"/>
+<circle cx="269.47" cy="237.35" r="4.2" fill="#2468a0"/>
+<circle cx="297.97" cy="226.18" r="4.2" fill="#2468a0"/>
+<circle cx="325.02" cy="215.96" r="4.2" fill="#2468a0"/>
+<circle cx="353.51" cy="204.86" r="4.2" fill="#2468a0"/>
+<circle cx="384.47" cy="192.81" r="4.2" fill="#2468a0"/>
+<circle cx="409.05" cy="183.69" r="4.2" fill="#2468a0"/>
+<circle cx="437.54" cy="172.59" r="4.2" fill="#2468a0"/>
+<circle cx="468.51" cy="161.17" r="4.2" fill="#2468a0"/>
+<circle cx="493.09" cy="151.06" r="4.2" fill="#2468a0"/>
+<circle cx="524.05" cy="137.10" r="4.2" fill="#2468a0"/>
+<circle cx="548.63" cy="133.98" r="4.2" fill="#2468a0"/>
+<circle cx="577.12" cy="126.24" r="4.2" fill="#2468a0"/>
+<circle cx="608.09" cy="107.19" r="4.2" fill="#2468a0"/>
+<circle cx="632.66" cy="96.77" r="4.2" fill="#2468a0"/>
+<circle cx="663.63" cy="84.12" r="4.2" fill="#2468a0"/>
+  <rect x="112.97" y="304.55" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="154.99" y="287.89" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="185.95" y="275.78" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="210.53" y="266.33" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="241.50" y="254.50" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="266.07" y="245.14" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="294.57" y="233.98" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="321.62" y="223.77" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="350.11" y="212.68" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="381.07" y="200.65" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="405.65" y="191.54" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="434.14" y="180.46" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="465.11" y="169.05" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="489.69" y="158.95" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="520.65" y="145.01" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="545.23" y="141.89" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="573.72" y="134.16" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="604.69" y="115.14" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="629.26" y="104.73" width="6.8" height="6.8" fill="#bb6f33"/>
+<rect x="660.23" y="92.10" width="6.8" height="6.8" fill="#bb6f33"/>
+  <text x="390.0" y="388" text-anchor="middle" font-size="13" fill="#33414f">ln(1 / |t_D − t_m|)</text>
+  <text x="22" y="188.0" text-anchor="middle" font-size="13" fill="#33414f" transform="rotate(-90 22,188.0)">Resolve time from CLK 50% (ps)</text>
+  <!-- legend, top-left inside, no overlap with points (points start ~ x=28 which is left; points at high x are upper right) -->
+  <rect x="100" y="48" width="14" height="14" rx="7" fill="#2468a0"/>
+  <text x="120" y="60" font-size="12" fill="#33414f">T_r to Q 90%</text>
+  <rect x="100" y="70" width="12" height="12" fill="#bb6f33"/>
+  <text x="120" y="81" font-size="12" fill="#33414f">T_r to Q 50%</text>
+  <line x1="250" y1="56" x2="290" y2="56" stroke="#2468a0" stroke-width="1.8"/>
+  <text x="296" y="60" font-size="12" fill="#33414f">90% fit  τ = 44.29 ps  R² = 0.9990</text>
+  <line x1="250" y1="76" x2="290" y2="76" stroke="#bb6f33" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="296" y="81" font-size="12" fill="#33414f">50% fit  τ = 44.23 ps  R² = 0.9990</text>
+</svg>

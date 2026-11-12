@@ -1,0 +1,162 @@
+{
+  "date": "2026-11-06",
+  "copy_path": "/workspace/scratch/20e1f2d0c0c5/v2_research/portable course/labs",
+  "ngspice": "/workspace/scratch/20e1f2d0c0c5/tooling/root/usr/bin/ngspice",
+  "default_commands": "python run.py --ngspice <absolute executable>; no --output or --models override",
+  "copied_reference_files_preserved": {
+    "L01_inverter": {
+      "files": 78,
+      "all_sha256_equal": true
+    },
+    "L03_sampling_interface": {
+      "files": 187,
+      "all_sha256_equal": true
+    }
+  },
+  "original_reference_files_unchanged": {
+    "L01_inverter": true,
+    "L03_sampling_interface": true
+  },
+  "comparisons": {
+    "L01_inverter/summary.json": {
+      "rows": 18,
+      "numeric_values": 210,
+      "maximum_absolute_difference": 0.0,
+      "exactly_equal": true,
+      "differences": []
+    },
+    "L03_sampling_interface/acquisition_summary.json": {
+      "rows": 57,
+      "numeric_values": 570,
+      "maximum_absolute_difference": 0.0,
+      "exactly_equal": true,
+      "differences": []
+    },
+    "L03_sampling_interface/reference_summary.csv": {
+      "rows": 3,
+      "exactly_equal": true
+    }
+  },
+  "literal_spaced_relative_path_probes": [
+    {
+      "lab": "L01_inverter",
+      "exit_code": 1,
+      "quoted_paths": [
+        ".lib \"../../../portable course/labs/common/models/sky130_course.lib.spice\" tt",
+        ".include \"../../../portable course/labs/L01_inverter/reference/sky130_fd_sc_hd__inv_1.spice\""
+      ],
+      "raw_files_identical": {
+        "tran.dat": false,
+        "dc.dat": false
+      },
+      "log_error": true
+    },
+    {
+      "lab": "L03_sampling_interface",
+      "exit_code": 1,
+      "quoted_paths": [
+        ".lib \"../../../portable course/labs/common/models/sky130_course.lib.spice\" tt"
+      ],
+      "raw_files_identical": {
+        "tran.dat": false
+      },
+      "log_error": true
+    }
+  ],
+  "local_alias_diagnostic": [
+    {
+      "variant": "model_alias_only",
+      "exit_code": 0,
+      "files_identical": {
+        "dc.dat": true,
+        "tran.dat": true
+      },
+      "log_tail": "0 and TNOM = 27.000000\n\nUsing SPARSE 1.3 as Direct Linear Solver\n Reference value :  0.00000e+00\nNo. of Data Rows : 901\nDoing analysis at TEMP = 25.000000 and TNOM = 27.000000\n\nUsing SPARSE 1.3 as Direct Linear Solver\n\nInitial Transient Solution\n--------------------------\n\nNode                                   Voltage\n----                                   -------\nvdd                                        1.8\na                                            0\ny                                          1.8\nvin#branch                                   0\nvdd#branch                        -1.91001e-12\n\n\nNo. of Data Rows : 7021\nngspice-44.2 done\n\nWarning: can't find the initialization file spinit.\n"
+    },
+    {
+      "variant": "model_and_cell_aliases",
+      "exit_code": 0,
+      "files_identical": {
+        "dc.dat": true,
+        "tran.dat": true
+      },
+      "log_tail": "0 and TNOM = 27.000000\n\nUsing SPARSE 1.3 as Direct Linear Solver\n Reference value :  0.00000e+00\nNo. of Data Rows : 901\nDoing analysis at TEMP = 25.000000 and TNOM = 27.000000\n\nUsing SPARSE 1.3 as Direct Linear Solver\n\nInitial Transient Solution\n--------------------------\n\nNode                                   Voltage\n----                                   -------\nvdd                                        1.8\na                                            0\ny                                          1.8\nvin#branch                                   0\nvdd#branch                        -1.91001e-12\n\n\nNo. of Data Rows : 7021\nngspice-44.2 done\n\nWarning: can't find the initialization file spinit.\n"
+    }
+  ],
+  "post_fix_validation": {
+    "helper_sha256": "76a72538abba33030f367b3bdb4ea4cd0952a23286831bc30e1e395aa4a68774",
+    "targeted_cases": [
+      {
+        "lab": "L01_inverter",
+        "through_integration": "common.lab_support.run_spice",
+        "passed": true,
+        "input_had_literal_spaced_lib_path": true,
+        "rewritten_lib": [
+          ".lib \"_course_models_af0e6e1a56b9/sky130_course.lib.spice\" tt"
+        ],
+        "directory_aliases": [
+          {
+            "name": "_course_models_af0e6e1a56b9",
+            "is_symlink": true,
+            "target": "/workspace/scratch/20e1f2d0c0c5/v2_research/portable course/labs/common/models"
+          }
+        ],
+        "repeat_rewrite_idempotent": true,
+        "raw_identical": {
+          "tran.dat": true,
+          "dc.dat": true
+        }
+      },
+      {
+        "lab": "L03_sampling_interface",
+        "through_integration": "common.lab_support.run_spice",
+        "passed": true,
+        "input_had_literal_spaced_lib_path": true,
+        "rewritten_lib": [
+          ".lib \"_course_models_af0e6e1a56b9/sky130_course.lib.spice\" tt"
+        ],
+        "directory_aliases": [
+          {
+            "name": "_course_models_af0e6e1a56b9",
+            "is_symlink": true,
+            "target": "/workspace/scratch/20e1f2d0c0c5/v2_research/portable course/labs/common/models"
+          }
+        ],
+        "repeat_rewrite_idempotent": true,
+        "raw_identical": {
+          "tran.dat": true
+        }
+      },
+      {
+        "lab": "L02_bias_amplifier",
+        "through_integration": "Runner.run with mirror.cir.in",
+        "passed": true,
+        "rows": 361,
+        "pre_rewrite_model_ref": "../../../portable course/labs/common/models/sky130_course.lib.spice",
+        "rewritten_lib": [
+          ".lib \"_course_models_af0e6e1a56b9/sky130_course.lib.spice\" tt"
+        ],
+        "raw_identical": {
+          "mirror_long.dat": true
+        },
+        "directory_aliases": [
+          {
+            "name": "_course_models_af0e6e1a56b9",
+            "is_symlink": true,
+            "target": "/workspace/scratch/20e1f2d0c0c5/v2_research/portable course/labs/common/models"
+          }
+        ]
+      }
+    ],
+    "wrapper_filename_with_space_rejected": {
+      "passed": true,
+      "message": "ngspice 44 cannot parse whitespace in a .lib filename. Use a model filename without spaces; parent directories may contain spaces."
+    },
+    "normal_path_unchanged_no_alias": true,
+    "all_passed": true
+  },
+  "bugs_found_before_fix": [
+    "Literal spaced quoted path probe failed or changed data"
+  ],
+  "remaining_bugs": []
+}

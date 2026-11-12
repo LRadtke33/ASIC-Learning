@@ -1,0 +1,417 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drive Strength &amp; Transistor Sizing</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 11 / 84 · Part II, Transistors to logic gates</p><h1>Drive Strength &amp; Transistor Sizing</h1>
+  <p class="subtitle">What the X1 / X4 / X16 on cell names physically means, why PMOS are drawn wider, and how big drivers are built.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Estimate switching delay with an effective-resistance model of the driver.</li><li>Explain why PMOS devices are drawn wider and how large drivers are folded into fingers.</li><li>Read SKY130 drive suffixes (<code>inv_1</code> to <code>inv_8</code>) as parallel devices, and weigh speed against input load.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-3">step 3, synthesis</a> makes the first choice of drive strength; <a href="design_flow.html#step-5">step 5, placement</a> to <a href="design_flow.html#step-7">step 7, routing</a> resize cells and add buffers as real wire loads appear.</dd><dt>Tools</dt><dd>Yosys with ABC for the first choice; OpenROAD’s <code>repair_design</code> and <code>repair_timing</code> afterward. Commercial: Genus, Innovus, IC Compiler II.</dd><dt>Why it matters</dt><dd>Drive strength sets the delay of each stage and the load on the stage before it.</dd></dl></aside><aside class="review-note" style="background:#edf5fc;border-left:4px solid #2b6cb0;padding:12px 16px;margin:1em 0"><strong>Reading the evidence.</strong> Colored layouts and switch states are teaching models unless a caption explicitly identifies LEF geometry. SKY130 HD file values on this page were checked against source revision <code>ac7fb61f06e6</code> on 2026-11-06; nominal Liberty values use <code>tt_025C_1v80</code>.  <a href="#sources">Source files and scope</a>.</aside>
+  <h2 id="section-1">1. An effective resistance helps estimate switching delay</h2>
+  <p>Lesson 10 showed a gate sourcing and sinking current into a load. For a first delay estimate, replace the switching transistor by an <strong>effective resistance</strong> and represent the wire and receiver inputs by capacitance. A real MOSFET changes operating region during the edge, so this resistance is a fitted approximation rather than a constant physical resistor. The familiar 50% RC estimate is:</p>
+  <p style="text-align:center"><code>delay ≈ 0.7 · R<sub>driver</sub> · C<sub>load</sub></code></p>
+  <p>For a fixed device type, length, terminal voltages and operating regime, increasing total channel width usually increases drive and input capacitance. An X4 suffix describes a library strength option; it does not universally guarantee four times the width, current, or speed. The ideal resistor model below deliberately assumes R scales as 1/W and ignores internal parasitics. Section 5 checks what the SKY130 inverter family actually implements.</p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — The RC approximation of a switching gate. A low input turns on the PMOS. The right-hand circuit replaces its nonlinear charging current by an effective resistor and collects wire and downstream-input capacitance into one load. A stronger driver often has a smaller effective R; a longer net or greater fanout often increases C."><text x="140" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#d9534f">VDD</text><line x1="140" y1="38" x2="140" y2="62" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="140" y1="62" x2="140" y2="86" stroke="#1e9e50" stroke-width="5" stroke-linecap="round"></line><text x="154" y="78" text-anchor="start" font-size="9.5" font-weight="700" fill="#1e9e50">PMOS ON</text><line x1="132" y1="62" x2="132" y2="86" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><circle cx="126.5" cy="74" r="4" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><line x1="122.5" y1="74" x2="106" y2="74" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="100" y="78" text-anchor="end" font-size="11" font-weight="700" fill="#3b6fb0">IN = 0</text><line x1="140" y1="86" x2="140" y2="120" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="140" y1="120" x2="200" y2="120" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="170" y="110" text-anchor="middle" font-size="10.5" font-weight="700" fill="#d9534f">OUT</text><line x1="200" y1="120" x2="200" y2="134" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="184" y1="134" x2="216" y2="134" stroke="#33414f" stroke-width="2.5" stroke-linecap="round"></line><line x1="184" y1="142" x2="216" y2="142" stroke="#33414f" stroke-width="2.5" stroke-linecap="round"></line><line x1="200" y1="142" x2="200" y2="156" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="188" y1="156" x2="212" y2="156" stroke="#3b6fb0" stroke-width="3" stroke-linecap="round"></line><line x1="140" y1="120" x2="140" y2="150" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="140" y1="150" x2="140" y2="174" stroke="#9aa5b1" stroke-width="5" stroke-linecap="round"></line><text x="154" y="166" text-anchor="start" font-size="9.5" font-weight="700" fill="#8a95a1">NMOS OFF</text><line x1="132" y1="150" x2="132" y2="174" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="132" y1="162" x2="106" y2="162" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><line x1="140" y1="174" x2="140" y2="198" stroke="#3b6fb0" stroke-width="2" stroke-linecap="round"></line><text x="140" y="214" text-anchor="middle" font-size="11" font-weight="700" fill="#3b6fb0">VSS</text><text x="320" y="122" text-anchor="middle" font-size="30" fill="#98a4b0">≈</text><text x="320" y="150" text-anchor="middle" font-size="10" font-style="italic" fill="#7a8794">for delay</text><text x="470" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#d9534f">VDD</text><line x1="470" y1="38" x2="470" y2="52" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><polyline points="470,52 470,62 478,66.83333333333333 462,76.5 478,86.16666666666666 462,95.83333333333333 478,105.5 462,115.16666666666666 470,120 470,130" fill="none" stroke="#33414f" stroke-width="2" stroke-linejoin="round"></polyline><text x="490" y="92" text-anchor="start" font-size="11" font-weight="700" fill="#33414f">R ∝ 1 / W</text><line x1="470" y1="130" x2="470" y2="150" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><line x1="470" y1="150" x2="550" y2="150" stroke="#d9534f" stroke-width="2" stroke-linecap="round"></line><text x="510" y="140" text-anchor="middle" font-size="10.5" font-weight="700" fill="#d9534f">OUT</text><line x1="550" y1="150" x2="550" y2="164" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="534" y1="164" x2="566" y2="164" stroke="#33414f" stroke-width="2.5" stroke-linecap="round"></line><line x1="534" y1="172" x2="566" y2="172" stroke="#33414f" stroke-width="2.5" stroke-linecap="round"></line><line x1="550" y1="172" x2="550" y2="186" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><line x1="538" y1="186" x2="562" y2="186" stroke="#3b6fb0" stroke-width="3" stroke-linecap="round"></line><text x="600" y="172" text-anchor="start" font-size="10.5" fill="#33414f">C = wire +</text><text x="600" y="186" text-anchor="start" font-size="10.5" fill="#33414f">gate inputs</text><text x="510" y="226" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">delay ≈ 0.7 · R · C</text></svg></div>
+    <figcaption><strong>Figure 1 — The RC approximation of a switching gate.</strong> A low input turns on the PMOS. The right-hand circuit replaces its nonlinear charging current by an effective resistor and collects wire and downstream-input capacitance into one load. A stronger driver often has a smaller effective R; a longer net or greater fanout often increases C.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Same load in an idealized resistance model. Here the model explicitly assigns the X4 driver one quarter the X1 resistance and ignores intrinsic capacitance. Its RC waveform therefore reaches 50% four times sooner. Real library strengths do not guarantee this delay ratio; section 5 shows characterized SKY130 values."><line x1="80" y1="210" x2="620" y2="210" stroke="#c8d0d8" stroke-width="1.5" stroke-linecap="round"></line><line x1="80" y1="210" x2="80" y2="40" stroke="#c8d0d8" stroke-width="1.5" stroke-linecap="round"></line><text x="70" y="214" text-anchor="end" font-size="10.5" fill="#7a8794">0</text><text x="70" y="64" text-anchor="end" font-size="10.5" fill="#7a8794">VDD</text><line x1="76" y1="60" x2="84" y2="60" stroke="#7a8794" stroke-width="1.5" stroke-linecap="round"></line><text x="620" y="230" text-anchor="end" font-size="10.5" fill="#7a8794">time →</text><line x1="80" y1="135" x2="620" y2="135" stroke="#c8d0d8" stroke-width="1" stroke-dasharray="4 4"></line><text x="626" y="139" text-anchor="start" font-size="10" fill="#7a8794">50%</text><polyline points="80,210 90.8,176.34008243329657 101.6,150.23343187057498 112.4,129.9850993470796 123.2,114.28048151427797 134,102.09997129260087 144.8,92.65276087080404 155.60000000000002,85.32549927589373 166.4,79.6424711561458 177.2,75.23471142333102 188,71.81605055225214 198.8,69.16453530190006 209.6,67.10801861657274 220.4,65.51298314526318 231.20000000000002,64.2758727571553 242,63.316369260278236 252.8,62.572177820800135 263.6,61.99498253136656 274.4,61.54730954768115 285.2,61.200094135513694 296,60.93079367102251 306.79999999999995,60.72192408276766 317.6,60.55992471533182 328.4,60.43427791692096 339.2,60.33682619102362 350,60.26124257886255 360.8,60.20261988773302 371.6,60.157152096276576 382.40000000000003,60.121887252235894 393.2,60.094535819817935 404,60.073322033803464 414.8,60.05686860971247 425.6,60.04410732494543 436.40000000000003,60.0342096654671 447.20000000000005,60.0265330353364 458,60.02057903678826 468.8,60.01596111224231 479.6,60.01237944742664 490.4,60.00960150622731 501.2,60.00744693350646 512,60.00577584572011 522.8,60.004479749114665 533.5999999999999,60.003474495875196 544.4,60.00269482091025 555.2,60.00209010457894 566,60.00162108626006 576.8,60.001257315394156 587.5999999999999,60.00097517451067 598.4,60.0007563458864 609.2,60.00058662228514 620,60.000454984566744" fill="none" stroke="#1e9e50" stroke-width="2.5" stroke-linejoin="round"></polyline><polyline points="80,210 90.8,200.76697762898925 101.6,192.10227993866906 112.4,183.97092456576738 123.2,176.34008243329657 134,169.17894520828418 144.8,162.45860091794123 155.60000000000002,156.15191722208914 166.4,150.23343187057498 177.2,144.67924990341436 188,139.46694717862346 198.8,134.57547983824907 209.6,129.9850993470796 220.4,125.67727276101965 231.20000000000002,121.6346079032232 242,117.84078314589695 252.8,114.28048151427797 263.6,110.93932884674086 274.4,107.803835761366 285.2,104.86134319466721 296,102.09997129260087 306.79999999999995,99.5085714475109 317.6,97.07668128736728 328.4,94.79448243557329 339.2,92.65276087080404 350,90.64286972683472 360.8,88.75669438216916 371.6,86.98661969852324 382.40000000000003,85.32549927589373 393.2,83.76662660008479 404,82.30370796620453 414.8,80.93083706881478 425.6,79.6424711561458 436.40000000000003,78.43340865210163 447.20000000000005,77.29876815570938 458,76.23396873322542 468.8,75.23471142333102 479.6,74.29696188074763 490.4,73.4169340881981 501.2,72.59107507095337 512,71.81605055225214 522.8,71.0887314916792 533.5999999999999,70.40618145215382 544.4,69.7656447445236 555.2,69.16453530190006 566,68.60042623881765 576.8,68.07104005306277 587.5999999999999,67.57423943061445 598.4,67.10801861657274 609.2,66.67049531723688 620,66.25990310063844" fill="none" stroke="#d9534f" stroke-width="2.5" stroke-linejoin="round"></polyline><line x1="109.45875517379767" y1="135" x2="109.45875517379767" y2="210" stroke="#1e9e50" stroke-width="1.2" stroke-dasharray="3 3"></line><circle cx="109.45875517379767" cy="135" r="3.5" fill="#1e9e50"></circle><text x="114.45875517379767" y="202" text-anchor="start" font-size="10.5" font-weight="700" fill="#1e9e50">X4 delay</text><line x1="197.83502069519068" y1="135" x2="197.83502069519068" y2="210" stroke="#d9534f" stroke-width="1.2" stroke-dasharray="3 3"></line><circle cx="197.83502069519068" cy="135" r="3.5" fill="#d9534f"></circle><text x="202.83502069519068" y="202" text-anchor="start" font-size="10.5" font-weight="700" fill="#d9534f">X1 delay</text><text x="380" y="122" text-anchor="start" font-size="11" font-weight="700" fill="#d9534f">INV_X1 driving C</text><text x="210" y="86" text-anchor="start" font-size="11" font-weight="700" fill="#1e9e50">INV_X4 driving C</text></svg></div>
+    <figcaption><strong>Figure 2 — Same load in an idealized resistance model.</strong> Here the model explicitly assigns the X4 driver one quarter the X1 resistance and ignores intrinsic capacitance. Its RC waveform therefore reaches 50% four times sooner. Real library strengths do not guarantee this delay ratio; section 5 shows characterized SKY130 values.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Why the PMOS is wider than the NMOS</h2>
+  <p>Electrons and holes have different mobility, so comparable bulk-CMOS NMOS and PMOS devices generally do not carry equal current at the same geometry. A PMOS-to-NMOS width ratio around two is a useful classroom starting point, not a process constant. Threshold options, velocity saturation, bias, layout and required rise/fall balance all affect the chosen ratio.</p>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Illustrative rise/fall balance. The simple left panel assumes lower PMOS current at equal width; the right assumes a PMOS about twice as wide balances the edges. Neither ratio is universal. Series stacks also reduce current, but two MOSFETs in series are not exactly two constant resistors: internal voltage, body effect and operating region matter."><text x="200" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#a83232">Wp = Wn — asymmetric</text><polyline points="60,44 90,44 90,60 225,60 225,44 340,44" fill="none" stroke="#98a4b0" stroke-width="1.5" stroke-linejoin="round"></polyline><text x="52" y="56" text-anchor="end" font-size="10" fill="#7a8794">IN</text><text x="52" y="145" text-anchor="end" font-size="10" fill="#7a8794">OUT</text><polyline points="60,190 90,190" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><polyline points="90,190 92.7,185.29295660047416 95.4,180.80747577659852 98.1,176.53312848178012 100.8,172.4599765691753 103.5,168.5785496848254 106.2,164.87982324844268 108.9,161.35519747065024 111.6,157.99647735788938 114.3,154.79585365850477 117,151.7458847057057 119.7,148.83947911518695 122.4,146.06987929718017 125.1,143.43064574460016 127.80000000000001,140.91564206075492 130.5,138.51902069180795 133.2,136.23520933081963 135.9,134.05889796175632 138.6,131.98502651334366 141.3,130.00877309405814 144,128.125542780903 146.7,126.33095693590113 149.4,124.62084302546522 152.1,122.99122491897486 154.8,121.43831364400353 157.5,119.95849857670123 160.2,118.54833904684958 162.9,117.2045563380706 165.60000000000002,115.92402606458914 168.3,114.70377090682454 171,113.54095368892088 173.7,112.4328707821211 176.4,111.3769458186471 179.10000000000002,110.37072370147027 181.8,109.41186489604456 184.5,108.49813999073042 187.2,107.6274245132617 189.9,106.79769399120381 192.6,106.00701924491833 195.3,105.25356190208956 198,104.53557012338467 200.7,103.85137452930843 203.39999999999998,103.19938431878302 206.1,102.5780835704277 208.8,101.98602771793904 211.5,101.42184019137645 214.2,100.88420921654387 216.89999999999998,100.37188476502597 219.6,99.88367564778738 222.3,99.41844674557767 225,98.97511636970209" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><polyline points="225,98.9751163697021 227.3,107.2933853679001 229.6,114.85149300838172 231.9,121.7189063028402 234.2,127.95874405062594 236.5,133.62835696734234 238.8,138.7798547986448 241.1,143.46058526397678 243.4,147.71356923224283 245.7,151.57789612914425 248,155.0890832103887 250.3,158.27940200287583 252.6,161.1781749141982 254.9,163.81204473661353 257.2,166.20521952251482 259.5,168.37969508206288 261.8,170.35545714797124 264.1,172.15066506555007 266.4,173.78181869631686 268.7,175.2639100691937 271,176.61056117312637 273.3,177.8341491575858 275.6,178.94592009167653 277.9,179.95609232741896 280.2,180.87395041722357 282.5,181.70793044875813 284.8,182.46569758152532 287.1,183.15421649779432 289.4,183.77981541540524 291.7,184.34824425079108 294,184.864727466798 296.3,185.33401209103027 298.6,185.76041134606027 300.9,186.14784429251054 303.2,186.49987184937055 305.5,186.81972952261245 307.8,187.1103571429166 310.1,187.37442588582837 312.4,187.61436282268937 314.7,187.83237322799317 317,188.03046084819252 319.3,188.210446318251 321.6,188.37398389520592 323.9,188.52257666254212 326.2,188.65759034512044 328.5,188.78026586163546 330.8,188.891730729972 333.1,188.99300943028842 335.4,189.08503282107387 337.7,189.1686466947234 340,189.24461955126583" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><text x="157.5" y="214" text-anchor="middle" font-size="10" fill="#7a8794">rise: τ = 56</text><text x="282.5" y="214" text-anchor="middle" font-size="10" fill="#7a8794">fall: τ = 24</text><line x1="380" y1="20" x2="380" y2="235" stroke="#e3e9ef" stroke-width="1.5"></line><text x="550" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#1e7e3e">Wp ≈ 2·Wn — balanced</text><polyline points="410,44 440,44 440,60 575,60 575,44 690,44" fill="none" stroke="#98a4b0" stroke-width="1.5" stroke-linejoin="round"></polyline><text x="402" y="56" text-anchor="end" font-size="10" fill="#7a8794">IN</text><text x="402" y="145" text-anchor="end" font-size="10" fill="#7a8794">OUT</text><polyline points="410,190 440,190" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><polyline points="440,190 442.7,181.39311852712282 445.4,173.5270211411272 448.1,166.3379494336853 450.8,159.7676326071031 453.5,153.76281516217733 456.2,148.27482523739897 458.9,143.25918010068972 461.6,138.67522559599718 464.3,134.48580662229412 467,130.65696597405991 469.7,127.15766910220458 472.4,123.95955256449392 475.1,121.0366941265485 477.8,118.36540264997703 480.5,115.92402606458914 483.2,113.69277586821217 485.9,111.6535667316007 488.6,109.78986990836147 491.3,108.08657926171222 494,106.52988882215865 496.7,105.10718088363708 499.4,103.80692373108928 502.1,102.61857817050388 504.8,101.53251210380625 507.5,100.53992245618643 510.2,99.63276382304929 512.9,98.80368325823726 515.6,98.04596067495325 518.3,97.3534543763057 521,96.72055127397498 523.7,96.14212139150001 526.4,95.61347628341336 529.1,95.13033103319191 531.8,94.68876952199885 534.5,94.28521268670401 537.2,93.9163895098987 539.9,93.57931050676554 542.6,93.27124349390198 545.3,92.98969144369264 548,92.73237224472925 550.7,92.49720020422761 553.4,92.28226914250929 556.1,92.08583694252147 558.8,91.90631142916116 561.5,91.74223746394935 564.2,91.59228515045116 566.9,91.45523905484161 569.6,91.32998835424438 572.3,91.2155178329915 575,91.11089965382422" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><polyline points="575,91.11089965382423 577.3,98.40906013173209 579.6,105.16860567457792 581.9,111.42928685363927 584.2,117.22792058979886 586.5,122.59860666124152 588.8,127.57292823256594 591.1,132.1801375845542 593.4,136.447328136812 595.7,140.39959377488645 598,144.0601764188087 600.3,147.4506027008623 602.6,150.59081055633175 604.9,153.49926647166848 607.2,156.19307407957052 609.5,158.6880747395859 611.8,160.99894069572053 614.1,163.13926135887783 616.4,165.12162322152804 618.7,166.957683874558 621,168.65824056156868 623.3,170.2332936737654 625.6,171.69210555883188 627.9,173.04325498962362 630.2,174.29468761299137 632.5,175.45376267540794 634.8,176.52729630017524 637.1,177.52160157070978 639.4,178.4425256556234 641.7,179.29548419391824 644,180.0854931425041 646.3,180.81719827332262 648.6,181.49490249353997 650.9,182.12259114946977 653.2,182.7039554630292 655.5,183.24241423855017 657.8,183.74113396759657 660.1,184.2030474500158 662.4,184.63087104073006 664.7,185.02712062368875 667,185.39412640692018 669.3,185.73404662568626 671.6,186.04888023432488 673.9,186.34047866141532 676.2,186.61055669739525 678.5,186.86070257865603 680.8,187.09238732741647 683.1,187.30697340230066 685.4,187.50572271049015 687.7,187.68980402856786 690,187.86029987569265" fill="none" stroke="#33414f" stroke-width="2.5" stroke-linejoin="round"></polyline><text x="507.5" y="214" text-anchor="middle" font-size="10" fill="#7a8794">rise: τ = 30</text><text x="632.5" y="214" text-anchor="middle" font-size="10" fill="#7a8794">fall: τ = 30</text></svg></div>
+    <figcaption><strong>Figure 3 — Illustrative rise/fall balance.</strong> The simple left panel assumes lower PMOS current at equal width; the right assumes a PMOS about twice as wide balances the edges. Neither ratio is universal. Series stacks also reduce current, but two MOSFETs in series are not exactly two constant resistors: internal voltage, body effect and operating region matter.</figcaption>
+  </figure>
+
+  <h2 id="section-3">3. How big transistors are drawn: fingers</h2>
+  <p>The solution is <strong>folding</strong>: connect several device fingers in parallel and tie their gates, sources and drains appropriately. Four equal fingers give approximately four times the total channel width, but shared diffusion changes junction capacitance and resistance. More fingers often cost width in sites; spare room can allow two strengths to share an outline, as the SKY130 inv_1/inv_2 example shows.</p>
+
+  <figure>
+    <div class="figwrap" id="fig4"><svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Folding a wide device into fingers. Four parallel fingers have approximately four times a single finger’s total channel width. Alternating source/drain diffusion regions allow sharing, and the gate connections tie the fingers together. The drawing illustrates geometry; current scaling depends on bias, layout resistance and the device model."><text x="115" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">X1 — one finger</text><rect x="40" y="90" width="150" height="60" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="105" y="60" width="16" height="118" fill="#d95252"></rect><rect x="64" y="112" width="14" height="14" fill="#2c3540"></rect><rect x="148" y="112" width="14" height="14" fill="#2c3540"></rect><text x="72" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">S</text><text x="155" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">D</text><text x="115" y="196" text-anchor="middle" font-size="10.5" fill="#33414f">W</text><line x1="30" y1="90" x2="30" y2="150" stroke="#33414f" stroke-width="1" stroke-linecap="round"></line><polygon points="26,98 34,98 30,90" fill="#33414f"></polygon><polygon points="26,142 34,142 30,150" fill="#33414f"></polygon><text x="115" y="226" text-anchor="middle" font-size="10.5" font-style="italic" fill="#7a8794">cell: 3 sites wide</text><text x="455" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">X4 — four fingers in parallel</text><rect x="270" y="90" width="370" height="60" fill="#8fbf6f" stroke="#5e8f43"></rect><rect x="322" y="66" width="16" height="112" fill="#d95252"></rect><rect x="402" y="66" width="16" height="112" fill="#d95252"></rect><rect x="482" y="66" width="16" height="112" fill="#d95252"></rect><rect x="562" y="66" width="16" height="112" fill="#d95252"></rect><rect x="322" y="52" width="256" height="14" fill="#d95252"></rect><text x="455" y="47" text-anchor="middle" font-size="9.5" fill="#d95252">poly strap ties all 4 gates (one input)</text><rect x="291" y="112" width="14" height="14" fill="#2c3540"></rect><text x="298" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">S</text><rect x="363" y="112" width="14" height="14" fill="#2c3540"></rect><text x="370" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">D</text><rect x="443" y="112" width="14" height="14" fill="#2c3540"></rect><text x="450" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">S</text><rect x="523" y="112" width="14" height="14" fill="#2c3540"></rect><text x="530" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">D</text><rect x="599" y="112" width="14" height="14" fill="#2c3540"></rect><text x="606" y="105" text-anchor="middle" font-size="10.5" font-weight="700" fill="#2c4a1e">S</text><text x="455" y="196" text-anchor="middle" font-size="10.5" fill="#33414f">adjacent fingers share S/D diffusion — total W = 4 × W_finger</text><text x="455" y="226" text-anchor="middle" font-size="10.5" font-style="italic" fill="#7a8794">cell: wider (more sites), same row height</text></svg></div>
+    <figcaption><strong>Figure 4 — Folding a wide device into fingers.</strong> Four parallel fingers have approximately four times a single finger’s total channel width. Alternating source/drain diffusion regions allow sharing, and the gate connections tie the fingers together. The drawing illustrates geometry; current scaling depends on bias, layout resistance and the device model.</figcaption>
+  </figure>
+
+  <h2 id="section-4">4. Choosing sizes: nothing is free</h2>
+  <p>Why not make every cell large? The input of each cell also loads its predecessor. Increasing width usually increases pin and internal capacitance, area, dynamic energy and peak rail current. Upsizing can improve a heavily loaded output while making the preceding stage slower. The best size depends on the entire path and routing, not only one gate:</p>
+  <ul>
+    <li><strong>Small drives (X1, X2)</strong> for short local nets and non-critical paths — cheap in area, power, and upstream loading.</li>
+    <li><strong>Large drives (X8, X16…)</strong> for long wires, high fanout, and critical paths.</li>
+    <li><strong>Swapping is easy by design:</strong> all strengths of a cell share the same logical footprint and pin names, so synthesis and place-and-route freely upsize/downsize cells during timing and power optimization — one reason placements leave the ECO (engineering change order) space described in <a href="spare_eco.html">lesson 53</a>.</li>
+    <li><strong>Very large loads often need a buffer chain.</strong> A stage-effort target around 3–4 is a useful first estimate for simple paths. Required polarity, branch loads, wire resistance, allowed slew and characterized intrinsic delay change the optimum. Tools select discrete cells and may build a branching buffer tree.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig5"><svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 5 — A conceptual buffer chain. Gradually increasing drive can reduce delay to a large load compared with forcing a small source to drive it directly. The 4× progression is a teaching choice, not a universal optimum or proof that every single-stage solution is slower."><line x1="20" y1="80" x2="60" y2="80" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><text x="20" y="70" text-anchor="start" font-size="10" fill="#7a8794">signal</text><polygon points="60,65 60,95 87,80" fill="#e3ecf7" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="92" cy="80" r="5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><text x="71.5" y="111" text-anchor="middle" font-size="10.5" font-weight="700" fill="#33414f">X1</text><line x1="97" y1="80" x2="150" y2="80" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><polygon points="150,57 150,103 191.4,80" fill="#e3ecf7" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="196.4" cy="80" r="5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><text x="168.7" y="119" text-anchor="middle" font-size="10.5" font-weight="700" fill="#33414f">X4</text><line x1="201.4" y1="80" x2="260" y2="80" stroke="#33414f" stroke-width="2" stroke-linecap="round"></line><polygon points="260,47 260,113 319.4,80" fill="#e3ecf7" stroke="#33414f" stroke-width="1.6"></polygon><circle cx="324.4" cy="80" r="5" fill="#fff" stroke="#33414f" stroke-width="1.6"></circle><text x="287.7" y="129" text-anchor="middle" font-size="10.5" font-weight="700" fill="#33414f">X16</text><line x1="329.4" y1="80" x2="420" y2="80" stroke="#33414f" stroke-width="3" stroke-linecap="round"></line><text x="392" y="66" text-anchor="middle" font-size="10" fill="#7a8794">long, heavy net</text><line x1="420" y1="80" x2="470" y2="30" stroke="#98a4b0" stroke-width="1.5" stroke-linecap="round"></line><rect x="470" y="20" width="44" height="20" rx="4" fill="#f2f5f9" stroke="#98a4b0"></rect><text x="492" y="34" text-anchor="middle" font-size="9.5" fill="#5c6b7a">gate</text><line x1="420" y1="80" x2="470" y2="64" stroke="#98a4b0" stroke-width="1.5" stroke-linecap="round"></line><rect x="470" y="54" width="44" height="20" rx="4" fill="#f2f5f9" stroke="#98a4b0"></rect><text x="492" y="68" text-anchor="middle" font-size="9.5" fill="#5c6b7a">gate</text><line x1="420" y1="80" x2="470" y2="98" stroke="#98a4b0" stroke-width="1.5" stroke-linecap="round"></line><rect x="470" y="88" width="44" height="20" rx="4" fill="#f2f5f9" stroke="#98a4b0"></rect><text x="492" y="102" text-anchor="middle" font-size="9.5" fill="#5c6b7a">gate</text><line x1="420" y1="80" x2="470" y2="132" stroke="#98a4b0" stroke-width="1.5" stroke-linecap="round"></line><rect x="470" y="122" width="44" height="20" rx="4" fill="#f2f5f9" stroke="#98a4b0"></rect><text x="492" y="136" text-anchor="middle" font-size="9.5" fill="#5c6b7a">gate</text><text x="580" y="92" text-anchor="middle" font-size="10.5" font-weight="700" fill="#33414f">each stage ~4×</text><text x="580" y="108" text-anchor="middle" font-size="10.5" fill="#33414f">bigger than the last</text></svg></div>
+    <figcaption><strong>Figure 5 — A conceptual buffer chain.</strong> Gradually increasing drive can reduce delay to a large load compared with forcing a small source to drive it directly. The 4× progression is a teaching choice, not a universal optimum or proof that every single-stage solution is slower.</figcaption>
+  </figure>
+
+<!-- sky130-cell -->
+  <h2 id="section-5">5. These SkyWater inverter strengths use parallel devices, and inv_2 is not wider</h2>
+  <p>
+    This library names the strengths <code>inv_1</code>, <code>inv_2</code>,
+    <code>inv_4</code>, and <code>inv_8</code>. The suffix is how many copies of
+    the <code>inv_1</code> transistor the cell uses, not how many sites it occupies,
+    and not the <code>X1</code> / <code>X4</code> label in the figures above.
+    The SPICE netlists of <code>inv_1</code>, <code>inv_2</code>, and
+    <code>inv_4</code> are one, two, and four of each transistor. Every finger is
+    the same device: NMOS 0.65&nbsp;µm, high-Vt PMOS 1.0&nbsp;µm, length 0.15&nbsp;µm.
+    <code>inv_8</code>'s input antenna area is 1.980&nbsp;µm², eight times
+    <code>inv_1</code>'s 0.2475&nbsp;µm², which is eight copies of that same gate.
+  </p>
+  <p>
+    Folding does not always make the cell wider. <code>inv_1</code> and
+    <code>inv_2</code> are both 1.38&nbsp;µm, three sites. The second finger fits
+    in the same outline. <code>inv_4</code> is 2.30&nbsp;µm, five sites.
+    <code>inv_8</code> is 4.14&nbsp;µm, nine sites. Five and nine, rather than four
+    and eight: in this inverter family the suffix matches the parallel-device count; the site count also includes layout overhead. Other cell families need not follow the same transistor-count rule.
+  </p>
+  <table>
+    <tbody><tr>
+      <th>Cell</th><th>Sites</th><th>Fingers</th><th>Input</th>
+      <th>Rise</th><th>Fall</th><th>Max load</th>
+    </tr>
+    <tr class="active"><td>inv_1</td><td>3</td><td>1 + 1</td><td>2.30 fF</td><td>71 ps</td><td>44 ps</td><td>181 fF</td></tr>
+    <tr><td>inv_2</td><td>3</td><td>2 + 2</td><td>4.46 fF</td><td>47 ps</td><td>27 ps</td><td>331 fF</td></tr>
+    <tr><td>inv_4</td><td>5</td><td>4 + 4</td><td>9.00 fF</td><td>37 ps</td><td>20 ps</td><td>563 fF</td></tr>
+    <tr><td>inv_8</td><td>9</td><td>8 + 8</td><td>17.7 fF</td><td>31 ps</td><td>17 ps</td><td>1035 fF</td></tr>
+  </tbody></table>
+  <p>
+    The rise and fall columns are the same comparison: typical corner, 25°C,
+    1.80&nbsp;V, input edge 0.01&nbsp;ns, load 9.21&nbsp;fF, which is four
+    <code>inv_1</code> inputs. Each number is a linear interpolation along the
+    load axis of that cell's own table. It is not a raw table entry. The input
+    column is the Liberty <code>capacitance</code> in femtofarads.
+  </p>
+  <p>The table’s rising edges are slower than its falling edges at these conditions. Doubling the fingers does not halve the measured delay because intrinsic device/interconnect capacitances and internal delay remain. The larger <em>input</em> capacitance burdens the preceding stage; it is not a load that this inverter’s own output charges.</p>
+  <p>Input antenna gate area in these four inverter variants scales 1:2:4:8. Rise/fall pin capacitances need not be equal. The output <code>max_capacitance</code> is an electrical design-rule limit at the named corner; timing constraints and <code>max_transition</code> also apply. Table coverage and design-rule limits must both be checked rather than inferred from the strength suffix.</p>
+    <p>
+      <code>inv_2</code> being the same three sites as <code>inv_1</code> matters
+      to the placer. Swapping <code>_1</code> for <code>_2</code> does not push the
+      neighbors sideways. Swapping in <code>_4</code> does: the cell grows by two
+      sites. The "same footprint, any strength" sentence in section 4 is the goal
+      for pin names and the row height. On this inverter the outline is shared by
+      <code>_1</code> and <code>_2</code> only.
+    </p>
+  
+
+    <h2 id="section-6">6. Logical effort is the textbook size, in units of an inverter</h2>
+  <p>
+    Harris's logical-effort count writes delay as <code>d = gh + p</code>. Electrical effort <code>h</code> is <code>Cout / Cin</code>. Logical effort <code>g</code> is how much input capacitance a gate needs to drive as hard as an inverter. The inverter is defined as <code>g = 1</code>, <code>p = 1</code>, so <code>d = h + 1</code>. A fanout of 4 is <code>h = 4</code>, so <code>d = 5</code>. That 5 is in units of the process delay. It is not a picosecond count for SkyWater.
+  </p>
+  <p>
+    The count that produces <code>g = 4/3</code> for a NAND2 and <code>g = 5/3</code> for a NOR2 takes the PMOS as twice the NMOS, and widens a series device until the stack matches the inverter. Section 2 already measured this library: <code>inv_1</code> is 1.00&nbsp;µm over 0.65&nbsp;µm, a ratio of 1.54, and the PMOS is high-Vt. The delay a path is signed off with is the Liberty table (<a href="liberty_tables.html">lesson 23</a>).
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 262" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 6 — Textbook delay against fanout. Inverter d = h + 1, NAND2 d = (4/3)h + 2, NOR2 d = (5/3)h + 2. The dot is a fanout-of-4 inverter, d = 5.">
+<text x="370" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Normalized delay against electrical effort h</text>
+<line x1="70" y1="190" x2="700" y2="190" stroke="#d7dfe8" stroke-width="1"></line>
+<line x1="70" y1="30" x2="70" y2="190" stroke="#d7dfe8" stroke-width="1"></line>
+<polyline fill="none" stroke="#4a72c4" stroke-width="2.5" points="70,175 188,160 306,145 424,130 542,115 660,100"></polyline>
+<polyline fill="none" stroke="#1e9e50" stroke-width="2.5" points="70,160 188,140 306,120 424,100 542,80 660,60"></polyline>
+<polyline fill="none" stroke="#c0564a" stroke-width="2.5" points="70,160 188,135 306,110 424,85 542,60"></polyline>
+<text x="666" y="104" text-anchor="start" font-size="12" font-weight="700" fill="#4a72c4">inverter</text>
+<text x="666" y="64" text-anchor="start" font-size="12" font-weight="700" fill="#1e9e50">NAND2</text>
+<text x="548" y="58" text-anchor="start" font-size="12" font-weight="700" fill="#c0564a">NOR2</text>
+<circle cx="542" cy="115" r="4" fill="#4a72c4"></circle>
+<text x="552" y="134" text-anchor="start" font-size="12" fill="#4a72c4">FO4: h = 4, d = 5</text>
+<line x1="70" y1="190" x2="70" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="70" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">0</text><line x1="188" y1="190" x2="188" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="188" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">1</text><line x1="306" y1="190" x2="306" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="306" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">2</text><line x1="424" y1="190" x2="424" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="424" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">3</text><line x1="542" y1="190" x2="542" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="542" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">4</text><line x1="660" y1="190" x2="660" y2="195" stroke="#7a8794" stroke-width="1"></line><text x="660" y="207" text-anchor="middle" font-size="11" fill="#5c6b7a">5</text><line x1="65" y1="190" x2="70" y2="190" stroke="#7a8794" stroke-width="1"></line><text x="61" y="194" text-anchor="end" font-size="11" fill="#5c6b7a">0</text><line x1="65" y1="160" x2="70" y2="160" stroke="#7a8794" stroke-width="1"></line><text x="61" y="164" text-anchor="end" font-size="11" fill="#5c6b7a">2</text><line x1="65" y1="130" x2="70" y2="130" stroke="#7a8794" stroke-width="1"></line><text x="61" y="134" text-anchor="end" font-size="11" fill="#5c6b7a">4</text><line x1="65" y1="100" x2="70" y2="100" stroke="#7a8794" stroke-width="1"></line><text x="61" y="104" text-anchor="end" font-size="11" fill="#5c6b7a">6</text><line x1="65" y1="70" x2="70" y2="70" stroke="#7a8794" stroke-width="1"></line><text x="61" y="74" text-anchor="end" font-size="11" fill="#5c6b7a">8</text><line x1="65" y1="40" x2="70" y2="40" stroke="#7a8794" stroke-width="1"></line><text x="61" y="44" text-anchor="end" font-size="11" fill="#5c6b7a">10</text>
+<text x="385" y="224" text-anchor="middle" font-size="12" fill="#33414f">electrical effort h = C<tspan baseline-shift="sub" font-size="9">out</tspan> / C<tspan baseline-shift="sub" font-size="9">in</tspan></text>
+<text x="22" y="110" text-anchor="middle" font-size="12" fill="#33414f" transform="rotate(-90 22 110)">delay d (units of τ)</text>
+<text x="385" y="250" text-anchor="middle" font-size="12" fill="#5c6b7a">Textbook logical-effort lines d = gh + p. Delay is in units of the process time τ, not nanoseconds.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 6 — Textbook delay against fanout. Inverter <code>d = h + 1</code>, NAND2 <code>d = (4/3)h + 2</code>, NOR2 <code>d = (5/3)h + 2</code>. The dot is a fanout-of-4 inverter, <code>d = 5</code>.</strong></figcaption>
+  </figure>
+
+
+<h2 id="worked-le">Worked example — a 3-stage path driving 100 fF</h2>
+<p>Logical effort writes a stage delay as <code>d = gh + p</code>, in units of a process’s basic inverter delay τ. For a path of <em>N</em> stages, the path electrical effort is <code>H = C<sub>out</sub> / C<sub>in</sub></code>, the path logical effort is the product of the stage <code>g</code> values, and the branching effort <code>B</code> accounts for each stage’s off-path load (here <code>B = 1</code>). The stage effort that minimizes the path delay is <code>ρ = (GBH)<sup>1/N</sup></code>, and the path delay is <code>D = Nρ + P</code> with <code>P = Σ p</code>.</p>
+<p>Take three inverters (<code>g = 1</code>, <code>p = 1</code> each) whose first input is an HD <code>inv_1</code>, <code>C<sub>in</sub> = 2.302 fF</code> (this course’s nominal pin capacitance for pin A, the same number used in <a href="loads.html">lesson 21</a>). The load is 100 fF.</p>
+<ul>
+<li><code>G = 1 × 1 × 1 = 1</code>, <code>B = 1</code>, <code>H = 100 / 2.302 = 43.440</code>, so <code>F = GBH = 43.440</code>.</li>
+<li><code>ρ = 43.440<sup>1/3</sup> = 3.516</code>.</li>
+<li>Each stage’s input capacitance is the previous stage’s output: 2.302 fF, then 2.302 × 3.516 = <strong>8.094 fF</strong>, then 8.094 × 3.516 = <strong>28.46 fF</strong>, and 28.46 × 3.516 = 100.0 fF, which closes on the load.</li>
+<li>Path delay <code>D = 3 × 3.516 + 3 × 1 = 13.55</code> τ. An FO4 inverter has <code>d = 1×4 + 1 = 5</code> τ, so this path is 13.55 / 5 ≈ <strong>2.71 FO4</strong>.</li>
+</ul>
+<p>Those capacitances are a sizing target, not a claim that the HD library has a cell at exactly 8.094 fF. In the library you would pick the nearest <code>inv_n</code> (lesson 11’s parallel-device strengths) and re-check <code>H</code>. The calculator below lets you change the gate types, the first-stage capacitance and the load; it is Harris’s textbook arithmetic, not an ngspice delay.</p>
+<div class="interactive" id="le-calc" style="background:#f7fafc;border:1px solid #d7dfe8;border-radius:8px;padding:16px 18px;margin:1.2em 0">
+<p style="margin:0 0 10px;font-weight:700;color:#33414f">Logical-effort path calculator</p>
+<p style="margin:0 0 12px;font-size:13px;color:#5c6b7a">Textbook <code>g</code>, <code>p</code>: inverter 1, 1; NAND2 4/3, 2; NOR2 5/3, 2. Branching effort is 1.</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;max-width:640px">
+<label>Stage 1 <select id="le-g0" aria-label="Stage 1 type"><option value="inv" selected>inverter</option><option value="nand2">NAND2</option><option value="nor2">NOR2</option></select></label>
+<label>Stage 2 <select id="le-g1" aria-label="Stage 2 type"><option value="inv" selected>inverter</option><option value="nand2">NAND2</option><option value="nor2">NOR2</option></select></label>
+<label>Stage 3 <select id="le-g2" aria-label="Stage 3 type"><option value="inv" selected>inverter</option><option value="nand2">NAND2</option><option value="nor2">NOR2</option></select></label>
+<label>C<sub>in</sub>, first stage (fF) <input id="le-cin" type="number" min="0.2" max="50" step="0.001" value="2.302"></label>
+<label>C<sub>out</sub> (fF) <input id="le-cout" type="number" min="1" max="1000" step="1" value="100"></label>
+</div>
+<p id="le-out" style="margin:14px 0 0;color:#33414f"></p>
+</div>
+<script>
+(function(){
+  const GP={inv:[1,1],nand2:[4/3,2],nor2:[5/3,2]};
+  function v(id){return document.getElementById(id);}
+  function u(){
+    const g=[],p=[];
+    for(let i=0;i<3;i++){const k=v('le-g'+i).value;g.push(GP[k][0]);p.push(GP[k][1]);}
+    const cin=parseFloat(v('le-cin').value), cout=parseFloat(v('le-cout').value);
+    const el=v('le-out');
+    if(!(cin>0&&cout>0)){el.textContent='Enter positive capacitances.';return;}
+    const G=g[0]*g[1]*g[2], H=cout/cin, F=G*H, N=3, rho=Math.pow(F,1/N), P=p[0]+p[1]+p[2], D=N*rho+P;
+    const c1=cin, c2=cin*rho/g[0]*g[1], c3=c2*rho/g[1]*g[2];
+    /* each stage: Cout_i / Cin_i = rho/g_i? Wait: stage effort gh = rho, so h = rho/g, Cout=h*Cin=(rho/g)*Cin.
+       Cin_{k+1} is not Cout_k when g differs — Cout_k is the next input if B=1, yes Cin_{k+1}=Cout_k=(rho/g_k)*Cin_k.
+    */
+    const cin2=(rho/g[0])*cin, cin3=(rho/g[1])*cin2, cload=(rho/g[2])*cin3;
+    el.innerHTML = '<strong>H</strong> = '+H.toFixed(3)+' · <strong>G</strong> = '+G.toFixed(3)+
+      ' · <strong>ρ</strong> = '+rho.toFixed(3)+
+      ' · <strong>D</strong> = '+D.toFixed(2)+' τ ('+(D/5).toFixed(2)+' FO4).'+
+      ' Stage input capacitances: '+cin.toFixed(3)+', '+cin2.toFixed(3)+', '+cin3.toFixed(3)+
+      ' fF, closing on '+cload.toFixed(2)+' fF.';
+  }
+  ['le-g0','le-g1','le-g2','le-cin','le-cout'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',u);
+    document.getElementById(id).addEventListener('change',u);
+  });
+  u();
+})();
+</script>
+
+<details class="checkpoint"><summary>Worked checkpoint — Does inv_4 give four times the speed?</summary><p>For the earlier comparison’s same 10 ps input transition and 9.208 fF external load, nominal rising delays are about 71 ps for <code>inv_1</code> and 37 ps for <code>inv_4</code>. The speed ratio is <strong>71/37 ≈ 1.92</strong>, using rounded table values. Input capacitance rises from 2.302 to 9.004 fF, a factor of <strong>3.91</strong>. The stronger output therefore adds substantially more load to its predecessor; a path-level timing check decides whether upsizing helps overall.</p></details>
+
+<details class="checkpoint"><summary>Check your understanding — replacing an <code>inv_1</code> with an <code>inv_4</code> speeds up that stage. Why can the whole path still get slower?</summary><p>The <code>inv_4</code> input is about four times heavier: 9.00 fF against 2.30 fF for <code>inv_1</code> in the HD Liberty data. The gate driving it now sees more load and slows down. Upsizing helps only when the stage’s own load dominates; otherwise it moves the delay upstream. Buffer chains and logical effort manage that trade.</p></details><p><a href="delay_physics.html">Lesson 29</a> derives these effective resistances from SKY130 device curves, compares them with values fitted to the Liberty tables, and works logical effort and a buffer tree through a fanout example.</p><div class="takeaways">
+    <h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>An effective RC model helps estimate delay. Increasing width usually improves drive but also adds capacitance; compare actual strength options using characterized timing and the surrounding path.</li>
+      <li>An X4 suffix is a library drive-strength choice. Fourfold current or speed is an idealized comparison, not a universal guarantee; use the characterized tables.</li>
+      <li>A PMOS width around twice the NMOS is a teaching approximation. Actual balanced sizing depends on the device models and operating point.</li>
+      <li>Fixed row height encourages folding into parallel fingers. More fingers may require more sites, although the checked inv_1 and inv_2 share an outline.</li>
+      <li>Input capacitance scales with W too — upsizing loads the previous stage; sizing is a trade of speed vs area, power, and upstream load.</li>
+      <li>Large loads often benefit from buffer chains or trees; choose stage sizes using the actual loads, slew constraints and timing models.</li>
+      <li>SkyWater's <code>inv_1/2/4/8</code> are 1, 2, 4, and 8 fingers of 0.65 / 1.0&nbsp;µm. <code>inv_2</code> is still 3 sites. Into 9.21&nbsp;fF the rise goes 71, 47, 37, 31&nbsp;ps.</li>
+          <li>Logical effort compares a gate with an inverter in textbook units. <code>inv_1</code> is ratio 1.54, and the sign-off delay is the Liberty table.</li>
+    </ul>
+  </div>
+<section id="sources" class="sources"><h2 id="section-8">Sources &amp; scope</h2><p>Reviewed 2026-11-06. Pin dimensions, areas, device counts and nominal tables are properties of the cited library revision; drawings are not fabrication layouts or a replacement for DRC/LVS/PEX.</p><ul><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4.spice">Inverter device topology</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">Nominal inv_1 characterization</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2__tt_025C_1v80.lib.json">Nominal inv_2 characterization</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4__tt_025C_1v80.lib.json">Nominal inv_4 characterization</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8__tt_025C_1v80.lib.json">Nominal inv_8 characterization</a></li><li><a href="https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf">Harris: logical effort</a></li></ul></section>
+<section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_inverter_characterization.html">Measure slew, load and switching energy in Lab 1</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html" aria-current="page">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="logic_gates.html"><small>← Previous</small>Logic Gates at the Transistor Level</a><a href="gate_topologies.html"><small>Next →</small>More Gate Topologies</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const HI = '#d9534f', LO = '#3b6fb0', ONC = '#1e9e50', OFFC = '#9aa5b1', DK = '#33414f';
+const DIFF = '#8fbf6f', DIFFB = '#5e8f43', POLY = '#d95252', CONT = '#2c3540';
+
+const wr = (x1, y1, x2, y2, c, w) =>
+  `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || DK}" stroke-width="${w || 2}" stroke-linecap="round"/>`;
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 11}" ${o.b ? 'font-weight="700"' : ''} ${o.i ? 'font-style="italic"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+// exponential edge as a polyline; returns points string
+function expEdge(x0, w, yFrom, yTo, tau, steps = 50) {
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps * w;
+    const v = 1 - Math.exp(-t / tau);
+    pts.push(`${x0 + t},${yFrom + (yTo - yFrom) * v}`);
+  }
+  return pts.join(' ');
+}
+const poly = (pts, c, w) => `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="${w || 2.5}" stroke-linejoin="round"/>`;
+
+// zigzag resistor, vertical, from (x,y1) to (x,y2)
+function resistor(x, y1, y2) {
+  const n = 6, seg = (y2 - y1 - 20) / n;
+  let p = `${x},${y1} ${x},${y1 + 10}`;
+  for (let i = 0; i < n; i++)
+    p += ` ${x + (i % 2 ? -8 : 8)},${y1 + 10 + seg * (i + 0.5)}`;
+  p += ` ${x},${y2 - 10} ${x},${y2}`;
+  return poly(p, DK, 2);
+}
+// capacitor to ground at (x, y) going down
+function cap(x, y) {
+  let t = wr(x, y, x, y + 14);
+  t += wr(x - 16, y + 14, x + 16, y + 14, DK, 2.5) + wr(x - 16, y + 22, x + 16, y + 22, DK, 2.5);
+  t += wr(x, y + 22, x, y + 36);
+  t += wr(x - 12, y + 36, x + 12, y + 36, LO, 3);
+  return t;
+}
+
+// ---------- Figure 1: gate -> RC model ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // left: inverter with PMOS on (simplified)
+  const x = 140;
+  s += txt(x, 30, 'VDD', { b: 1, c: HI, s: 11 });
+  s += wr(x, 38, x, 62, HI);
+  s += wr(x, 62, x, 86, ONC, 5) + txt(x + 14, 78, 'PMOS ON', { a: 'start', s: 9.5, c: ONC, b: 1 });
+  s += wr(x - 8, 62, x - 8, 86, DK, 2) + `<circle cx="${x - 13.5}" cy="74" r="4" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+  s += wr(x - 17.5, 74, x - 34, 74, LO, 2) + txt(x - 40, 78, 'IN = 0', { a: 'end', c: LO, b: 1, s: 11 });
+  s += wr(x, 86, x, 120, HI) + wr(x, 120, x + 60, 120, HI);
+  s += txt(x + 30, 110, 'OUT', { c: HI, b: 1, s: 10.5 });
+  s += cap(x + 60, 120);
+  s += wr(x, 120, x, 150, HI, 2);
+  s += wr(x, 150, x, 174, OFFC, 5) + txt(x + 14, 166, 'NMOS OFF', { a: 'start', s: 9.5, c: '#8a95a1', b: 1 });
+  s += wr(x - 8, 150, x - 8, 174, DK, 2) + wr(x - 8, 162, x - 34, 162, LO, 2);
+  s += wr(x, 174, x, 198, LO);
+  s += txt(x, 214, 'VSS', { b: 1, c: LO, s: 11 });
+
+  s += txt(320, 122, '≈', { s: 30, c: '#98a4b0' });
+  s += txt(320, 150, 'for delay', { s: 10, c: '#7a8794', i: 1 });
+
+  // right: RC circuit
+  const rx = 470;
+  s += txt(rx, 30, 'VDD', { b: 1, c: HI, s: 11 });
+  s += wr(rx, 38, rx, 52, HI);
+  s += resistor(rx, 52, 130);
+  s += txt(rx + 20, 92, 'R ∝ 1 / W', { a: 'start', s: 11, b: 1 });
+  s += wr(rx, 130, rx, 150, HI) + wr(rx, 150, rx + 80, 150, HI);
+  s += txt(rx + 40, 140, 'OUT', { c: HI, b: 1, s: 10.5 });
+  s += cap(rx + 80, 150);
+  s += txt(rx + 130, 172, 'C = wire +', { a: 'start', s: 10.5 });
+  s += txt(rx + 130, 186, 'gate inputs', { a: 'start', s: 10.5 });
+  s += txt(rx + 40, 226, 'delay ≈ 0.7 · R · C', { b: 1, s: 12 });
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: X1 vs X4 into the same load ----------
+(function () {
+  const X0 = 80, XW = 540, Y0 = 210, Y1 = 60; // 0 and VDD levels
+  const Y50 = (Y0 + Y1) / 2;
+  let s = `<svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += wr(X0, Y0, X0 + XW, Y0, '#c8d0d8', 1.5) + wr(X0, Y0, X0, 40, '#c8d0d8', 1.5);
+  s += txt(X0 - 10, Y0 + 4, '0', { a: 'end', s: 10.5, c: '#7a8794' });
+  s += txt(X0 - 10, Y1 + 4, 'VDD', { a: 'end', s: 10.5, c: '#7a8794' });
+  s += wr(X0 - 4, Y1, X0 + 4, Y1, '#7a8794', 1.5);
+  s += txt(X0 + XW, Y0 + 20, 'time →', { a: 'end', s: 10.5, c: '#7a8794' });
+  s += `<line x1="${X0}" y1="${Y50}" x2="${X0 + XW}" y2="${Y50}" stroke="#c8d0d8" stroke-width="1" stroke-dasharray="4 4"/>`;
+  s += txt(X0 + XW + 6, Y50 + 4, '50%', { a: 'start', s: 10, c: '#7a8794' });
+
+  const tau1 = 170, tau4 = 42.5;
+  s += poly(expEdge(X0, XW, Y0, Y1, tau4), ONC);
+  s += poly(expEdge(X0, XW, Y0, Y1, tau1), HI);
+  const d1 = tau1 * Math.LN2, d4 = tau4 * Math.LN2;
+  for (const [d, c, name] of [[d4, ONC, 'X4 delay'], [d1, HI, 'X1 delay']]) {
+    s += `<line x1="${X0 + d}" y1="${Y50}" x2="${X0 + d}" y2="${Y0}" stroke="${c}" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+    s += `<circle cx="${X0 + d}" cy="${Y50}" r="3.5" fill="${c}"/>`;
+    s += txt(X0 + d + 5, Y0 - 8, name, { a: 'start', s: 10.5, c, b: 1 });
+  }
+  s += txt(X0 + 300, Y1 + 62, 'INV_X1 driving C', { a: 'start', c: HI, b: 1, s: 11 });
+  s += txt(X0 + 130, Y1 + 26, 'INV_X4 driving C', { a: 'start', c: ONC, b: 1, s: 11 });
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: rise/fall symmetry ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function panel(ox, taur, tauf, title, good) {
+    const Y0 = 190, Y1 = 90, t1 = 30, t2 = 165, W = 280;
+    let t = txt(ox + W / 2, 28, title, { b: 1, s: 12, c: good ? '#1e7e3e' : '#a83232' });
+    // input (inverted pulse), drawn small above
+    const iy0 = 60, iy1 = 44;
+    t += poly(`${ox},${iy1} ${ox + t1},${iy1} ${ox + t1},${iy0} ${ox + t2},${iy0} ${ox + t2},${iy1} ${ox + W},${iy1}`, '#98a4b0', 1.5);
+    t += txt(ox - 8, 56, 'IN', { a: 'end', s: 10, c: '#7a8794' });
+    t += txt(ox - 8, 145, 'OUT', { a: 'end', s: 10, c: '#7a8794' });
+    // output: rise at t1 (tau r), fall at t2 (tau f)
+    t += poly(`${ox},${Y0} ${ox + t1},${Y0}`, DK, 2.5);
+    t += poly(expEdge(ox + t1, t2 - t1, Y0, Y1, taur), DK);
+    const yAtT2 = Y1 + (Y0 - Y1) * Math.exp(-(t2 - t1) / taur);
+    t += poly(expEdge(ox + t2, W - t2, yAtT2, Y0, tauf), DK);
+    t += txt(ox + (t1 + t2) / 2, Y0 + 24, `rise: τ = ${taur}`, { s: 10, c: '#7a8794' });
+    t += txt(ox + (t2 + W) / 2, Y0 + 24, `fall: τ = ${tauf}`, { s: 10, c: '#7a8794' });
+    return t;
+  }
+  s += panel(60, 56, 24, 'Wp = Wn — asymmetric', false);
+  s += `<line x1="380" y1="20" x2="380" y2="235" stroke="#e3e9ef" stroke-width="1.5"/>`;
+  s += panel(410, 30, 30, 'Wp ≈ 2·Wn — balanced', true);
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+
+// ---------- Figure 4: single finger vs 4 fingers ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  // X1: single finger
+  s += txt(115, 30, 'X1 — one finger', { b: 1, s: 12 });
+  s += `<rect x="40" y="90" width="150" height="60" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  s += `<rect x="105" y="60" width="16" height="118" fill="${POLY}"/>`;
+  s += `<rect x="64" y="112" width="14" height="14" fill="${CONT}"/>`;
+  s += `<rect x="148" y="112" width="14" height="14" fill="${CONT}"/>`;
+  s += txt(72, 105, 'S', { s: 10.5, b: 1, c: '#2c4a1e' });
+  s += txt(155, 105, 'D', { s: 10.5, b: 1, c: '#2c4a1e' });
+  s += txt(115, 196, 'W', { s: 10.5, c: DK });
+  s += wr(30, 90, 30, 150, DK, 1) + `<polygon points="26,98 34,98 30,90" fill="${DK}"/>` + `<polygon points="26,142 34,142 30,150" fill="${DK}"/>`;
+
+  s += txt(115, 226, 'cell: 3 sites wide', { s: 10.5, c: '#7a8794', i: 1 });
+
+  // X4: four fingers
+  s += txt(455, 30, 'X4 — four fingers in parallel', { b: 1, s: 12 });
+  s += `<rect x="270" y="90" width="370" height="60" fill="${DIFF}" stroke="${DIFFB}"/>`;
+  const fx = [330, 410, 490, 570];
+  for (const x of fx) s += `<rect x="${x - 8}" y="66" width="16" height="112" fill="${POLY}"/>`;
+  s += `<rect x="${fx[0] - 8}" y="52" width="${fx[3] - fx[0] + 16}" height="14" fill="${POLY}"/>`;
+  s += txt(455, 47, 'poly strap ties all 4 gates (one input)', { s: 9.5, c: POLY });
+  const dxs = [298, 370, 450, 530, 606];
+  const lbl = ['S', 'D', 'S', 'D', 'S'];
+  dxs.forEach((x, i) => {
+    s += `<rect x="${x - 7}" y="112" width="14" height="14" fill="${CONT}"/>`;
+    s += txt(x, 105, lbl[i], { s: 10.5, b: 1, c: '#2c4a1e' });
+  });
+  s += txt(455, 196, 'adjacent fingers share S/D diffusion — total W = 4 × W_finger', { s: 10.5, c: DK });
+  s += txt(455, 226, 'cell: wider (more sites), same row height', { s: 10.5, c: '#7a8794', i: 1 });
+  s += `</svg>`;
+  document.getElementById('fig4').innerHTML = s;
+})();
+
+// ---------- Figure 5: buffer chain ----------
+(function () {
+  let s = `<svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function inv(x, y, h, name) {
+    let t = `<polygon points="${x},${y - h / 2} ${x},${y + h / 2} ${x + h * 0.9},${y}" fill="#e3ecf7" stroke="${DK}" stroke-width="1.6"/>`;
+    t += `<circle cx="${x + h * 0.9 + 5}" cy="${y}" r="5" fill="#fff" stroke="${DK}" stroke-width="1.6"/>`;
+    t += txt(x + h * 0.45 - 2, y + h / 2 + 16, name, { s: 10.5, b: 1 });
+    return { svg: t, out: x + h * 0.9 + 10 };
+  }
+  const y = 80;
+  s += wr(20, y, 60, y) + txt(20, y - 10, 'signal', { a: 'start', s: 10, c: '#7a8794' });
+  let g = inv(60, y, 30, 'X1'); s += g.svg;
+  s += wr(g.out, y, 150, y);
+  g = inv(150, y, 46, 'X4'); s += g.svg;
+  s += wr(g.out, y, 260, y);
+  g = inv(260, y, 66, 'X16'); s += g.svg;
+  s += wr(g.out, y, 420, y, DK, 3);
+  s += txt(392, y - 14, 'long, heavy net', { s: 10, c: '#7a8794' });
+  // fanout of receivers
+  for (let i = 0; i < 4; i++) {
+    const ry = 30 + i * 34;
+    s += wr(420, y, 470, ry, '#98a4b0', 1.5);
+    s += `<rect x="470" y="${ry - 10}" width="44" height="20" rx="4" fill="#f2f5f9" stroke="#98a4b0"/>`;
+    s += txt(492, ry + 4, 'gate', { s: 9.5, c: '#5c6b7a' });
+  }
+  s += txt(580, 92, 'each stage ~4×', { s: 10.5, b: 1 });
+  s += txt(580, 108, 'bigger than the last', { s: 10.5 });
+  s += `</svg>`;
+  document.getElementById('fig5').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

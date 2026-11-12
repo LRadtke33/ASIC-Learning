@@ -1,0 +1,6 @@
+CONFIG source_period=14 ns readout_period=22 ns readout_phase=3 ns seed=4369
+TEST boot: requests blocked while reset or analog-not-ready
+TEST normal: three coherent words
+TEST rapid requests: busy requests rejected without overwriting data
+FATAL: <lab>/tb/tb_mixed_signal_integration.sv:29: FAIL at 938.000 ns: mailbox changed while busy
+       Time: 938000  Scope: tb_mixed_signal_integration.require

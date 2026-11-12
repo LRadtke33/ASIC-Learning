@@ -1,0 +1,566 @@
+{
+  "reviewer": "physical_review subagent",
+  "date": "2026-11-06",
+  "original_lessons_modified": false,
+  "deliverables": [
+    {
+      "path": "learning/matching_layout_extraction.html",
+      "status": "written, source-checked, calculation-checked and visually reviewed",
+      "word_count_main": 2119,
+      "figures": 3,
+      "tables": 3,
+      "solved_details": 3,
+      "sha256": "734e7db003a783cd5802647c85e0507e1d294c168ba8815538b1563c3158adbe",
+      "source_urls": [
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.opencircuitdesign.com/magic/commandref/extresist.html"
+      ]
+    },
+    {
+      "path": "learning/power_package_thermal.html",
+      "status": "written, source-checked, calculation-checked and visually reviewed",
+      "word_count_main": 2058,
+      "figures": 4,
+      "tables": 2,
+      "solved_details": 2,
+      "sha256": "18e6333a4d4c980bf6791d64f0c14dcb3eba92e0569b7fb9002a7d5f5def91b5",
+      "source_urls": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+        "https://www.ti.com/lit/an/spra953d/spra953d.pdf"
+      ]
+    },
+    {
+      "path": "learning/lab_layout_extraction.html",
+      "status": "written, source-checked, calculation-checked and visually reviewed",
+      "word_count_main": 2110,
+      "figures": 5,
+      "tables": 4,
+      "solved_details": 2,
+      "sha256": "bf2ae85834a191f48e865ebcfccd3bb2f4ce397f59c6c76dceae7b5c9dabe5af",
+      "source_urls": [
+        "https://ngspice.sourceforge.io/docs.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+        "https://www.opencircuitdesign.com/magic/howto.html"
+      ]
+    }
+  ],
+  "lesson47_topics": [
+    "Weighted centroid and linear-gradient cancellation",
+    "Quadratic-gradient counterexample and random mismatch limits",
+    "Dummy surroundings, orientation, contacts, wells and routing",
+    "Equal-length versus equal electrical environment",
+    "Dynamic matching and post-fill effects",
+    "Coordinate-to-internal-probe mapping",
+    "SPEF/DSPF/extracted-SPICE roles and model accounting"
+  ],
+  "lesson48_topics": [
+    "Local differential power port and full return loop",
+    "Impedance target with frequency/activity limitations",
+    "Series ESR/ESL model and self-resonance",
+    "Three-branch anti-resonance example",
+    "Current-slew and charge estimates",
+    "Published SKY130 met3 sheet resistance versus assumed temperature coefficient",
+    "Thermal RC and asymmetric thermal coupling"
+  ],
+  "lesson48_calculations": {
+    "scope": "All package and thermal values are assumed teaching examples. Only met3 sheet coefficient is from the public SKY130 RCX table.",
+    "pdn_local_peaks_30_to_800MHz": [
+      {
+        "frequency_Hz": 798577468.9269817,
+        "magnitude_ohm": 2.5085209094477268
+      },
+      {
+        "frequency_Hz": 220744884.6692451,
+        "magnitude_ohm": 10.689276568457426
+      },
+      {
+        "frequency_Hz": 220744884.6692451,
+        "magnitude_ohm": 2.8079531748665034
+      }
+    ],
+    "remote_SRF_Hz": 15915494.309189534,
+    "local_SRF_Hz": 1125395395.1963828,
+    "matching_settling_A_error_mV": 0.6737946999085467,
+    "matching_settling_B_error_mV": 1.0615346461976682,
+    "matching_settling_difference_mV": 0.3877399462891215,
+    "met3_example_Rref_ohm": 9.4,
+    "met3_example_Rhot_ohm": 11.092,
+    "met3_example_drop_mV_at_2mA": [
+      18.8,
+      22.184
+    ],
+    "thermal_rise_at_10ms_K": 0.9516258196404048,
+    "thermal_rise_at_100ms_K": 6.321205588285577
+  },
+  "lab4": {
+    "directory": "learning/labs/L04_layout_extraction",
+    "model": "analytical geometry-to-RC estimate; explicitly not qualified PEX",
+    "reference_simulator": "ngspice 44.2",
+    "runner_dependencies": "Python 3.10+ standard library; optional ngspice",
+    "default_new_output": "run_results; shipped results preserved",
+    "input_geometries": 4,
+    "reference_runs": 8,
+    "refined_runs": 8,
+    "independent_python_runs": 8,
+    "outputs": [
+      "geometry SVGs",
+      "distributed RC subcircuits",
+      "complete ngspice benches",
+      "coordinate and hierarchy probe CSVs",
+      "raw simulator text",
+      "logs",
+      "normalized waveform CSVs",
+      "summary JSON/CSV",
+      "response SVGs",
+      "verification JSON"
+    ],
+    "source_coefficients": {
+      "process": "SKY130 published basic RCX table values",
+      "checked_utc": "2026-11-06",
+      "source_url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+      "source_html_sha256": "446ae8c4b73d17d194d0a391fd95b254537fcffc803740c02cea456bf00e92bd",
+      "source_snapshot_bytes": 114538,
+      "source_note": "Table 91 resistance; Table 93 downward fringe; Table 95 parallel area. Documented fringe values are approximations from 5 um x 10 um test plates, not a calibrated general geometry model.",
+      "met3_sheet_ohm_per_square": 0.047,
+      "met2_met3_area_aF_per_um2": 86.1861,
+      "met3_to_met2_downward_fringe_aF_per_um": 69.846,
+      "met3_met4_area_aF_per_um2": 84.0346,
+      "scope_limitations": [
+        "Constant-width, non-self-intersecting Manhattan centerline model with a large quiet met2 reference plane.",
+        "Lower capacitance uses area plus a constant fringe-perimeter approximation; upper coupling and grounded-patch capacitance use overlap area only.",
+        "Upper edge/fringing fields, same-layer lateral coupling, shielding redistribution, floating fill, vias, pin/device capacitance, width corrections, process corners, temperature, package and substrate networks are omitted.",
+        "The 20 kohm driver/bias resistance, 50 fF receiver load, 1.8 V stimulus, geometry, and accuracy target are teaching assumptions.",
+        "SVG layouts illustrate the input geometry; they are not DRC/LVS-clean GDS or output from a foundry-qualified extraction deck.",
+        "ngspice solves the generated linear RC network; it does not validate the geometry estimator or turn its results into foundry extraction."
+      ]
+    },
+    "results": [
+      {
+        "id": "compact",
+        "label": "Compact route",
+        "length_um": 200.0,
+        "width_um": 0.4,
+        "total_R_ohm": 23.499999999999996,
+        "total_ground_C_fF": 34.88916480000001,
+        "total_mutual_C_fF": 0.0,
+        "aggressor_overlap_um2": 0.0,
+        "grounded_patch_overlap_um2": 0.0,
+        "node_count": 11,
+        "t50_delay_ns": 1.1789939295295573,
+        "half_LSB_settling_after_ramp_ns": 15.21129737099782,
+        "output_at_10ns_V": 1.782769996106835,
+        "coupling_peak_mV": 0.0,
+        "final_step_error_uV": 1.3000045484545808e-05
+      },
+      {
+        "id": "detour",
+        "label": "Long detour",
+        "length_um": 600.0,
+        "width_um": 0.4,
+        "total_R_ohm": 70.49999999999999,
+        "total_ground_C_fF": 104.55574080000002,
+        "total_mutual_C_fF": 16.1346432,
+        "aggressor_overlap_um2": 192.0,
+        "grounded_patch_overlap_um2": 0.0,
+        "node_count": 31,
+        "t50_delay_ns": 2.372833475414088,
+        "half_LSB_settling_after_ramp_ns": 30.714214917184183,
+        "output_at_10ns_V": 1.6212554053983024,
+        "coupling_peak_mV": 165.1007107497,
+        "final_step_error_uV": 0.07969500015470032
+      },
+      {
+        "id": "wide_detour",
+        "label": "Wider detour",
+        "length_um": 600.0,
+        "width_um": 1.2,
+        "total_R_ohm": 23.5,
+        "total_ground_C_fF": 146.0368224,
+        "total_mutual_C_fF": 48.4039296,
+        "aggressor_overlap_um2": 576.0,
+        "grounded_patch_overlap_um2": 0.0,
+        "node_count": 31,
+        "t50_delay_ns": 3.3917258511867328,
+        "half_LSB_settling_after_ramp_ns": 43.975772473159225,
+        "output_at_10ns_V": 1.441944698993553,
+        "coupling_peak_mV": 349.14463589009995,
+        "final_step_error_uV": 13.014556000001676
+      },
+      {
+        "id": "detour_fill",
+        "label": "Detour + grounded patch",
+        "length_um": 600.0,
+        "width_um": 0.4,
+        "total_R_ohm": 70.49999999999999,
+        "total_ground_C_fF": 107.91712480000002,
+        "total_mutual_C_fF": 16.1346432,
+        "aggressor_overlap_um2": 192.0,
+        "grounded_patch_overlap_um2": 40.0,
+        "node_count": 31,
+        "t50_delay_ns": 2.419522589263436,
+        "half_LSB_settling_after_ramp_ns": 31.320514700122605,
+        "output_at_10ns_V": 1.6131061566131895,
+        "coupling_peak_mV": 162.0029118184,
+        "final_step_error_uV": 0.11051100012871018
+      }
+    ],
+    "verification": {
+      "checked_date": "2026-11-06",
+      "scope": "Numerical and implementation checks of an analytical geometry-to-RC estimator; not foundry-qualified PEX validation.",
+      "reference_engine": "ngspice-44.2 : Circuit level simulation program",
+      "reference_segment_um": 20,
+      "reference_maximum_time_step_ps": 10,
+      "reference_input_sha256": {
+        "run_lab.py": "75e82d404e100ed34017009e28c7b9071b803149eefd507c65d0bb4f17fe62f3",
+        "sky130_coefficients.json": "e2f003afed8dc27ec6172b953019b49d049583b54fc9e4c8d1b3d0575867eb33",
+        "geometry/01_compact.json": "a6a29c04c4178a916fa3495f01520f6a72059964b45c566b594c48981c51d516",
+        "geometry/02_detour.json": "c41532954d06e077a6549a2bd1a3c70c83a99be3cbb085efcbe40d43bed4e6f2",
+        "geometry/03_wide_detour.json": "ebd1dcce3af979d44369451bf72fa7d87c472ac67e86e4a2e9a1b83a7cc52b4d",
+        "geometry/04_detour_fill.json": "f16e8f0d85f0d7e696b7f0aa5510818c6b2a0848cbd30a2ed85c3d60117e4966"
+      },
+      "reference_cases": [
+        {
+          "id": "compact",
+          "label": "Compact route",
+          "length_um": 200.0,
+          "width_um": 0.4,
+          "total_R_ohm": 23.499999999999996,
+          "total_ground_C_fF": 34.88916480000001,
+          "total_mutual_C_fF": 0.0,
+          "aggressor_overlap_um2": 0.0,
+          "grounded_patch_overlap_um2": 0.0,
+          "node_count": 11,
+          "t50_delay_ns": 1.1789939295295573,
+          "half_LSB_settling_after_ramp_ns": 15.21129737099782,
+          "output_at_10ns_V": 1.782769996106835,
+          "coupling_peak_mV": 0.0,
+          "final_step_error_uV": 1.3000045484545808e-05
+        },
+        {
+          "id": "detour",
+          "label": "Long detour",
+          "length_um": 600.0,
+          "width_um": 0.4,
+          "total_R_ohm": 70.49999999999999,
+          "total_ground_C_fF": 104.55574080000002,
+          "total_mutual_C_fF": 16.1346432,
+          "aggressor_overlap_um2": 192.0,
+          "grounded_patch_overlap_um2": 0.0,
+          "node_count": 31,
+          "t50_delay_ns": 2.372833475414088,
+          "half_LSB_settling_after_ramp_ns": 30.714214917184183,
+          "output_at_10ns_V": 1.6212554053983024,
+          "coupling_peak_mV": 165.1007107497,
+          "final_step_error_uV": 0.07969500015470032
+        },
+        {
+          "id": "wide_detour",
+          "label": "Wider detour",
+          "length_um": 600.0,
+          "width_um": 1.2,
+          "total_R_ohm": 23.5,
+          "total_ground_C_fF": 146.0368224,
+          "total_mutual_C_fF": 48.4039296,
+          "aggressor_overlap_um2": 576.0,
+          "grounded_patch_overlap_um2": 0.0,
+          "node_count": 31,
+          "t50_delay_ns": 3.3917258511867328,
+          "half_LSB_settling_after_ramp_ns": 43.975772473159225,
+          "output_at_10ns_V": 1.441944698993553,
+          "coupling_peak_mV": 349.14463589009995,
+          "final_step_error_uV": 13.014556000001676
+        },
+        {
+          "id": "detour_fill",
+          "label": "Detour + grounded patch",
+          "length_um": 600.0,
+          "width_um": 0.4,
+          "total_R_ohm": 70.49999999999999,
+          "total_ground_C_fF": 107.91712480000002,
+          "total_mutual_C_fF": 16.1346432,
+          "aggressor_overlap_um2": 192.0,
+          "grounded_patch_overlap_um2": 40.0,
+          "node_count": 31,
+          "t50_delay_ns": 2.419522589263436,
+          "half_LSB_settling_after_ramp_ns": 31.320514700122605,
+          "output_at_10ns_V": 1.6131061566131895,
+          "coupling_peak_mV": 162.0029118184,
+          "final_step_error_uV": 0.11051100012871018
+        }
+      ],
+      "closed_form_R_C_checks": "Passed for all four cases against independent length/width/area/perimeter calculations.",
+      "default_ngspice_runs": 8,
+      "refined_ngspice_runs": 8,
+      "independent_python_transients": 8,
+      "comparisons": {
+        "finer_ngspice": {
+          "engine": "ngspice-44.2 : Circuit level simulation program",
+          "segment_um": 10.0,
+          "time_step_ps": 5.0,
+          "cases": [
+            {
+              "id": "compact",
+              "absolute_difference": {
+                "t50_delay_ns": -7.903555399702e-06,
+                "half_LSB_settling_after_ramp_ns": 0.00011817951558690254,
+                "coupling_peak_mV": 0.0,
+                "output_at_10ns_V": -5.239402431911344e-07
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.0006703643845609689,
+                "half_LSB_settling_after_ramp_ns": 0.0007769193692329367,
+                "coupling_peak_mV": null,
+                "output_at_10ns_V": 2.9389110448083655e-05
+              }
+            },
+            {
+              "id": "detour",
+              "absolute_difference": {
+                "t50_delay_ns": -7.005683837491006e-07,
+                "half_LSB_settling_after_ramp_ns": 6.549226815977249e-05,
+                "coupling_peak_mV": -0.00030148070001700944,
+                "output_at_10ns_V": -7.650337439102373e-07
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 2.9524549067938404e-05,
+                "half_LSB_settling_after_ramp_ns": 0.00021323113202262081,
+                "coupling_peak_mV": 0.00018260412002348527,
+                "output_at_10ns_V": 4.7187737438709565e-05
+              }
+            },
+            {
+              "id": "wide_detour",
+              "absolute_difference": {
+                "t50_delay_ns": 1.582627592977559e-06,
+                "half_LSB_settling_after_ramp_ns": 1.8612870391621072e-05,
+                "coupling_peak_mV": -0.0007726145999527034,
+                "output_at_10ns_V": -5.377959164665214e-07
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 4.6661424372604073e-05,
+                "half_LSB_settling_after_ramp_ns": 4.2325283547847866e-05,
+                "coupling_peak_mV": 0.00022128783333102641,
+                "output_at_10ns_V": 3.7296570169569724e-05
+              }
+            },
+            {
+              "id": "detour_fill",
+              "absolute_difference": {
+                "t50_delay_ns": 2.9266338454903007e-06,
+                "half_LSB_settling_after_ramp_ns": 6.53047188166056e-05,
+                "coupling_peak_mV": -0.00033543990002726787,
+                "output_at_10ns_V": -7.479681478628208e-07
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.00012095914534863849,
+                "half_LSB_settling_after_ramp_ns": 0.00020850461571868728,
+                "coupling_peak_mV": 0.0002070579449851402,
+                "output_at_10ns_V": 4.6368191256130576e-05
+              }
+            }
+          ]
+        },
+        "independent_python": {
+          "engine": "Python standard-library backward Euler, fixed time step",
+          "segment_um": 20.0,
+          "time_step_ps": 10.0,
+          "cases": [
+            {
+              "id": "compact",
+              "absolute_difference": {
+                "t50_delay_ns": -0.0015459064734071326,
+                "half_LSB_settling_after_ramp_ns": 0.04016705210234228,
+                "coupling_peak_mV": 0.0,
+                "output_at_10ns_V": -0.00018589451174344518
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.13112081705322953,
+                "half_LSB_settling_after_ramp_ns": 0.2640606591448645,
+                "coupling_peak_mV": null,
+                "output_at_10ns_V": 0.010427285188184487
+              }
+            },
+            {
+              "id": "detour",
+              "absolute_difference": {
+                "t50_delay_ns": -0.0015329123576628412,
+                "half_LSB_settling_after_ramp_ns": 0.040119912275429215,
+                "coupling_peak_mV": -0.576470637807347,
+                "output_at_10ns_V": -0.0003428351661223239
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.06460261006707727,
+                "half_LSB_settling_after_ramp_ns": 0.13062327128857418,
+                "coupling_peak_mV": 0.3491630261248857,
+                "output_at_10ns_V": 0.02114627744529233
+              }
+            },
+            {
+              "id": "wide_detour",
+              "absolute_difference": {
+                "t50_delay_ns": -0.001533078402563337,
+                "half_LSB_settling_after_ramp_ns": 0.040099056244983444,
+                "coupling_peak_mV": -0.8542490827645679,
+                "output_at_10ns_V": -0.0002253768702866754
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.04520054007392512,
+                "half_LSB_settling_after_ramp_ns": 0.09118442721946056,
+                "coupling_peak_mV": 0.2446691127265261,
+                "output_at_10ns_V": 0.015630063375106112
+              }
+            },
+            {
+              "id": "detour_fill",
+              "absolute_difference": {
+                "t50_delay_ns": -0.001529128715979322,
+                "half_LSB_settling_after_ramp_ns": 0.04011818126246425,
+                "coupling_peak_mV": -0.5532030669130563,
+                "output_at_10ns_V": -0.0003395857960739601
+              },
+              "relative_difference_percent": {
+                "t50_delay_ns": 0.06319960486274392,
+                "half_LSB_settling_after_ramp_ns": 0.12808915066235232,
+                "coupling_peak_mV": 0.3414772368617541,
+                "output_at_10ns_V": 0.021051670696424614
+              }
+            }
+          ]
+        }
+      },
+      "unexecuted": [
+        "Magic extraction",
+        "DRC",
+        "LVS",
+        "SKY130 device-model simulation",
+        "package or thermal extraction"
+      ],
+      "notes": [
+        "The finer ngspice run halves both maximum segment length and maximum transient step.",
+        "The independent Python solver uses fixed-step backward Euler and retains the mutual-capacitor forcing term.",
+        "Numerical refinement does not quantify omitted-field or process-model error."
+      ]
+    },
+    "grounded_patch_pair_error_at_10ns_mV": 8.149248785112917
+  },
+  "qa": {
+    "jsdom_pages": 3,
+    "jsdom_errors": 0,
+    "duplicate_id_errors": 0,
+    "missing_image_alt": 0,
+    "svg_xml_parsed": 14,
+    "svg_rasterized_and_inspected": 14,
+    "visual_fixes": [
+      "Corrected centroid marker to actual active-unit centroid",
+      "Removed ambiguous unconnected capacitor glyph from environmental comparison",
+      "Moved probe and source labels away from circuit wires",
+      "Changed equal-capacitance heading to equivalent loading to match neighbor-identity comparison"
+    ],
+    "local_link_errors": [],
+    "external_links": [
+      {
+        "url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+        "status": 200,
+        "target": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs"
+      },
+      {
+        "url": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+        "status": 200,
+        "target": "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator"
+      },
+      {
+        "url": "https://ngspice.sourceforge.io/docs.html",
+        "status": 200,
+        "target": "https://ngspice.sourceforge.io/docs.html"
+      },
+      {
+        "url": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "status": 200,
+        "target": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html"
+      },
+      {
+        "url": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+        "status": 206,
+        "target": "https://past.date-conference.com/proceedings-archive/2021/html/1829.html"
+      },
+      {
+        "url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "status": 200,
+        "target": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html"
+      },
+      {
+        "url": "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+        "status": 200,
+        "target": "https://ez.analog.com/adiacademy/university-program/a/studentzone-articles/SA1023/grounding-and-decoupling-learn-basics-now-and-save-yourself-much-grief-later-part-3-decoupling-continued"
+      },
+      {
+        "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+        "status": 200,
+        "target": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf"
+      },
+      {
+        "url": "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+        "status": 206,
+        "target": "https://www.opencircuitdesign.com/magic/commandref/extresist.html"
+      },
+      {
+        "url": "https://www.opencircuitdesign.com/magic/howto.html",
+        "status": 206,
+        "target": "https://www.opencircuitdesign.com/magic/howto.html"
+      },
+      {
+        "url": "https://www.ti.com/lit/an/spra953d/spra953d.pdf",
+        "status": 206,
+        "target": "https://www.ti.com/lit/an/spra953d/spra953d.pdf"
+      }
+    ],
+    "peer_review": "Analog subagent independently reviewed lessons47/48, verified formulas/source scope and found no blocking issues. Its recommended equal-capacitance to equivalent-loading heading correction was applied."
+  },
+  "magic_investigation": {
+    "result": "Not executed; no installed Magic or qualified SKY130 technology available",
+    "inspected_open_pdks_revision": "c6df28c1fccb05c286aa0a15e9c4c7dcd8502607",
+    "inspected_source_requires": "Magic 8.3.693 and installation-time tech preprocessing",
+    "extension_files": [
+      "OPTIONAL_MAGIC.md",
+      "optional_magic_extract.tcl"
+    ],
+    "current_documentation_notes": [
+      "Modern extract do resistance emits .ext and .res.ext without old ext2sim prerequisite",
+      "threshold and minres units are milliohms; mindelay is picoseconds",
+      "Current coupling connects one node per net rather than distributed spatial coupling; assess suitability"
+    ],
+    "claim_boundary": "No DRC/LVS/real-PDK extraction or device simulation was performed for L04"
+  },
+  "peer_review_root_labs": {
+    "status": "Read-only source and result review completed; no blocking issue found",
+    "L01": [
+      "Pin order matches archived inverter subcircuit",
+      "Unmodified width/length suffixes plus scale=1u produce correct 0.65/0.15 and 1.0/0.15 um units",
+      "50% polarity, 20–80% slew conversion, Liberty table interpolation and energy sign are consistent",
+      "Source-level model omits explicit diffusion geometry as disclosed"
+    ],
+    "L03": [
+      "Correct NMOS/PMOS body terminals and complementary controls",
+      "Ideal RC hand result agrees within approximately 0.13% for short/medium acquisition, consistent with edge/threshold timestep placement",
+      "m=8 is parallel multiplicity, not rebinning one larger-width MOS",
+      "Acquisition interval is the clock-ramp-start to opening-ramp-start; measurement precedes opening by 50 ps",
+      "Reference recovery is measured after 12.4 ns pulse end and uses last violation",
+      "Edge shift is correctly not mislabeled as isolated charge injection"
+    ],
+    "minor_portability": "--models external is labeled external in metadata, but runners first verify bundled upstream files unconditionally"
+  },
+  "limitations": [
+    "Published plate fringe coefficients are deliberately approximated onto long wires.",
+    "No lateral or upper-fringe fields, field redistribution, vias, temperature, package, floating fill, or nonlinear receiver devices are modeled in Lab4.",
+    "Model discretization checks do not validate omitted physical effects.",
+    "Package, thermal, gradient and matching coefficients outside the quoted SKY130 RC table are assumptions.",
+    "Optional Magic extension is a documented unexecuted template, not an installation or signoff claim."
+  ]
+}

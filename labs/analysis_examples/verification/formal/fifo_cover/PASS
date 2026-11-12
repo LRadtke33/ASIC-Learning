@@ -1,0 +1,12 @@
+Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+engine_0 (smtbmc z3) returned pass
+cover trace: engine_0/trace0.vcd
+cover trace: engine_0/trace0.yw
+  reached cover statement sync_fifo._witness_.check_cover_sync_fifo_formal_v_96_165 at sync_fifo_formal.v:96.27-96.122 step 5
+cover trace: engine_0/trace1.vcd
+cover trace: engine_0/trace1.yw
+  reached cover statement sync_fifo._witness_.check_cover_sync_fifo_formal_v_89_151 at sync_fifo_formal.v:89.27-89.55 step 6
+cover trace: engine_0/trace2.vcd
+cover trace: engine_0/trace2.yw
+  reached cover statement sync_fifo._witness_.check_cover_sync_fifo_formal_v_95_156 at sync_fifo_formal.v:95.27-95.96 step 10

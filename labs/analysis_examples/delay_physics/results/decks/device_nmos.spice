@@ -1,0 +1,104 @@
+* nmos sky130_fd_pr__nfet_01v8 W=0.65 L=0.15 tt 25C
+.lib "../../../../common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-5 abstol=1e-14 vntol=1e-8
+.subckt inv1 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv2 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv4 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv8 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN4 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP4 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN5 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP5 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN6 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP6 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN7 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP7 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+.subckt inv16 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN1 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP1 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN2 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP2 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN3 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP3 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN4 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP4 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN5 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP5 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN6 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP6 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN7 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP7 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN8 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP8 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN9 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP9 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN10 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP10 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN11 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP11 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN12 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP12 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN13 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP13 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN14 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP14 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+XN15 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP15 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+XM d g 0 0 sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+VD d 0 1.8
+VG g 0 1.8
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=10
+alter VG dc=0.9
+dc VD 0 1.8 0.005
+wrdata ivd_9.dat i(VD)
+alter VG dc=1.2
+dc VD 0 1.8 0.005
+wrdata ivd_12.dat i(VD)
+alter VG dc=1.5
+dc VD 0 1.8 0.005
+wrdata ivd_15.dat i(VD)
+alter VG dc=1.8
+dc VD 0 1.8 0.005
+wrdata ivd_18.dat i(VD)
+alter VD dc=1.8
+dc VG 0 1.8 0.005
+wrdata ivg_sat.dat i(VD)
+alter VD dc=0.05
+dc VG 0 1.8 0.005
+wrdata ivg_lin.dat i(VD)
+quit
+.endc
+.end

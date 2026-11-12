@@ -1,0 +1,512 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading Liberty Timing Tables</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+tr.active td {background: #fff3cd;}
+td.mark {background: #d9e8f8; font-weight: 600;}
+table.dense {font-size: 0.78rem;}
+table.dense th, table.dense td {padding: 3px 6px;}
+.scroll {overflow-x: auto;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 23 / 84 · Part IV, Loads, timing and interconnect</p><h1>Reading Liberty Timing Tables</h1>
+  <p class="subtitle">Every timing arc in a Liberty file is a grid of delay and output-slew values against input slew and load. This lesson reads one square, interpolates between squares, and passes one stage’s output slew to the next stage.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> The cell throughout is <code>sky130_fd_sc_hd__inv_1</code> at the typical corner <code>tt_025C_1v80</code>: 25°C, 1.80&nbsp;V. Time in the file is nanoseconds. Capacitance is picofarads.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Read one delay from a 7 × 7 table indexed by input slew and output load.</li><li>Interpolate between table points, and know when the timer must extrapolate.</li><li>Chain two stages by passing one cell’s output slew to the next cell’s input.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Inside every timing run, from <a href="design_flow.html#step-3">step 3, synthesis</a> to <a href="design_flow.html#step-8">step 8, extraction and timing</a>.</dd><dt>Tools</dt><dd>OpenSTA, built into OpenROAD, interpolates the tables. Commercial: PrimeTime, Tempus.</dd><dt>Why it matters</dt><dd>Knowing how a delay is looked up tells you when to trust it and when the timer is extrapolating.</dd></dl></aside><aside class="review-note"><p><strong>Source scope.</strong> Exact inverter values and table axes below were rechecked against the archived SkyWater HD repository at revision <code>ac7fb61f06e6</code>. They are nominal library data, not a measured chip specification. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">Inverter data</a> · <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json">units and templates</a>.</p></aside>
+<h2 id="section-1">1. A delay is one square in a table</h2>
+  <p>
+    <code>cell_rise</code> answers: the input is falling, so the output is rising. How long
+    from the input's 50% point to the output's 50% point? The rows are the input slew. The
+    columns are the load capacitance from <a href="loads.html">lesson 21</a>. Both axes are
+    the seven points the library was simulated at.
+  </p>
+  <p>
+    This is the fastest input edge in the file, a 20–80 slew of 0.01&nbsp;ns. Delay grows
+    with the load, and the rise stays slower than the fall at every column.
+  </p>
+
+  <table>
+    <tbody><tr>
+      <th>Load (pF)</th>
+      <th>Load (fF)</th>
+      <th>Rise delay (ns)</th>
+      <th>Fall delay (ns)</th>
+    </tr>
+    <tr><td>0.000500</td><td>0.50</td><td>0.0203</td><td>0.0144</td></tr>
+    <tr><td>0.001335</td><td>1.34</td><td>0.0256</td><td>0.0174</td></tr>
+    <tr><td>0.003565</td><td>3.57</td><td>0.0389</td><td>0.0252</td></tr>
+    <tr class="active"><td>0.009521</td><td>9.52</td><td>0.0728</td><td>0.0455</td></tr>
+    <tr><td>0.025423</td><td>25.4</td><td>0.163</td><td>0.0983</td></tr>
+    <tr><td>0.067888</td><td>67.9</td><td>0.402</td><td>0.240</td></tr>
+    <tr><td>0.181284</td><td>181</td><td>1.038</td><td>0.617</td></tr>
+  </tbody></table>
+  <p>
+    The highlighted column, 9.52&nbsp;fF, is the nearest simulated point to four
+    <code>inv_1</code> inputs (9.21&nbsp;fF). At that load a fast input edge produces a
+    rising output in 0.0728&nbsp;ns and a falling output in 0.0455&nbsp;ns. The output edge
+    is not the same number: the rise transition stored beside this delay is 0.0877&nbsp;ns,
+    and the fall transition is 0.0477&nbsp;ns. Lesson 25 uses that difference.
+  </p>
+
+  <p>
+      The table template is named <code>del_1_7_7</code>. Its axes are declared once for
+      the whole library:
+    </p>
+    <ul>
+      <li><code>variable_1 : input_net_transition</code> — the row. The seven values run from 0.01&nbsp;ns to 1.5&nbsp;ns. 1.5&nbsp;ns is also <code>max_transition</code> on the input and <code>default_max_transition</code> for the library.</li>
+      <li><code>variable_2 : total_output_net_capacitance</code> — the column. For <code>inv_1</code> the last column equals <code>max_capacitance</code>, 0.181284&nbsp;pF.</li>
+    </ul>
+    <p>
+      A real net almost never lands on a grid point. Four inputs are 0.009208&nbsp;pF, which
+      sits between 0.003565&nbsp;pF and 0.009521&nbsp;pF. Section 3 writes that straight
+      line out: the rise delay is 0.071063&nbsp;ns. The highlighted table cell, one column
+      over, is 0.072847&nbsp;ns. Quoting a number means saying which square, and whether
+      the value was read from a square or from the line between two squares.
+    </p>
+    <p>
+      There are four tables on this arc, not one: <code>cell_rise</code>,
+      <code>cell_fall</code>, <code>rise_transition</code>, <code>fall_transition</code>.
+      Delay is when the 50% point arrives. Transition spans the edge from
+      20% to 80%. The transition becomes the next gate's input slew.
+    </p>
+  
+
+
+  <h2 id="section-2">2. The lookup table is a 7 by 7 grid</h2>
+  <p>
+    The library header sets <code>delay_model : table_lookup</code>. That model is the
+    non-linear delay model, usually called NLDM. A straight formula
+    <code>delay = D0 + D1 × slew + D2 × load</code> is too stiff for a modern cell, so
+    the file stores the SPICE result at a grid of slews and loads. The timer reads the
+    grid. It does not rerun the transistors.
+  </p>
+  <p>
+    This inverter’s combinational arc has four timing tables. <code>cell_rise</code> and
+    <code>cell_fall</code> are the delay of a rising and a falling output.
+    <code>rise_transition</code> and <code>fall_transition</code> are the 20–80 output
+    slews that go with those edges. The table is chosen by the <em>output</em> edge.
+    This inverter is <code>negative_unate</code>, so a rising output comes from a falling
+    input, and the row index for <code>cell_rise</code> is that falling input's slew.
+  </p>
+  <p>
+    Below is the whole <code>cell_rise</code> table of pin Y, typical corner, in
+    nanoseconds. Rows are <code>input_net_transition</code>. Columns are
+    <code>total_output_net_capacitance</code>. The four shaded squares are the corners used in section 3. The same seven-by-seven index is on the other three tables.
+  </p>
+  <div class="scroll">
+  <table class="dense">
+    <tbody><tr>
+      <th>slew \ load</th>
+      <th>0.0005</th>
+      <th>0.00133517</th>
+      <th>0.00356533</th>
+      <th>0.00952062</th>
+      <th>0.0254232</th>
+      <th>0.0678883</th>
+      <th>0.181284</th>
+    </tr>
+    <tr>
+      <th>0.01</th>
+      <td>0.0203433</td><td>0.0255806</td><td class="mark">0.0388749</td><td class="mark">0.0728467</td>
+      <td>0.1628902</td><td>0.4016502</td><td>1.0383745</td>
+    </tr>
+    <tr>
+      <th>0.0230506</th>
+      <td>0.0255253</td><td>0.0306373</td><td class="mark">0.0439316</td><td class="mark">0.078324</td>
+      <td>0.1679452</td><td>0.4092315</td><td>1.042883</td>
+    </tr>
+    <tr>
+      <th>0.0531329</th>
+      <td>0.0373555</td><td>0.0435741</td><td>0.0566328</td><td>0.0903158</td>
+      <td>0.1807958</td><td>0.4194971</td><td>1.0619717</td>
+    </tr>
+    <tr>
+      <th>0.122474</th>
+      <td>0.0547083</td><td>0.0647747</td><td>0.0847049</td><td>0.1211221</td>
+      <td>0.2113354</td><td>0.4503315</td><td>1.0860455</td>
+    </tr>
+    <tr>
+      <th>0.282311</th>
+      <td>0.0801236</td><td>0.0963068</td><td>0.1281064</td><td>0.1863159</td>
+      <td>0.2799442</td><td>0.5189765</td><td>1.1578426</td>
+    </tr>
+    <tr>
+      <th>0.650743</th>
+      <td>0.1184431</td><td>0.1426164</td><td>0.1928426</td><td>0.2835618</td>
+      <td>0.4327621</td><td>0.6847846</td><td>1.3109622</td>
+    </tr>
+    <tr>
+      <th>1.5</th>
+      <td>0.1833476</td><td>0.2165725</td><td>0.2904738</td><td>0.4311227</td>
+      <td>0.6701159</td><td>1.0433531</td><td>1.6968695</td>
+    </tr>
+  </tbody></table>
+  </div>
+  <p>
+    Slew is in ns, load in pF, delay in ns. The last slew, 1.5&nbsp;ns, is
+    <code>max_transition</code>. The last load, 0.181284&nbsp;pF, is
+    <code>max_capacitance</code> on Y. A question past either end is outside the
+    simulated grid. Tools still return a number there, by extending the edge of the
+    table, and that extension is the less accurate read. Stay inside the squares
+    that were simulated.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 740 310" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — The 0.01&nbsp;ns row, drawn. Squares are table cells
+      of cell_rise and cell_fall at the first four loads.
+      The open circles are the straight-line read at 9.208&nbsp;fF from section 3:
+      rise 0.071063&nbsp;ns (71.06&nbsp;ps) and fall 0.044436&nbsp;ns (44.44&nbsp;ps).
+      Each circle sits on the segment between the 3.565&nbsp;fF square and the
+      9.521&nbsp;fF square. The table continues to 181&nbsp;fF, where the rise delay
+      is 1.038&nbsp;ns. This axis stops at 11&nbsp;fF so that segment is visible."><line x1="70" y1="40" x2="70" y2="250" stroke="#c5d0dc" stroke-width="1.5"></line><line x1="70" y1="250" x2="700" y2="250" stroke="#c5d0dc" stroke-width="1.5"></line><line x1="64" y1="250" x2="700" y2="250" stroke="#eef2f6"></line><text x="58" y="254" text-anchor="end" font-size="11" fill="#7a8794">0</text><line x1="64" y1="203.33333333333334" x2="700" y2="203.33333333333334" stroke="#eef2f6"></line><text x="58" y="207.33333333333334" text-anchor="end" font-size="11" fill="#7a8794">20</text><line x1="64" y1="156.66666666666669" x2="700" y2="156.66666666666669" stroke="#eef2f6"></line><text x="58" y="160.66666666666669" text-anchor="end" font-size="11" fill="#7a8794">40</text><line x1="64" y1="110" x2="700" y2="110" stroke="#eef2f6"></line><text x="58" y="114" text-anchor="end" font-size="11" fill="#7a8794">60</text><line x1="64" y1="63.33333333333334" x2="700" y2="63.33333333333334" stroke="#eef2f6"></line><text x="58" y="67.33333333333334" text-anchor="end" font-size="11" fill="#7a8794">80</text><line x1="70" y1="250" x2="70" y2="256" stroke="#7a8794"></line><text x="70" y="272" text-anchor="middle" font-size="11" fill="#7a8794">0</text><line x1="182.72727272727275" y1="250" x2="182.72727272727275" y2="256" stroke="#7a8794"></line><text x="182.72727272727275" y="272" text-anchor="middle" font-size="11" fill="#7a8794">2</text><line x1="295.4545454545455" y1="250" x2="295.4545454545455" y2="256" stroke="#7a8794"></line><text x="295.4545454545455" y="272" text-anchor="middle" font-size="11" fill="#7a8794">4</text><line x1="408.18181818181813" y1="250" x2="408.18181818181813" y2="256" stroke="#7a8794"></line><text x="408.18181818181813" y="272" text-anchor="middle" font-size="11" fill="#7a8794">6</text><line x1="520.909090909091" y1="250" x2="520.909090909091" y2="256" stroke="#7a8794"></line><text x="520.909090909091" y="272" text-anchor="middle" font-size="11" fill="#7a8794">8</text><line x1="633.6363636363636" y1="250" x2="633.6363636363636" y2="256" stroke="#7a8794"></line><text x="633.6363636363636" y="272" text-anchor="middle" font-size="11" fill="#7a8794">10</text><text x="18" y="145" text-anchor="middle" font-size="12" fill="#7a8794">ps</text><text x="380" y="294" text-anchor="middle" font-size="12" fill="#5c6b7a">load (fF), input slew 0.01 ns</text><polyline fill="none" stroke="#c47b2c" stroke-width="2" points="98.2,202.5 145.3,190.3 271.0,159.3 606.6,80.0"></polyline><polyline fill="none" stroke="#3b6fb0" stroke-width="2" points="98.2,216.5 145.3,209.3 271.0,191.1 606.6,143.8"></polyline><rect x="94.18181818181819" y="198.5323" width="8" height="8" fill="#c47b2c"></rect><rect x="94.18181818181819" y="212.48026666666667" width="8" height="8" fill="#3b6fb0"></rect><rect x="141.25503636363635" y="186.31193333333334" width="8" height="8" fill="#c47b2c"></rect><rect x="141.25503636363635" y="205.32673333333332" width="8" height="8" fill="#3b6fb0"></rect><rect x="266.95496363636363" y="155.2919" width="8" height="8" fill="#c47b2c"></rect><rect x="266.95496363636363" y="187.09406666666666" width="8" height="8" fill="#3b6fb0"></rect><rect x="602.6167636363635" y="76.02436666666668" width="8" height="8" fill="#c47b2c"></rect><rect x="602.6167636363635" y="139.83426666666665" width="8" height="8" fill="#3b6fb0"></rect><circle cx="589.0" cy="84.2" r="6" fill="#fff" stroke="#c47b2c" stroke-width="2.5"></circle><circle cx="589.0" cy="146.3" r="6" fill="#fff" stroke="#3b6fb0" stroke-width="2.5"></circle><text x="580.9963636363636" y="74.18633333333332" text-anchor="end" font-size="12" font-weight="700" fill="#c47b2c">71.06 ps</text><text x="580.9963636363636" y="162.31599999999997" text-anchor="end" font-size="12" font-weight="700" fill="#3b6fb0">44.44 ps</text><text x="619.1454545454545" y="84.01666666666668" text-anchor="start" font-size="12" font-weight="700" fill="#c47b2c">cell_rise</text><text x="619.1454545454545" y="147.83333333333334" text-anchor="start" font-size="12" font-weight="700" fill="#3b6fb0">cell_fall</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — The 0.01&nbsp;ns row, drawn.</strong> Squares are table cells
+      of <code>cell_rise</code> and <code>cell_fall</code> at the first four loads.
+      The open circles are the straight-line read at 9.208&nbsp;fF from section 3:
+      rise 0.071063&nbsp;ns (71.06&nbsp;ps) and fall 0.044436&nbsp;ns (44.44&nbsp;ps).
+      Each circle sits on the segment between the 3.565&nbsp;fF square and the
+      9.521&nbsp;fF square. The table continues to 181&nbsp;fF, where the rise delay
+      is 1.038&nbsp;ns. This axis stops at 11&nbsp;fF so that segment is visible.
+    </figcaption>
+  </figure>
+
+  <p>
+      Both axes are geometric. Each slew is 2.30506 times the slew before it:
+      0.0230506 / 0.01 = 2.30506, and 1.5 / 0.01 = 150, whose sixth root is the same
+      2.30506. Each load is 2.67033 times the load before it: 0.00133517 / 0.0005 =
+      2.67034, and 0.181284 / 0.0005 = 362.568. Equal steps on a log axis are why the
+      columns look bunched at the left of a linear plot and spread out at the right.
+    </p>
+    <p>
+      The header measures delay from 50% to 50%
+      (<code>input_threshold_pct_rise</code> and <code>output_threshold_pct_rise</code>
+      are both 50, and the same on the fall). Slew is 20% to 80%
+      (<code>slew_lower_threshold_pct_rise</code> 20,
+      <code>slew_upper_threshold_pct_rise</code> 80, both edges).
+      <code>slew_derate_from_library</code> is 1.0, so the transition number in the
+      table is already the slew the next lookup uses. Some other libraries measure a
+      10–90 edge and scale it. This file does not.
+    </p>
+    <p>
+      Delay does not grow with input slew in every column. On <code>cell_fall</code>,
+      at the lightest load 0.0005&nbsp;pF, the 0.650743&nbsp;ns row is 0.0467306&nbsp;ns
+      and the 1.5&nbsp;ns row is 0.0317479&nbsp;ns. The slowest input edge is the
+      smaller delay in that one column. Read the square. The trend in section 1 is the
+      first row against load, where both edges do grow.
+    </p>
+    <p>
+      A very slow edge into a tiny load does get sharper. At input slew 1.5&nbsp;ns and
+      load 0.0005&nbsp;pF, <code>rise_transition</code> is 0.152164&nbsp;ns. At the
+      highlighted load 0.00952062&nbsp;pF and input slew 0.01&nbsp;ns,
+      <code>rise_transition</code> is 0.087680&nbsp;ns, slower than the input. The cell
+      restores the edge when the load is light and passes a slower edge on when the
+      load is heavy. The next gate's row index is whichever of those the transition
+      table returned.
+    </p>
+  
+
+
+  <h2 id="section-3">3. Interpolation is the straight line between the nearest squares</h2>
+  <p>
+    Four <code>inv_1</code> inputs are 4 × 0.002302 = 0.009208&nbsp;pF. The input slew
+    in this first example is exactly the first row, 0.01&nbsp;ns, so only the load
+    axis moves. 0.009208 sits between 0.00356533&nbsp;pF and 0.00952062&nbsp;pF.
+  </p>
+  <p>
+    The fraction of the way across that gap is
+  </p>
+  <p>
+    (0.009208 − 0.00356533) / (0.00952062 − 0.00356533)
+    = 0.00564267 / 0.00595529
+    = <strong>0.947505</strong>.
+  </p>
+  <p>
+    Rise delay, from the two <code>cell_rise</code> squares on that row:
+  </p>
+  <p>
+    0.0388749 + 0.947505 × (0.0728467 − 0.0388749)
+    = 0.0388749 + 0.947505 × 0.0339718
+    = <strong>0.071063&nbsp;ns</strong> (71.06&nbsp;ps).
+  </p>
+  <p>
+    Fall delay, from the two <code>cell_fall</code> squares on the same row
+    (0.0252454 and 0.0454996):
+  </p>
+  <p>
+    0.0252454 + 0.947505 × (0.0454996 − 0.0252454)
+    = <strong>0.044436&nbsp;ns</strong> (44.44&nbsp;ps).
+  </p>
+  <p>
+    Those two results are the line drawn in figure 1. The table cell at
+    0.00952062&nbsp;pF is 0.0728467&nbsp;ns rise and 0.0454996&nbsp;ns fall. The corner table in <a href="liberty.html#section-3">lesson 22, section 3</a> rounds this same 0.009208&nbsp;pF line to 71&nbsp;ps
+    and 44&nbsp;ps.
+  </p>
+  <p>
+    When the slew is off the grid as well, the read uses four squares. The worked
+    point here is an input slew of 0.015&nbsp;ns and a load of 0.006&nbsp;pF. Both
+    sit inside the shaded cell of the table above. This pair is a point chosen inside
+    the grid so the arithmetic is visible. It is not a net that was extracted from a chip.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — The four squares around 0.015&nbsp;ns and 0.006&nbsp;pF.
+      Each corner is a cell_rise entry. The dot is the bilinear result,
+      0.054767&nbsp;ns. Its position in the rectangle is the two fractions from the
+      arithmetic below: 0.383 of the way from 0.01&nbsp;ns to 0.0230506&nbsp;ns, and
+      0.409 of the way from 0.00356533&nbsp;pF to 0.00952062&nbsp;pF."><rect x="200" y="56" width="360" height="150" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><circle cx="347.2" cy="113.5" r="7" fill="#c47b2c"></circle><text x="359.177" y="117.46860000000001" text-anchor="start" font-size="13" font-weight="700" fill="#c47b2c">0.054767 ns</text><circle cx="200" cy="56" r="5" fill="#3b6fb0"></circle><circle cx="560" cy="56" r="5" fill="#3b6fb0"></circle><circle cx="200" cy="206" r="5" fill="#3b6fb0"></circle><circle cx="560" cy="206" r="5" fill="#3b6fb0"></circle><text x="190" y="48" text-anchor="end" font-size="12" font-weight="700" fill="#33414f">0.0388749</text><text x="190" y="66" text-anchor="end" font-size="11" fill="#5c6b7a">slew 0.01 ns</text><text x="570" y="48" text-anchor="start" font-size="12" font-weight="700" fill="#33414f">0.0728467</text><text x="570" y="66" text-anchor="start" font-size="11" fill="#5c6b7a">slew 0.01 ns</text><text x="190" y="200" text-anchor="end" font-size="12" font-weight="700" fill="#33414f">0.0439316</text><text x="190" y="218" text-anchor="end" font-size="11" fill="#5c6b7a">slew 0.02305 ns</text><text x="570" y="200" text-anchor="start" font-size="12" font-weight="700" fill="#33414f">0.078324</text><text x="570" y="218" text-anchor="start" font-size="11" fill="#5c6b7a">slew 0.02305 ns</text><text x="200" y="250" text-anchor="middle" font-size="12" fill="#33414f">load 0.003565 pF</text><text x="560" y="250" text-anchor="middle" font-size="12" fill="#33414f">load 0.009521 pF</text><text x="370" y="272" text-anchor="middle" font-size="12" fill="#5c6b7a">cell_rise corners, ns. Dot is the interpolated delay.</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — The four squares around 0.015&nbsp;ns and 0.006&nbsp;pF.</strong>
+      Each corner is a <code>cell_rise</code> entry. The dot is the bilinear result,
+      0.054767&nbsp;ns. Its position in the rectangle is the two fractions from the
+      arithmetic below: 0.383 of the way from 0.01&nbsp;ns to 0.0230506&nbsp;ns, and
+      0.409 of the way from 0.00356533&nbsp;pF to 0.00952062&nbsp;pF.
+    </figcaption>
+  </figure>
+
+  <p>
+    Load fraction, call it <em>t<sub>y</sub></em>:
+    (0.006 − 0.00356533) / (0.00952062 − 0.00356533)
+    = 0.00243467 / 0.00595529
+    = <strong>0.408825</strong>.
+  </p>
+  <p>
+    Slew fraction, call it <em>t<sub>x</sub></em>:
+    (0.015 − 0.01) / (0.0230506 − 0.01)
+    = 0.005 / 0.0130506
+    = <strong>0.383124</strong>.
+  </p>
+  <p>
+    First hold the slew at each neighboring row and walk the load fraction.
+    At slew 0.01&nbsp;ns:
+    0.0388749 + 0.408825 × (0.0728467 − 0.0388749) = <strong>0.052763&nbsp;ns</strong>.
+    At slew 0.0230506&nbsp;ns:
+    0.0439316 + 0.408825 × (0.078324 − 0.0439316) = <strong>0.057992&nbsp;ns</strong>.
+  </p>
+  <p>
+    Then walk the slew fraction between those two results:
+    0.052763 + 0.383124 × (0.057992 − 0.052763) = <strong>0.054767&nbsp;ns</strong>
+    (54.77&nbsp;ps). That is the dot in figure 2.
+  </p>
+
+  <p>
+      Walking slew first and load second lands on the same 0.054767&nbsp;ns. Along the
+      low load, 0.00356533&nbsp;pF:
+      0.0388749 + 0.383124 × (0.0439316 − 0.0388749) = 0.040812&nbsp;ns.
+      Along the high load, 0.00952062&nbsp;pF:
+      0.0728467 + 0.383124 × (0.078324 − 0.0728467) = 0.074945&nbsp;ns.
+      Then 0.040812 + 0.408825 × (0.074945 − 0.040812) = 0.054767&nbsp;ns.
+      The two orders are one bilinear read. Publishing either intermediate without
+      the order is how the same point turns into two different stories.
+    </p>
+    <p>
+      The same fractions apply to <code>cell_fall</code>, <code>rise_transition</code>,
+      and <code>fall_transition</code>. Each table has its own four numbers. One
+      fraction does not transfer a rise delay into a fall delay.
+    </p>
+    <p>One <code>inv_1</code> input, 0.002302&nbsp;pF at a 0.01&nbsp;ns slew, falls between the 0.00133517&nbsp;pF and 0.00356533&nbsp;pF columns. Its fraction of the way across is (0.002302 − 0.00133517) / (0.00356533 − 0.00133517) = 0.433525, which gives a rise delay of 0.031344&nbsp;ns and a fall delay of 0.020819&nbsp;ns. Wire capacitance (<a href="loads.html">lesson 21</a>) is added to the pin capacitance before the lookup, because the column is one total capacitance. A resistive wire, whose delay grows along its length, needs the extracted net of <a href="parasitics.html">lesson 28</a> instead.</p>
+  
+
+
+  <h2 id="section-4">4. The timer adds the delay and hands the slew to the next pin</h2>
+  <p>
+    For one arc the timer does four things.
+  </p>
+  <ol>
+    <li>Pick the table from the output edge. A rising output uses <code>cell_rise</code> and <code>rise_transition</code>.</li>
+    <li>Take the input slew from the previous arc's transition table. The library name for that axis is <code>input_net_transition</code>.</li>
+    <li>Add the load: every receiver's pin capacitance, plus the wire capacitance on that net. The library name is <code>total_output_net_capacitance</code>.</li>
+    <li>Interpolate. Add the delay to the arrival time at the 50% point. Store the transition result as the next pin's input slew.</li>
+  </ol>
+  <p>
+    Lesson 25 already walks two <code>inv_1</code> cells on the exact 0.00952062&nbsp;pF
+    column, so only the slew axis is off a row. The first cell's
+    <code>rise_transition</code> at input slew 0.01&nbsp;ns is the table cell
+    <strong>0.0876798&nbsp;ns</strong>. That number is the second cell's input slew.
+    The second cell's output falls, so the delay comes from <code>cell_fall</code>.
+    0.0876798&nbsp;ns sits between the rows 0.0531329&nbsp;ns (fall delay 0.0615784&nbsp;ns)
+    and 0.122474&nbsp;ns (fall delay 0.087258&nbsp;ns).
+  </p>
+  <p>
+    (0.0876798 − 0.0531329) / (0.122474 − 0.0531329) = 0.0345469 / 0.0693411 = 0.498217.
+  </p>
+  <p>
+    0.0615784 + 0.498217 × (0.087258 − 0.0615784) = <strong>0.074372&nbsp;ns</strong>.
+  </p>
+  <p>
+    Lesson 25 rounds that read to 0.074&nbsp;ns. The fastest-row fall at the same load
+    is the table cell 0.0454996&nbsp;ns. Using 0.01&nbsp;ns as every stage's input slew
+    makes the path look faster than the transition table says it is.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig4"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — One lookup becomes the next lookup.
+      Both gates are inv_1 at the typical corner, load column
+      0.00952062&nbsp;pF. The first delay and the first output slew are table cells.
+      The second delay, 0.074372&nbsp;ns, is the straight line between two slew rows
+      at that same load column. Setup and hold, which are constraint tables on a
+      flip-flop rather than these four delay tables, are
+      lesson 26."><rect x="40" y="70" width="200" height="90" rx="8" fill="#f8efe6" stroke="#c47b2c" stroke-width="2"></rect><rect x="500" y="70" width="200" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"></rect><text x="140" y="98" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">inv_1</text><text x="140" y="120" text-anchor="middle" font-size="12" fill="#33414f">cell_rise 0.07285 ns</text><text x="140" y="140" text-anchor="middle" font-size="12" fill="#c47b2c">rise slew 0.08768 ns</text><text x="600" y="98" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">inv_1</text><text x="600" y="120" text-anchor="middle" font-size="12" font-weight="700" fill="#3b6fb0">cell_fall 0.07437 ns</text><text x="600" y="140" text-anchor="middle" font-size="12" fill="#5c6b7a">line between two rows</text><line x1="240" y1="115" x2="490" y2="115" stroke="#33414f" stroke-width="2" marker-end="url(#arrL)"></line><text x="365" y="100" text-anchor="middle" font-size="12" fill="#33414f">output slew becomes</text><text x="365" y="148" text-anchor="middle" font-size="12" fill="#33414f">the next input slew</text><text x="140" y="52" text-anchor="middle" font-size="12" fill="#5c6b7a">input slew 0.01 ns</text><text x="140" y="184" text-anchor="middle" font-size="12" fill="#5c6b7a">load 0.009521 pF</text><text x="600" y="52" text-anchor="middle" font-size="12" fill="#5c6b7a">input slew 0.08768 ns</text><text x="600" y="184" text-anchor="middle" font-size="12" fill="#5c6b7a">same load column</text><defs><marker id="arrL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#33414f"></path></marker></defs></svg></div>
+    <figcaption>
+      <strong>Figure 3 — One lookup becomes the next lookup.</strong>
+      Both gates are <code>inv_1</code> at the typical corner, load column
+      0.00952062&nbsp;pF. The first delay and the first output slew are table cells.
+      The second delay, 0.074372&nbsp;ns, is the straight line between two slew rows
+      at that same load column. Setup and hold, which are constraint tables on a
+      flip-flop rather than these four delay tables, are
+      <a href="setup_hold.html">lesson 26</a>.
+    </figcaption>
+  </figure>
+
+  <p>
+      The arrival the timer stores is the time of the 50% point. Slew is carried
+      beside it and is not added into the arrival. On a longer path the same pair of
+      operations repeats: delay joins the arrival, transition becomes the next row index.
+    </p>
+    <p>
+      Constraint arcs use a different template. On <code>dfxtp_1</code> the setup and
+      hold tables are <code>vio_3_3_1</code>, indexed by the clock slew and the data
+      slew, with no load column. The delay tables on Q are still the 7×7
+      <code>del_1_7_7</code> grid. Clock-to-Q at the exact column 0.00900162&nbsp;pF
+      and clock slew 0.01&nbsp;ns is the table cell 0.3279992&nbsp;ns rising and
+      0.3040849&nbsp;ns falling. Lesson 26 adds those to a path.
+    </p>
+    <p>
+      A second model, CCS, stores a current waveform instead of one delay and one slew.
+      The numbers on this page are the <code>table_lookup</code> grids. The fast-corner name <code>ff_n40C_1v95</code> is not one of the four plain tables in <a href="liberty.html#section-3">lesson 22, section 3</a>.
+    </p>
+  
+
+
+    <details class="checkpoint"><summary>Checkpoint: should 40 ps of slew be added to a 70 ps cell delay?</summary><p>No. Add the 70 ps propagation delay to the arrival time. Pass the 40 ps transition to the next lookup, after accounting for interconnect. Slew describes the waveform width, not a second propagation delay.</p></details><details class="checkpoint"><summary>Check your understanding — the load falls between two table columns. How does the timer get a delay?</summary><p>It interpolates between the nearest characterized points in both slew and load. On the 0.01 ns slew row, four <code>inv_1</code> inputs (0.009208 pF) interpolate to 0.071063 ns rise and 0.044436 ns fall. Outside the table it must extrapolate, which is less trustworthy.</p></details><div class="takeaways"><h2 id="section-5">Key takeaways</h2><ul><li>This inverter arc has four 7×7 timing tables: <code>cell_rise</code>, <code>cell_fall</code>, <code>rise_transition</code>, <code>fall_transition</code>. Rows are input slew. Columns are total output capacitance.</li><li>At the table cell 0.01&nbsp;ns and 0.00952062&nbsp;pF, <code>inv_1</code> rises in 0.0728467&nbsp;ns and falls in 0.0454996&nbsp;ns.</li><li>Four inputs, 0.009208&nbsp;pF, on that same slew row, interpolate to 0.071063&nbsp;ns rise and 0.044436&nbsp;ns fall. The worked off-grid point 0.015&nbsp;ns and 0.006&nbsp;pF interpolates to 0.054767&nbsp;ns.</li><li>The timer adds the delay at the 50% point and uses the transition result as the next pin's input slew. On the 9.521&nbsp;fF column that handoff is 0.0876798&nbsp;ns in, then a fall of 0.074372&nbsp;ns.</li><li>How a table like this is measured — a slew×load sweep, and a setup bisection — is <a href="liberty_characterization.html">lesson 24</a>.</li></ul></div><section class="sources" id="sources-liberty"><h2 id="section-6">Sources &amp; scope</h2><p>Technical review: 6 November 2026. SKY130 links are pinned to HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. Numerical interpolations are calculations from those tables.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json">SKY130 inv_1 timing and pin data</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json">Library units, thresholds and templates</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json">Typical operating conditions and ramp waveform</a></li><li><a href="https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf">Liberty Reference Manual, library and timing attributes</a></li><li><a href="https://opensta.readthedocs.io/en/latest/">OpenSTA documentation: delay calculation and timing analysis</a></li></ol></section><section class="related-practice scope-note"><strong>Continue with this edition’s practical work</strong><ul><li><a href="lab_inverter_characterization.html">Compare measured delay with Liberty</a></li><li><a href="rtl_synthesis_constraints.html">Connect Liberty to synthesis and constraints</a></li></ul></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html" aria-current="page">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="liberty.html"><small>← Previous</small>Liberty Files: What a Cell Library Records</a><a href="liberty_characterization.html"><small>Next →</small>Standard-Cell Characterization: How Liberty Is Made</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 13}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+(function () {
+  const cards = [
+    [40, 'Layout', 'GDS / Magic', 'polygons', '#f8efe6', '#c47b2c'],
+    [260, 'Abstract', 'LEF', 'sites, pins, blockages', '#f4f7fb', '#3b6fb0'],
+    [480, 'Behavior', 'Liberty', 'caps and delay tables', '#f2f7f2', '#1e6b4f']
+  ];
+  let s = `<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += txt(360, 28, 'sky130_fd_sc_hd__inv_1', {b: true, s: 15});
+  cards.forEach(c => {
+    s += `<rect x="${c[0]}" y="48" width="190" height="110" rx="8" fill="${c[4]}" stroke="${c[5]}" stroke-width="2"/>`;
+    s += txt(c[0] + 95, 82, c[1], {b: true, s: 16, c: c[5]});
+    s += txt(c[0] + 95, 108, c[2], {s: 13});
+    s += txt(c[0] + 95, 132, c[3], {s: 12, c: '#5c6b7a'});
+  });
+  s += `</svg>`;
+  {const e=document.getElementById('fig1'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  const xOf = f => 70 + (f / 11) * 620;
+  const yOf = p => 250 - (p / 90) * 210;
+  const loads = [0.500, 1.33517, 3.56533, 9.52062];
+  const rise = [20.3433, 25.5806, 38.8749, 72.8467];
+  const fall = [14.3656, 17.4314, 25.2454, 45.4996];
+  let s = `<svg viewBox="0 0 740 310" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<line x1="70" y1="40" x2="70" y2="250" stroke="#c5d0dc" stroke-width="1.5"/>`;
+  s += `<line x1="70" y1="250" x2="700" y2="250" stroke="#c5d0dc" stroke-width="1.5"/>`;
+  [0, 20, 40, 60, 80].forEach(p => {
+    const y = yOf(p);
+    s += `<line x1="64" y1="${y}" x2="700" y2="${y}" stroke="#eef2f6"/>`;
+    s += txt(58, y + 4, String(p), {a: 'end', s: 11, c: '#7a8794'});
+  });
+  [0, 2, 4, 6, 8, 10].forEach(f => {
+    const x = xOf(f);
+    s += `<line x1="${x}" y1="250" x2="${x}" y2="256" stroke="#7a8794"/>`;
+    s += txt(x, 272, String(f), {s: 11, c: '#7a8794'});
+  });
+  s += txt(18, 145, 'ps', {s: 12, c: '#7a8794'});
+  s += txt(380, 294, 'load (fF), input slew 0.01 ns', {s: 12, c: '#5c6b7a'});
+  const risePts = loads.map((f, i) => `${xOf(f).toFixed(1)},${yOf(rise[i]).toFixed(1)}`).join(' ');
+  const fallPts = loads.map((f, i) => `${xOf(f).toFixed(1)},${yOf(fall[i]).toFixed(1)}`).join(' ');
+  s += `<polyline fill="none" stroke="#c47b2c" stroke-width="2" points="${risePts}"/>`;
+  s += `<polyline fill="none" stroke="#3b6fb0" stroke-width="2" points="${fallPts}"/>`;
+  loads.forEach((f, i) => {
+    s += `<rect x="${xOf(f) - 4}" y="${yOf(rise[i]) - 4}" width="8" height="8" fill="#c47b2c"/>`;
+    s += `<rect x="${xOf(f) - 4}" y="${yOf(fall[i]) - 4}" width="8" height="8" fill="#3b6fb0"/>`;
+  });
+  const mx = xOf(9.208), myR = yOf(71.063), myF = yOf(44.436);
+  s += `<circle cx="${mx.toFixed(1)}" cy="${myR.toFixed(1)}" r="6" fill="#fff" stroke="#c47b2c" stroke-width="2.5"/>`;
+  s += `<circle cx="${mx.toFixed(1)}" cy="${myF.toFixed(1)}" r="6" fill="#fff" stroke="#3b6fb0" stroke-width="2.5"/>`;
+  s += txt(mx - 8, myR - 10, '71.06 ps', {a: 'end', s: 12, b: true, c: '#c47b2c'});
+  s += txt(mx - 8, myF + 16, '44.44 ps', {a: 'end', s: 12, b: true, c: '#3b6fb0'});
+  s += txt(xOf(9.53) + 12, yOf(72.85) + 4, 'cell_rise', {a: 'start', s: 12, b: true, c: '#c47b2c'});
+  s += txt(xOf(9.53) + 12, yOf(45.50) + 4, 'cell_fall', {a: 'start', s: 12, b: true, c: '#3b6fb0'});
+  s += `</svg>`;
+  {const e=document.getElementById('fig2'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  const x0 = 200, y0 = 56, w = 360, h = 150;
+  s += `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"/>`;
+  const tx = 0.383124, ty = 0.408825;
+  const px = x0 + ty * w, py = y0 + tx * h;
+  s += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="7" fill="#c47b2c"/>`;
+  s += txt(px + 12, py + 4, '0.054767 ns', {a: 'start', s: 13, b: true, c: '#c47b2c'});
+  const corners = [
+    [x0, y0, '0.0388749 ns', 'slew 0.0100', 'end', 'start'],
+    [x0 + w, y0, '0.0728467 ns', 'slew 0.0100', 'start', 'start'],
+    [x0, y0 + h, '0.0439316 ns', 'slew 0.0231', 'end', 'end'],
+    [x0 + w, y0 + h, '0.078324 ns', 'slew 0.0231', 'start', 'end']
+  ];
+  corners.forEach(c => {
+    s += `<circle cx="${c[0]}" cy="${c[1]}" r="5" fill="#3b6fb0"/>`;
+  });
+  s += txt(x0 - 10, y0 - 8, '0.0388749', {a: 'end', s: 12, b: true});
+  s += txt(x0 - 10, y0 + 10, 'slew 0.01 ns', {a: 'end', s: 11, c: '#5c6b7a'});
+  s += txt(x0 + w + 10, y0 - 8, '0.0728467', {a: 'start', s: 12, b: true});
+  s += txt(x0 + w + 10, y0 + 10, 'slew 0.01 ns', {a: 'start', s: 11, c: '#5c6b7a'});
+  s += txt(x0 - 10, y0 + h - 6, '0.0439316', {a: 'end', s: 12, b: true});
+  s += txt(x0 - 10, y0 + h + 12, 'slew 0.02305 ns', {a: 'end', s: 11, c: '#5c6b7a'});
+  s += txt(x0 + w + 10, y0 + h - 6, '0.078324', {a: 'start', s: 12, b: true});
+  s += txt(x0 + w + 10, y0 + h + 12, 'slew 0.02305 ns', {a: 'start', s: 11, c: '#5c6b7a'});
+  s += txt(x0, 250, 'load 0.003565 pF', {s: 12});
+  s += txt(x0 + w, 250, 'load 0.009521 pF', {s: 12});
+  s += txt(370, 272, 'cell_rise corners, ns. Dot is the interpolated delay.', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  {const e=document.getElementById('fig3'); if(e) e.innerHTML = s;}
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="70" width="200" height="90" rx="8" fill="#f8efe6" stroke="#c47b2c" stroke-width="2"/>`;
+  s += `<rect x="500" y="70" width="200" height="90" rx="8" fill="#f4f7fb" stroke="#3b6fb0" stroke-width="2"/>`;
+  s += txt(140, 98, 'inv_1', {b: true, s: 16});
+  s += txt(140, 120, 'cell_rise 0.07285 ns', {s: 12});
+  s += txt(140, 140, 'rise slew 0.08768 ns', {s: 12, c: '#c47b2c'});
+  s += txt(600, 98, 'inv_1', {b: true, s: 16});
+  s += txt(600, 120, 'cell_fall 0.07437 ns', {s: 12, b: true, c: '#3b6fb0'});
+  s += txt(600, 140, 'line between two rows', {s: 12, c: '#5c6b7a'});
+  s += `<line x1="240" y1="115" x2="490" y2="115" stroke="#33414f" stroke-width="2" marker-end="url(#arrL)"/>`;
+  s += txt(365, 100, 'output slew becomes', {s: 12});
+  s += txt(365, 148, 'the next input slew', {s: 12});
+  s += txt(140, 52, 'input slew 0.01 ns', {s: 12, c: '#5c6b7a'});
+  s += txt(140, 184, 'load 0.009521 pF', {s: 12, c: '#5c6b7a'});
+  s += txt(600, 52, 'input slew 0.08768 ns', {s: 12, c: '#5c6b7a'});
+  s += txt(600, 184, 'same load column', {s: 12, c: '#5c6b7a'});
+  s += `<defs><marker id="arrL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#33414f"/></marker></defs>`;
+  s += `</svg>`;
+  {const e=document.getElementById('fig4'); if(e) e.innerHTML = s;}
+})();
+</script>
+
+
+</body></html>

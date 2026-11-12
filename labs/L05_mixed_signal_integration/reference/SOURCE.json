@@ -1,0 +1,12 @@
+{
+  "library": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+  "bytes": 12800135,
+  "sha256": "ec0e1067a35c8bf20b11e58d1e8ac53326067e4dac84a125cc1b917a3518d0d9",
+  "retrieved": "2026-11-06",
+  "distribution_repository": "The-OpenROAD-Project/OpenROAD-flow-scripts",
+  "revision": "c5310d7ffdd5f8a1eed83089697631548cc08a99",
+  "source_url": "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+  "upstream_cell_repository": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd",
+  "upstream_license": "Apache-2.0; included LICENSE-SKY130-Apache-2.0.txt",
+  "scope": "Exact file used for the recorded synthesis and equivalence example. Typical 25 C 1.8 V library, not a full process/corner set or tapeout qualification."
+}

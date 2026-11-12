@@ -1,0 +1,1395 @@
+{
+  "review_date": "2026-11-06",
+  "revisions": {
+    "sky130_fd_sc_hd": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+    "sky130_fd_sc_hvl": "4fd4f858d16c558a6a488b200649e909bb4dd800",
+    "sky130_fd_io": "63752cd96d0798468758e929922a8dd3ff103381",
+    "open_pdks": "c6df28c1fccb05c286aa0a15e9c4c7dcd8502607",
+    "sky130_fd_pr": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+    "OpenROAD_flow_scripts_synthesis_reference": "c5310d7ffdd5f8a1eed83089697631548cc08a99"
+  },
+  "note": "SHA-256 values identify source bytes consulted during review. Moving documentation URLs may change later. Citation links refer to primary sources; the archive does not redistribute their full contents.",
+  "citations": [
+    {
+      "url": "https://coriolis.lip6.fr/doc/lefdef/lefdefref/LEFSyntax.html",
+      "used_in": [
+        "cell_template.html",
+        "pin_access.html",
+        "site_rows.html"
+      ]
+    },
+    {
+      "url": "https://digicoll.lib.berkeley.edu/record/134469/files/EECS-2006-126.pdf",
+      "used_in": [
+        "parasitics.html"
+      ]
+    },
+    {
+      "url": "https://docenti.ing.unipi.it/~a008309/mat_stud/PSM/Archive/2017/Optional_Material/Pelgrom_JSSC_1989_Original_paper_on_Matching.pdf",
+      "used_in": [
+        "noise_mismatch.html"
+      ]
+    },
+    {
+      "url": "https://doi.org/10.1109/T-ED.1969.16754",
+      "used_in": [
+        "electromigration.html"
+      ]
+    },
+    {
+      "url": "https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+      "used_in": [
+        "clock_tree.html",
+        "decap.html",
+        "floorplan.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_10um.lef",
+      "used_in": [
+        "io_fill.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_1um.lef",
+      "used_in": [
+        "io_fill.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_20um.lef",
+      "used_in": [
+        "io_fill.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/custom/sky130_fd_io/lef/sky130_ef_io__com_bus_slice_5um.lef",
+      "used_in": [
+        "io_fill.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_ef_io/config.tcl",
+      "used_in": [
+        "io_fill.html",
+        "io_ring.html"
+      ]
+    },
+    {
+      "url": "https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+      "used_in": [
+        "antenna.html",
+        "endcaps.html",
+        "tie_cells.html",
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/corner_bus_overlay/sky130_fd_io__corner_bus_overlay.lef",
+      "used_in": [
+        "io_ring.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpiov2/sky130_fd_io__top_gpiov2.lef",
+      "used_in": [
+        "esd_clamps.html",
+        "io_power.html",
+        "io_ring.html",
+        "rdl.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_hvc_wpad/sky130_fd_io__top_power_hvc_wpad.lef",
+      "used_in": [
+        "esd_clamps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_lvc_wpad/sky130_fd_io__top_power_lvc_wpad.lef",
+      "used_in": [
+        "esd_clamps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_io/blob/63752cd96d0798468758e929922a8dd3ff103381/docs/user_guide.rst",
+      "used_in": [
+        "esd_clamps.html",
+        "io_fill.html",
+        "io_power.html",
+        "io_ring.html",
+        "rdl.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/sky130_fd_sc_hd__clkbuf_16__tt_025C_1v80.lib.json",
+      "used_in": [
+        "clock_tree.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.lef",
+      "used_in": [
+        "tie_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.spice",
+      "used_in": [
+        "tie_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "tie_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.lef",
+      "used_in": [
+        "endcaps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.spice",
+      "used_in": [
+        "endcaps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.lef",
+      "used_in": [
+        "decap.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice",
+      "used_in": [
+        "decap.html",
+        "fill_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4__tt_025C_1v80.lib.json",
+      "used_in": [
+        "decap.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfrtp/sky130_fd_sc_hd__dfrtp_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "cdc_reset.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef",
+      "used_in": [
+        "dff_inside.html",
+        "pin_access.html",
+        "site_rows.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.spice",
+      "used_in": [
+        "dff_inside.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "clock_tree.html",
+        "dff_inside.html",
+        "setup_hold.html",
+        "timing.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef",
+      "used_in": [
+        "antenna.html",
+        "electromigration.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.spice",
+      "used_in": [
+        "antenna.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2__tt_025C_1v80.lib.json",
+      "used_in": [
+        "antenna.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.lef",
+      "used_in": [
+        "fill_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.spice",
+      "used_in": [
+        "fill_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef",
+      "used_in": [
+        "cell_layout.html",
+        "pin_access.html",
+        "site_rows.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice",
+      "used_in": [
+        "cell_layout.html",
+        "loads.html",
+        "logic_gates.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "drive_strength.html",
+        "liberty.html",
+        "loads.html",
+        "setup_hold.html",
+        "timing.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2.spice",
+      "used_in": [
+        "spare_eco.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2__tt_025C_1v80.lib.json",
+      "used_in": [
+        "drive_strength.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4.spice",
+      "used_in": [
+        "drive_strength.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4__tt_025C_1v80.lib.json",
+      "used_in": [
+        "drive_strength.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8__tt_025C_1v80.lib.json",
+      "used_in": [
+        "drive_strength.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1.spice",
+      "used_in": [
+        "level_shifters.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/lpflow_lsbuf_lh_isowell_tap/sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "level_shifters.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.lef",
+      "used_in": [
+        "spare_eco.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell.spice",
+      "used_in": [
+        "spare_eco.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/macro_sparecell/sky130_fd_sc_hd__macro_sparecell__tt_025C_1v80.lib.json",
+      "used_in": [
+        "spare_eco.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.lef",
+      "used_in": [
+        "bigger_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.spice",
+      "used_in": [
+        "bigger_cells.html",
+        "logic_gates.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "bigger_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.lef",
+      "used_in": [
+        "scan.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.spice",
+      "used_in": [
+        "scan.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1__tt_025C_1v80.lib.json",
+      "used_in": [
+        "scan.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.lef",
+      "used_in": [
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.spice",
+      "used_in": [
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+      "used_in": [
+        "antenna.html",
+        "cell_template.html",
+        "electromigration.html",
+        "floorplan.html",
+        "io_power.html",
+        "loads.html",
+        "metal_fill.html",
+        "metal_layers.html",
+        "parasitics.html",
+        "power_grid.html",
+        "rdl.html",
+        "site_rows.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__common.lib.json",
+      "used_in": [
+        "liberty.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/timing/sky130_fd_sc_hd__tt_025C_1v80.lib.json",
+      "used_in": [
+        "level_shifters.html",
+        "liberty.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/",
+      "used_in": [
+        "clock_tree.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbufhv2lv/sky130_fd_sc_hvl__lsbufhv2lv_1.spice",
+      "used_in": [
+        "level_shifters.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hvl/blob/4fd4f858d16c558a6a488b200649e909bb4dd800/cells/lsbuflv2hv/sky130_fd_sc_hvl__lsbuflv2hv_1.spice",
+      "used_in": [
+        "level_shifters.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk/issues/276",
+      "used_in": [
+        "tie_cells.html"
+      ]
+    },
+    {
+      "url": "https://github.com/google/skywater-pdk/issues/309",
+      "used_in": [
+        "noise_mismatch.html"
+      ]
+    },
+    {
+      "url": "https://github.com/parallaxsw/OpenSTA/blob/master/include/sta/Liberty.hh",
+      "used_in": [
+        "setup_hold.html"
+      ]
+    },
+    {
+      "url": "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+      "used_in": [
+        "cdc_reset.html"
+      ]
+    },
+    {
+      "url": "https://ngspice.sourceforge.io/docs/ngspice-manual.pdf",
+      "used_in": [
+        "mixed_signal_verification.html"
+      ]
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec10/",
+      "used_in": [
+        "analog_bias.html"
+      ]
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec19/",
+      "used_in": [
+        "analog_bias.html"
+      ]
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec25/",
+      "used_in": [
+        "analog_bias.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/ant/README.html",
+      "used_in": [
+        "antenna.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/cts/README.html",
+      "used_in": [
+        "clock_tree.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/dft/README.html",
+      "used_in": [
+        "scan.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/dpl/README.html",
+      "used_in": [
+        "fill_cells.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/drt/README.html",
+      "used_in": [
+        "bigger_cells.html",
+        "pin_access.html",
+        "power_grid.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/fin/README.html",
+      "used_in": [
+        "metal_fill.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/grt/README.html",
+      "used_in": [
+        "antenna.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/ifp/README.html",
+      "used_in": [
+        "floorplan.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/pdn/README.html",
+      "used_in": [
+        "power_grid.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/psm/README.html",
+      "used_in": [
+        "io_power.html",
+        "power_grid.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+      "used_in": [
+        "crosstalk_return_paths.html",
+        "metal_fill.html",
+        "mixed_signal_verification.html",
+        "parasitics.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/rsz/README.html",
+      "used_in": [
+        "spare_eco.html",
+        "tie_cells.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/sta/README.html",
+      "used_in": [
+        "mixed_signal_verification.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/tap/README.html",
+      "used_in": [
+        "endcaps.html",
+        "floorplan.html",
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://openroad.readthedocs.io/en/latest/main/src/upf/README.html",
+      "used_in": [
+        "level_shifters.html"
+      ]
+    },
+    {
+      "url": "https://opensta.readthedocs.io/en/latest/",
+      "used_in": [
+        "liberty.html",
+        "setup_hold.html",
+        "timing.html"
+      ]
+    },
+    {
+      "url": "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect4.pdf",
+      "used_in": [
+        "analog_bias.html",
+        "gate_topologies.html",
+        "logic_gates.html"
+      ]
+    },
+    {
+      "url": "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf",
+      "used_in": [
+        "drive_strength.html",
+        "gate_topologies.html"
+      ]
+    },
+    {
+      "url": "https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf",
+      "used_in": [
+        "liberty.html",
+        "setup_hold.html",
+        "timing.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/contents/file_types.html",
+      "used_in": [
+        "mixed_signal_verification.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/foundry-provided.html",
+      "used_in": [
+        "cell_template.html",
+        "site_rows.html",
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/cells/dfxtp/README.html",
+      "used_in": [
+        "dff_inside.html",
+        "gate_topologies.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/antenna.html",
+      "used_in": [
+        "antenna.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/assumptions.html",
+      "used_in": [
+        "metal_layers.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+      "used_in": [
+        "analog_bias.html",
+        "cell_layout.html",
+        "converters.html",
+        "crosstalk_return_paths.html",
+        "feedback_stability.html",
+        "gate_topologies.html",
+        "logic_gates.html",
+        "noise_mismatch.html",
+        "sampling_aliasing.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/layers.html",
+      "used_in": [
+        "cell_layout.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html",
+      "used_in": [
+        "cell_template.html",
+        "crosstalk_return_paths.html",
+        "fill_cells.html",
+        "metal_fill.html",
+        "metal_layers.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html#rdl",
+      "used_in": [
+        "rdl.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+      "used_in": [
+        "parasitics.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/rules/wlcsp.html",
+      "used_in": [
+        "rdl.html"
+      ]
+    },
+    {
+      "url": "https://skywater-pdk.readthedocs.io/en/main/verification.html",
+      "used_in": [
+        "mixed_signal_verification.html"
+      ]
+    },
+    {
+      "url": "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf",
+      "used_in": [
+        "cdc_reset.html"
+      ]
+    },
+    {
+      "url": "https://vlsida.github.io/chip-tutorials/klayout-lvs.html",
+      "used_in": [
+        "loads.html"
+      ]
+    },
+    {
+      "url": "https://wiki.analog.com/university/courses/electronics/electronics-lab-loop-gain",
+      "used_in": [
+        "feedback_stability.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/analog-dialogue/articles/ask-the-applications-engineer-25.html",
+      "used_in": [
+        "feedback_stability.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/analog-dialogue/articles/techniques-to-avoid-instability-capacitive-loading.html",
+      "used_in": [
+        "feedback_stability.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/analog-dialogue/articles/winning-the-battle-against-latchup.html",
+      "used_in": [
+        "well_taps.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/app-notes/an-835.html",
+      "used_in": [
+        "converters.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/2022/07/16/11/45/managing-noise-in-the-signal-chain-part-2-noise-and-distortion-in-data-converters.html",
+      "used_in": [
+        "noise_mismatch.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/effects-of-digital-crosstalk-in-data-converters-part-one.html",
+      "used_in": [
+        "crosstalk_return_paths.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/technical-articles/high-speed-adc-sampling-transients.html",
+      "used_in": [
+        "sampling_aliasing.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-001.pdf",
+      "used_in": [
+        "converters.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-002.pdf",
+      "used_in": [
+        "sampling_aliasing.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf",
+      "used_in": [
+        "converters.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-007.pdf",
+      "used_in": [
+        "sampling_aliasing.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-031.pdf",
+      "used_in": [
+        "crosstalk_return_paths.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-047.pdf",
+      "used_in": [
+        "noise_mismatch.html"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+      "used_in": [
+        "decap.html"
+      ]
+    },
+    {
+      "url": "https://www.esda.org/esd-overview/esd-fundamentals/part-5-device-sensitivity-and-testing/",
+      "used_in": [
+        "esd_clamps.html"
+      ]
+    },
+    {
+      "url": "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+      "used_in": [
+        "cdc_reset.html"
+      ]
+    },
+    {
+      "url": "https://www.itl.nist.gov/div898/handbook/apr/section1/apr153.htm",
+      "used_in": [
+        "electromigration.html"
+      ]
+    },
+    {
+      "url": "https://www.ti.com/lit/an/sbaa173/sbaa173.pdf",
+      "used_in": [
+        "converters.html"
+      ]
+    },
+    {
+      "url": "https://www.ti.com/lit/pdf/sbaa767",
+      "used_in": [
+        "feedback_stability.html"
+      ]
+    }
+  ],
+  "verified_source_snapshots": [
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/tech/sky130_fd_sc_hd.tlef",
+      "sha256": "c8351e320a3d89640a1aae4cc0991d41646553362007fb45f40d3882d3b1688f",
+      "bytes": 17957
+    },
+    {
+      "url": "https://api.github.com/repos/google/skywater-pdk-libs-sky130_fd_sc_hd/commits/main",
+      "sha256": "b2dbf6bfc27a01b83a7438999a969efa72a5651543126ff06275196b32a63cea",
+      "bytes": 8359
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_3.spice",
+      "sha256": "5d4e3146bdb1824dcc8f3f6f19842f8256e5d1876217f86d8b7d219e3fe1bcff",
+      "bytes": 824
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_3.lef",
+      "sha256": "6b4c026797453f3d1dcc6825c065012a6ec367c29ad49ad907040a2249acf6e3",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_4.spice",
+      "sha256": "adde6c358509b1a6095087685da93556006bf0220b1f635f313b9ed06fa3212b",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_4.lef",
+      "sha256": "a606e2abc945ce4e8e442a1a916634bdb8a01dfa0380780a5bea34a97df82332",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_6.spice",
+      "sha256": "a3c1deb8159288be329ee5472d9427af3b2c5836d12882b4b1c97056d18587a9",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_6.lef",
+      "sha256": "d899730df6468cce13684c5e2eba8980006db93ea720488db5b14cae120abf78",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_8.spice",
+      "sha256": "9d79e1cc78039bcdc6d7b9760c471b78734860ddea7822f03a639c89bee282df",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_8.lef",
+      "sha256": "c626620cf3704fe1d952c698573843a04ae3ddb1b2e3c4876e5f629f58ba936a",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_12.spice",
+      "sha256": "c3cf01e6d8d57b57f978fbe1ec111fc921c6cc399a8f20bf92837aef51a1531b",
+      "bytes": 829
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_12.lef",
+      "sha256": "e62c81c42cb3a7611219db6eb3d5f90cc3c40afbbf2e3c75a6e85d1f2d626008",
+      "bytes": 1639
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/cells/decap/sky130_fd_sc_hd__decap_4__tt_025C_1v80.lib.json",
+      "sha256": "88a9c19b5be77449ddd3b7f0ac8a8302b91ee7ad9d14b2b91957f8c76f38c578",
+      "bytes": 564
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3__tt_025C_1v80.lib.json",
+      "sha256": "902fbef5dfb944b77a59f91f8adb77adc0535bd1de4fa6c8582edf7bb1c08b18"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4__tt_025C_1v80.lib.json",
+      "sha256": "88a9c19b5be77449ddd3b7f0ac8a8302b91ee7ad9d14b2b91957f8c76f38c578"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_6__tt_025C_1v80.lib.json",
+      "sha256": "94ef5e55012f0e70e061a301829238bdfc11d2394e42f8206a13d38085cd8e31"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_8__tt_025C_1v80.lib.json",
+      "sha256": "2584cc7991c1038707c6002ffb3154269189907a9f0e7cbd198743ea024121b6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_12__tt_025C_1v80.lib.json",
+      "sha256": "78cc3884f513a2829407cf551635b1b4e6df4f791d80a4d14acc3637c590f1e7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/RTimothyEdwards/open_pdks/master/sky130/librelane/sky130_fd_sc_hd/config.tcl",
+      "sha256": "750a044b30e090f09f5e13e9e0113730a1c47f78e2a62553e44a1fa1a9f2b417"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef",
+      "sha256": "c8351e320a3d89640a1aae4cc0991d41646553362007fb45f40d3882d3b1688f",
+      "bytes": 17957
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.spice",
+      "sha256": "1099e3641c46d241852db47974540b3ad161e20e01b74f2fd5cc152627011909",
+      "bytes": 813
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1.lef",
+      "sha256": "271694f8d1223b72fd14af21c5666b28649c39083d60e9525b208a7fa3cef5ea",
+      "bytes": 1979
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2.spice",
+      "sha256": "3f43c8487f2eb480193f14957db59d40a0fe92b0ee3f2c88f2b3f0d8db3c14f1",
+      "bytes": 936
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2.lef",
+      "sha256": "b4937523713766ee3900e24318a5e617763045507b7b83dd0d77701d8a10d1d4",
+      "bytes": 2082
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4.spice",
+      "sha256": "13687b7e8832492c380843714743fb6910d11f39c611752ac97f9031145aecb8",
+      "bytes": 1182
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4.lef",
+      "sha256": "36ad5230d6162fd746d188525c7b60161eb7c3b686e907edbbfb1d5e4b5fbaf2",
+      "bytes": 2440
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8.spice",
+      "sha256": "d9a249311ea6c5827d3bbba98bcabcfa83188ef4cc0334c5c0493017170468cf",
+      "bytes": 1680
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8.lef",
+      "sha256": "ce7b86f13e8bb371b2588dc7c7da7c24c07d709fff86b567c3d94c0f7b7046d8",
+      "bytes": 2850
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.spice",
+      "sha256": "1e2261e7a2f4e20b2ecbde8d1f16fe2071281487a83aa03846bb9f68b61ad30d",
+      "bytes": 953
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1.lef",
+      "sha256": "f3b99f7946a7e667aa21041a989c0c7b46dfa25596f80b9cea56edfb60363e0e",
+      "bytes": 2207
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nor2/sky130_fd_sc_hd__nor2_1.spice",
+      "sha256": "92cc6f14dde1e0585e2d9c1642d5a7b7056cbe882a786779a6d622b37223fc0b",
+      "bytes": 954
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nor2/sky130_fd_sc_hd__nor2_1.lef",
+      "sha256": "59469f3a3f60edc147d2d1f3df1b55d3e4b0cae63166dc16949be605ac9604c6",
+      "bytes": 2257
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.spice",
+      "sha256": "39049c3c6a74ac24fdc0d93528dd5b0e15f7ef51729008913bdeeee0d8ead2df",
+      "bytes": 2604
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1.lef",
+      "sha256": "fc7b01be5e30691de4455f55cec6bb5cd7d954af0be4553198580b74c17db529",
+      "bytes": 5912
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.spice",
+      "sha256": "11ef40f828f7cf8ea9c13a9a1d6497c5ac5747d9fcca10137a21a9c943be7c11",
+      "bytes": 687
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_1.lef",
+      "sha256": "48bfefe5924f5ab5622fb59dd561e81447a9dfe85707da192e41ff5dcf8e5901",
+      "bytes": 1436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_2.spice",
+      "sha256": "c0fc2573ca72c9c6c9250ebb0fe52d24f2b787dcb62c3f379f46740392916424",
+      "bytes": 687
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_2.lef",
+      "sha256": "fe3600adc8dcff6148e7d628a97a628c963d8b1f54b278ff3bb02a7f8c4b5a85",
+      "bytes": 1436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_4.spice",
+      "sha256": "010ca14a2111f5313333217ac3faf2d340736ed081853fdfdae4f836bc549b7f",
+      "bytes": 687
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_4.lef",
+      "sha256": "2f2368f386ce22eb883d8ee188e32a1cb2d31fb7cc3cc9d14f8507967ec4e10a",
+      "bytes": 1436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_8.spice",
+      "sha256": "d05f1c544df3d424fc66b66fa24a5c12e9baf455c11cfa8597870a8de8ae7912",
+      "bytes": 687
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill_8.lef",
+      "sha256": "ebf334fbfaf714e582dca01db71fe9f72afdabb8e0c2cfa019ef569641f8fd41",
+      "bytes": 1436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.spice",
+      "sha256": "5d4e3146bdb1824dcc8f3f6f19842f8256e5d1876217f86d8b7d219e3fe1bcff",
+      "bytes": 824
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.lef",
+      "sha256": "6b4c026797453f3d1dcc6825c065012a6ec367c29ad49ad907040a2249acf6e3",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.spice",
+      "sha256": "adde6c358509b1a6095087685da93556006bf0220b1f635f313b9ed06fa3212b",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_4.lef",
+      "sha256": "a606e2abc945ce4e8e442a1a916634bdb8a01dfa0380780a5bea34a97df82332",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_6.spice",
+      "sha256": "a3c1deb8159288be329ee5472d9427af3b2c5836d12882b4b1c97056d18587a9",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_6.lef",
+      "sha256": "d899730df6468cce13684c5e2eba8980006db93ea720488db5b14cae120abf78",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_8.spice",
+      "sha256": "9d79e1cc78039bcdc6d7b9760c471b78734860ddea7822f03a639c89bee282df",
+      "bytes": 828
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_8.lef",
+      "sha256": "c626620cf3704fe1d952c698573843a04ae3ddb1b2e3c4876e5f629f58ba936a",
+      "bytes": 1637
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_12.spice",
+      "sha256": "c3cf01e6d8d57b57f978fbe1ec111fc921c6cc399a8f20bf92837aef51a1531b",
+      "bytes": 829
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_12.lef",
+      "sha256": "e62c81c42cb3a7611219db6eb3d5f90cc3c40afbbf2e3c75a6e85d1f2d626008",
+      "bytes": 1639
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_1__tt_025C_1v80.lib.json",
+      "sha256": "2ebd0770e6de56dd67ce2c46c3d242be923778492c2ab814dfd3741445f8f86d",
+      "bytes": 11743
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_2__tt_025C_1v80.lib.json",
+      "sha256": "0eeabd4d8ae917d08912b0bc7544072f8799b3670282a1bb1a5861b9c3eca1e5",
+      "bytes": 11731
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_4__tt_025C_1v80.lib.json",
+      "sha256": "c102cfe2f4b84e4821eb189e8a710b7ca354e862bab09ee87cbd75a6bfa93117",
+      "bytes": 11736
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv_8__tt_025C_1v80.lib.json",
+      "sha256": "21aa33ce3bd5ab8131403e685cd5e2e22c46ac484df99181cdc1dfd1edd9e81d",
+      "bytes": 11713
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2_1__tt_025C_1v80.lib.json",
+      "sha256": "711e6d445b53abceb2cf126022d6cc4892fc670cb49bbf3ee1bd9319b18dd632",
+      "bytes": 26273
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+      "sha256": "6f7793786ce917e03b70c2420e6ca202f42a361f9d453739f71fba44832e1b7f",
+      "bytes": 17318
+    },
+    {
+      "url": "https://www.ti.com/lit/pdf/sbaa767",
+      "sha256": "93fe78ce5a06656403c291028825b496f517bd96465acb0de34f875c02721510",
+      "bytes": 3600032
+    },
+    {
+      "url": "https://pages.hmc.edu/harris/cmosvlsi/4e/lect/lect6.pdf",
+      "sha256": "e5ff122e9b8128f67d3e86526ac4585efa1276056308465de6272c5db9ac2427",
+      "bytes": 162564
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/f539d85c15f389afd2290abfc6ca4318_MIT6_012S09_lec10.pdf",
+      "sha256": "8cfd6e40631c26929a86ec6c770de9123249140007cbbcd249548a79612f3cce",
+      "bytes": 1325995
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/716bbb88c4269cde3dc6cc8f9cd90f64_MIT6_012S09_lec19.pdf",
+      "sha256": "0c6eb06e5bb04e876f76e24dbd705e129bbeefbabcfec86d61f49d37830f42e3",
+      "bytes": 346510
+    },
+    {
+      "url": "https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/0e19807429a2e5bd8d181661cb23c5b4_MIT6_012S09_lec25.pdf",
+      "sha256": "dd7d03728cec9e27baedc191060bc221ebe7e8d8e294755d190acd08f0d38fe2",
+      "bytes": 248908
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.lef",
+      "sha256": "23090525e5813532125b8707a990704106b0e1ac582ad271a11e0f34c2dc94c3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1.spice",
+      "sha256": "c7e39a5ac63fdf18a286567e9b9a7322dcfa78735c8d3b964ea68997ca569b10"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef",
+      "sha256": "b0bd0d42407ed4c2d363b0745809e1538a5d29a80cbceda49f68308c0c55c666"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.spice",
+      "sha256": "dd900c1bfe7a5fa7ec63e622c994c0340a743c3985dac7f675d091f48dd897cd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.lef",
+      "sha256": "6386798102b4aa328f024982a18331c45432970e1f2f77ba90b0eb306c1e17ad"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd_1.spice",
+      "sha256": "f253efe304e644e27a9164193c3f166d640eb7230bcc9b44cdf75da046ca2239"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tap/sky130_fd_sc_hd__tap_1.lef",
+      "sha256": "cd07b97e80b018d7477bc46702a9bad8706978f37974935e9a2f36a7024993e9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tap/sky130_fd_sc_hd__tap_1.spice",
+      "sha256": "3b0b7f4caacc36e55d9c4e3a04f4f88c1772f7192e1232c90af8043359daf136"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tap/sky130_fd_sc_hd__tap_2.lef",
+      "sha256": "f69abb6b8d0c72aad95e01d126bfc2a479eb9901648d669bbd9df29684784731"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tap/sky130_fd_sc_hd__tap_2.spice",
+      "sha256": "571b8b9ae31f7cce1df21bd1c412af8828d699efcb58c84abcfe255406733130"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvgnd/sky130_fd_sc_hd__tapvgnd_1.lef",
+      "sha256": "07d2a3b6f19c2e739d746ae2ece908b27facf6177c046b21f459b46c84d1a145"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvgnd/sky130_fd_sc_hd__tapvgnd_1.spice",
+      "sha256": "226738301e1966099d328c4430c2677bb0f7ffecd50fed689f2f29c3bc25c9bc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvgnd2/sky130_fd_sc_hd__tapvgnd2_1.lef",
+      "sha256": "21a69c784b971313731d3a1ac50390a4e8051a233d1c2c647c3dac52aa401291"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvgnd2/sky130_fd_sc_hd__tapvgnd2_1.spice",
+      "sha256": "63ded408b960da220d34ff21c943732c4ead5b477f943f960b6682b6788c21f8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb_1__tt_025C_1v80.lib.json",
+      "sha256": "aa20b6906de4ff373fbef7dcca2841de9b285c5f85a26d5dcf72b7657b487355"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2__tt_025C_1v80.lib.json",
+      "sha256": "90ed85d45db4d4f514d2f93cfb51e6d40b1bb99d2b7dc41750c9ae352fd34a7d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_gpio_ovtv2/sky130_fd_io__top_gpio_ovtv2.lef",
+      "sha256": "044b7bd756c959858c51f6a1b7d8f0b0b7e5f635e160c3459ab610a9e4a06be2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_hvc_wpad/sky130_fd_io__top_power_hvc_wpad.lef",
+      "sha256": "ced78a132650861b32aa1c2100ee6be53d026e6e19314679ff74dc9e761313ba"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_ground_hvc_wpad/sky130_fd_io__top_ground_hvc_wpad.lef",
+      "sha256": "ccdd457a60b23fc3cc57b54198f4d58f22abe76393f272edccb09be1fd676ea0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_power_lvc_wpad/sky130_fd_io__top_power_lvc_wpad.lef",
+      "sha256": "24a2167f56d05f324da9629d2f5f83e4226f5e0ce56e000dcf1d76e6cdf891ad"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_ground_lvc_wpad/sky130_fd_io__top_ground_lvc_wpad.lef",
+      "sha256": "09523037b9a9dd3a98cfa369e09478468c343d90ae8faf4260083a0dcb78e5b4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/top_xres4v2/sky130_fd_io__top_xres4v2.lef",
+      "sha256": "796daa30ea00d37ca9a4b72ff927e6efa4ff3c10af5abe6c83bece4b551deb1a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/corner_bus_overlay/sky130_fd_io__corner_bus_overlay.lef",
+      "sha256": "1684e919a0765ad677cc8360664819ea438963e510044db095c9b715f8e24c36"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/overlay_vddio_hvc/sky130_fd_io__overlay_vddio_hvc.lef",
+      "sha256": "6e01b452a6f308804c09c4f56665596f4c30e4969632fb6455dc16b51d0e3fd5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_io/63752cd96d0798468758e929922a8dd3ff103381/cells/overlay_vccd_lvc/sky130_fd_io__overlay_vccd_lvc.lef",
+      "sha256": "ee4be120ae31320080d3f0b0d36b6f709933802c28a4725c279f8cf35df64a27"
+    },
+    {
+      "url": "https://api.github.com/repos/fossi-foundation/open-pdks/commits/main",
+      "sha256": "74c2db6f732ee347124fe708bb5b0091bff29fa2618c2d10dcae98dcd915fa99"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fossi-foundation/open-pdks/main/sky130/librelane/sky130_ef_io/config.tcl",
+      "sha256": "7cdca94a29c9aa039bae41a886eda0973941811ec723b78444c90d5a9bb91c98"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk/main/docs/rules/periphery/periphery.csv",
+      "sha256": "432c56b98213cb308c21a23f939f51f87539cf081b7dbd476f5dc837f61d6311"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD/master/src/tap/README.md",
+      "sha256": "cbe5ab4b59306b4a9cf6c9b0ca15dcc9d330754d2d88a39242ec2e6368c5a88e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfrtp/sky130_fd_sc_hd__dfrtp_1__tt_025C_1v80.lib.json",
+      "sha256": "e9d2194211b7a87db3a68df420f937fb200c6423fb0885477e758a52a3ac50bf",
+      "bytes": 27720
+    },
+    {
+      "url": "https://raw.githubusercontent.com/zhangzek/Clock-Domain-Crossing-Design/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+      "sha256": "51e951d298b15e34ec40bf8de8564d7a48e5218617b05faeb2b348d9d3fe75e3",
+      "bytes": 1807634
+    }
+  ],
+  "lab_model_manifest": "../labs/common/models/source_manifest.json",
+  "lab_synthesis_library_sha256": "ec0e1067a35c8bf20b11e58d1e8ac53326067e4dac84a125cc1b917a3518d0d9",
+  "expansion_sources": [
+    {
+      "file": "differential_pairs.html",
+      "urls": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://web.mit.edu/6.012/FALL00/www/handouts/lec26.pdf",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-042.pdf",
+        "https://www.ti.com/lit/pdf/sloa054",
+        "https://www.ti.com/lit/pdf/snoa506"
+      ]
+    },
+    {
+      "file": "references_startup.html",
+      "urls": [
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html#bipolar-pnp-transistor",
+        "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html"
+      ]
+    },
+    {
+      "file": "rtl_synthesis_constraints.html",
+      "urls": [
+        "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/c5310d7ffdd5f8a1eed83089697631548cc08a99/flow/platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+        "https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/sdc/Sdc.tcl",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1.lef",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/edfxtp/sky130_fd_sc_hd__edfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/xor2/sky130_fd_sc_hd__xor2_1.lef",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/cmd/index_passes_equiv.html",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/latest/using_yosys/synthesis/cell_libs.html"
+      ]
+    },
+    {
+      "file": "clock_gating_power_states.html",
+      "urls": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp.functional.v",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlclkp/sky130_fd_sc_hd__dlclkp_1__tt_025C_1v80.lib.json",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp.functional.v",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdlclkp/sky130_fd_sc_hd__sdlclkp_1__tt_025C_1v80.lib.json",
+        "https://opensta.readthedocs.io/en/latest/Commands/",
+        "https://opentitan.org/book/hw/top_earlgrey/ip_autogen/pwrmgr/doc/theory_of_operation.html",
+        "https://yosyshq.readthedocs.io/projects/yosys/en/v0.51/cmd/clockgate.html"
+      ]
+    },
+    {
+      "file": "matching_layout_extraction.html",
+      "urls": [
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/balancing-analog-layout-parasitics-in-mosfet-differential-pairs",
+        "https://community.cadence.com/cadence_blogs_8/b/cic/posts/spectre-tech-tips-using-dspf-post-layout-netlists-in-spectre-circuit-simulator",
+        "https://openroad.readthedocs.io/en/latest/main/src/rcx/README.html",
+        "https://past.date-conference.com/proceedings-archive/2021/html/1829.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.opencircuitdesign.com/magic/commandref/extresist.html"
+      ]
+    },
+    {
+      "file": "power_package_thermal.html",
+      "urls": [
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.analog.com/en/resources/analog-dialogue/studentzone/2019/07/25/14/49/studentzone-may-2017.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+        "https://www.ti.com/lit/an/spra953d/spra953d.pdf"
+      ]
+    },
+    {
+      "file": "calibration_trim.html",
+      "urls": [
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/en/resources/technical-articles/methods-for-calibrating-gain-error-in-dataconverter-systems.html",
+        "https://www.ti.com/lit/an/spraad8a/spraad8a.pdf"
+      ]
+    },
+    {
+      "file": "spectral_measurements.html",
+      "urls": [
+        "https://docs.scipy.org/doc/scipy-1.17.0/reference/generated/scipy.signal.periodogram.html",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://numpy.org/doc/2.3/reference/routines.fft.html",
+        "https://www.analog.com/en/resources/app-notes/an-835.html",
+        "https://www.analog.com/en/resources/technical-articles/coherent-sampling-vs-window-sampling.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf"
+      ]
+    },
+    {
+      "file": "lab_inverter_characterization.html",
+      "urls": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_sc_hd/README.html"
+      ]
+    },
+    {
+      "file": "lab_bias_amplifier.html",
+      "urls": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/device-details.html",
+        "https://wiki.analog.com/university/courses/electronics/text/chapter-14",
+        "https://www.analog.com/en/resources/technical-articles/2022/07/16/10/44/selfstarting-can-be-hard-to-do--understanding-poweronreset-requirements-in-regulators-and-bandgaps.html"
+      ]
+    },
+    {
+      "file": "lab_sampling_interface.html",
+      "urls": [
+        "https://github.com/google/skywater-pdk-libs-sky130_fd_pr/tree/f62031a1be9aefe902d6d54cddd6f59b57627436",
+        "https://ngspice.sourceforge.io/docs/ngspice-44-manual.pdf",
+        "https://skywater-pdk.readthedocs.io/en/main/analog.html",
+        "https://www.analog.com/en/resources/app-notes/an-82f.html",
+        "https://www.analog.com/media/en/training-seminars/tutorials/MT-090.pdf"
+      ]
+    },
+    {
+      "file": "lab_layout_extraction.html",
+      "urls": [
+        "https://ngspice.sourceforge.io/docs.html",
+        "https://skywater-pdk.readthedocs.io/en/main/rules/rcx.html",
+        "https://www.opencircuitdesign.com/magic/commandref/extresist.html",
+        "https://www.opencircuitdesign.com/magic/howto.html"
+      ]
+    },
+    {
+      "file": "lab_mixed_signal_integration.html",
+      "urls": [
+        "https://docs.altera.com/r/docs/683082/25.1.1/quartus-prime-pro-edition-user-guide-design-recommendations/metastability-and-mtbf-reporting",
+        "https://github.com/zhangzek/Clock-Domain-Crossing-Design/blob/master/doc%26paper/CummingsSNUG2008Boston_CDC.pdf",
+        "https://steveicarus.github.io/iverilog/usage/installation.html",
+        "https://trilobyte.com/pdf/CummingsSNUG2003Boston_Resets_rev1_2.pdf"
+      ]
+    }
+  ]
+}

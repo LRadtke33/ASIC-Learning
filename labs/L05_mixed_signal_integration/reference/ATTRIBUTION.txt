@@ -1,0 +1,20 @@
+Included reference: sky130_fd_sc_hd__tt_025C_1v80.lib
+
+The SKY130 high-density standard-cell data originate from the SkyWater PDK.
+Upstream attribution: Copyright 2020 The SkyWater PDK Authors.
+Cell-library source repository: https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd
+The upstream cell library is provided under Apache License 2.0; the full text is
+included as LICENSE-SKY130-Apache-2.0.txt.
+
+This exact compiled Liberty file was obtained from the OpenROAD-flow-scripts
+platform distribution at revision c5310d7ffdd5f8a1eed83089697631548cc08a99.
+It is reproduced without byte changes. SOURCE.json records the source URL,
+size, and SHA-256 used in the executed synthesis example.
+
+The separately included ORFS build/run-script license is provided for clear
+repository attribution. As its own text states, that BSD license applies to
+ORFS build/run scripts; it does not replace the platform cell-library license.
+No ORFS build/run script is required by or copied into this teaching runner.
+
+The reference is one typical 25 C / 1.8 V library, not a complete PDK,
+multicorner qualification, silicon warranty, or tapeout signoff package.

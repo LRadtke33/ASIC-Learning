@@ -1,0 +1,11 @@
+Q=1  CLK->Q = 0.3740 ns
+Q=0  CLK->Q = 0.3890 ns
+Q=1  CLK->Q = 0.3740 ns
+Q=0  CLK->Q = 0.3890 ns
+Q=1  CLK->Q = 0.3740 ns
+Q=0  CLK->Q = 0.3890 ns
+Q=1  CLK->Q = 0.3740 ns
+Q=0  CLK->Q = 0.3890 ns
+CKQ  n=8  rises=4  falls=4  min=0.3740  mean=0.3815  max=0.3890 ns
+PASS  tb_ckq_specify  OpenSTA SDF IOPATH compiled as specify
+tb_ckq_specify.v:55: $finish called at 110000 (1ps)

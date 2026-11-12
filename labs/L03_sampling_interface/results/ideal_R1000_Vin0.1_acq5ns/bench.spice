@@ -1,0 +1,23 @@
+* Lab3 acquisition: ideal; assumed 2pF capacitor and source resistance
+.lib "../../../common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-5 abstol=1e-14 vntol=1e-8
+VDD vdd 0 1.8
+VIN drive 0 PWL(0 0 9n 0 9.1n 0.1)
+RSOURCE drive src 1000
+VCLK clk 0 PWL(0 0 10n 0 10.1n 1.8 15n 1.8 15.1n 0 23n 0)
+VCLKB clkb 0 PWL(0 1.8 10n 1.8 10.1n 0 15n 0 15.1n 1.8 23n 1.8)
+S1 src hold clk 0 SWTEACH
+.model SWTEACH SW(Ron=5 Roff=1e12 Vt=0.9 Vh=0.05)
+CHOLD hold 0 2p
+RHOLD hold 0 1e12
+.ic v(hold)=0
+.control
+set wr_vecnames
+set wr_singlescale
+set numdgt=12
+tran 20p 23n 0 20p uic
+wrdata tran.dat v(drive) v(hold) v(clk) v(src)
+quit
+.endc
+.end

@@ -1,0 +1,20 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1
+use sky130_fd_sc_hd__tap_1  tap_w
+timestamp 1752481779
+transform 1 0 0 0 1 0
+box 0 0 92 544
+use sky130_fd_sc_hd__inv_1  inv0
+timestamp 1752481779
+transform 1 0 92 0 1 0
+box 0 0 276 544
+use sky130_fd_sc_hd__tap_1  tap_e
+timestamp 1752481779
+transform 1 0 368 0 1 0
+box 0 0 92 544
+<< metal1 >>
+rect 172 446 272 486
+<< end >>
+

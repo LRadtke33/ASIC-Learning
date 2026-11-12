@@ -1,0 +1,540 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antenna Diodes</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 51 / 84 · Part VI, Physical cells and the floorplan</p><h1>Antenna Diodes</h1>
+  <p class="subtitle">A long metal tied to a gate can charge up during manufacture and punch the gate oxide. A diode gives that charge a path into diffusion. The router adds the diode when the metal-to-gate ratio is too high.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> Ratios are the antenna lines in <code>sky130_fd_sc_hd.tlef</code>, read inside the layer they belong to. The diode is the <code>diode_2</code> LEF, schematic spice, and <code>tt_025C_1v80</code> Liberty. The flow setting is from the open_pdks LibreLane configuration.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain what an antenna violation is, and how plasma etch charges metal that is connected only to a gate.</li>
+<li>State why the damage matters for yield and reliability, and why it is a layout and manufacturing problem, not a functional one.</li>
+<li>Compute a SKY130 antenna ratio (sidewall vs cut area, per layer and with a diode) from the tech LEF and the official MAX_EGAR / K / diode-bonus table.</li>
+<li>Choose and describe a fix: a layer jump, a <code>sky130_fd_sc_hd__diode_2</code>, or a buffer, and how OpenROAD and LibreLane detect and repair violations.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-7">step 7, routing</a> repairs violations; <a href="design_flow.html#step-9">step 9, physical verification</a> checks for them again.</dd><dt>Tools</dt><dd>OpenROAD: <code>check_antennas</code> and <code>repair_antennas</code>; Magic and KLayout at signoff. Commercial: Innovus, Calibre.</dd><dt>Why it matters</dt><dd>Antenna damage happens during manufacture, before the chip is ever powered.</dd></dl></aside><h2 id="section-1">1. Long metal collects charge, and the gate oxide takes the damage</h2>
+  <p>
+    While a metal layer is being etched, the metal already drawn can collect
+    charge from the plasma. If that metal touches a transistor gate and does
+    not yet touch a diffusion, the charge has nowhere to go except through the
+    gate oxide. A long wire on a small gate is the dangerous case. The check
+    is a ratio: metal connected to the gate, divided by the gate area. If a limit is violated, the flow can add a <em>shunt</em> diode to the same net
+    or change its layer routing. The diode is not inserted in series and does not
+    intentionally interrupt the functional connection. <a href="https://skywater-pdk.readthedocs.io/en/main/rules/antenna.html">[SKY130 antenna rules]</a>
+  </p>
+  <p>
+    The gate area the router accumulates is the <code>ANTENNAGATEAREA</code> on
+    the pin. On <code>inv_1</code> pin A that is 0.2475&nbsp;µm², which is
+    (0.65 + 1.0) × 0.15
+    (<a href="cell_layout.html">lesson 16</a>). That number is the gate. It is
+    not a diode.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — The same gate, two protection cases. Left: metal hangs on
+      the gate and the ratio climbs. Right: diode_2 ties the net
+      to a diffusion. The diode's own gate area is 0, so it does not make the
+      ratio worse. It does add 0.878&nbsp;fF of pin capacitance."><text x="180" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">metal only</text><line x1="60" y1="70" x2="300" y2="70" stroke="#4a72c4" stroke-width="4"></line><line x1="180" y1="70" x2="180" y2="110" stroke="#33414f" stroke-width="2"></line><rect x="162" y="110" width="36" height="28" fill="#fff" stroke="#33414f"></rect><text x="180" y="128" text-anchor="middle" font-size="11" fill="#33414f">gate</text><text x="180" y="170" text-anchor="middle" font-size="12" fill="#c0564a">ratio climbs</text><text x="540" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">diode_2 on the net</text><line x1="420" y1="70" x2="660" y2="70" stroke="#4a72c4" stroke-width="4"></line><line x1="500" y1="70" x2="500" y2="110" stroke="#33414f" stroke-width="2"></line><rect x="482" y="110" width="36" height="28" fill="#fff" stroke="#33414f"></rect><text x="500" y="128" text-anchor="middle" font-size="11" fill="#33414f">gate</text><line x1="580" y1="70" x2="580" y2="100" stroke="#33414f" stroke-width="2"></line><polygon points="566,124 594,124 580,104" fill="#fff" stroke="#1e9e50" stroke-width="2"></polygon><line x1="566" y1="100" x2="594" y2="100" stroke="#1e9e50" stroke-width="2"></line><line x1="580" y1="124" x2="580" y2="144" stroke="#1e9e50" stroke-width="2"></line><line x1="566" y1="144" x2="594" y2="144" stroke="#1e9e50" stroke-width="2"></line><text x="634" y="125" text-anchor="middle" font-size="12" fill="#1e9e50">0.878 fF</text><text x="540" y="180" text-anchor="middle" font-size="12" fill="#5c6b7a">anode: VNB; cathode: signal</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — The same gate, two protection cases.</strong> Left: metal hangs on
+      the gate and the ratio climbs. Right: <code>diode_2</code> ties the net
+      to a diffusion. The diode's own gate area is 0, so it does not make the
+      ratio worse. It does add 0.878&nbsp;fF of pin capacitance.
+    </figcaption>
+  </figure>
+
+  <p>
+    The charge arrives while the metal is being etched. Plasma in the etch
+    puts charge on every piece of metal that is still floating. If that metal
+    already touches a gate, and the driver at the other end is a higher layer
+    that has not been connected yet, accumulated charge can develop a damaging
+    voltage across the gate oxide. The diode gives it a diffusion path. A jumper
+    up to a higher layer does the other job: during the etch of the lower
+    layer, the long wire is not yet tied to the gate, so only the metal already
+    connected to the gate is counted.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 740 240" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Charge on a gate during the metal etch.
+      The driver sits on a higher layer and is not connected yet. The diode
+      on the right is the path into diffusion. This is a sketch of that moment.
+      The tech LEF ratios are the table in the next section. No oxide thickness
+      is stated here."><rect x="40" y="30" width="400" height="180" rx="8" fill="#f7f4ef" stroke="#33414f"></rect><text x="240" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">during the etch</text><rect x="70" y="80" width="220" height="16" fill="#4a72c4"></rect><text x="180" y="74" text-anchor="middle" font-size="12" fill="#4a72c4">metal, still floating</text><rect x="250" y="96" width="18" height="28" fill="#718096"></rect><rect x="230" y="124" width="58" height="36" rx="4" fill="#fff" stroke="#33414f"></rect><text x="259" y="146" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">gate</text><rect x="300" y="70" width="100" height="16" fill="#e3e9ef" stroke="#33414f" stroke-dasharray="4 3"></rect><text x="350" y="64" text-anchor="middle" font-size="11" fill="#5c6b7a">higher layer</text><text x="350" y="108" text-anchor="middle" font-size="11" fill="#5c6b7a">not connected yet</text><rect x="470" y="30" width="240" height="180" rx="8" fill="#f2f7f2" stroke="#1e6b4f"></rect><text x="590" y="52" text-anchor="middle" font-size="14" font-weight="700" fill="#1e6b4f">with diode_2</text><rect x="500" y="80" width="160" height="16" fill="#4a72c4"></rect><line x1="560" y1="96" x2="560" y2="140" stroke="#1e9e50" stroke-width="2"></line><rect x="530" y="140" width="60" height="28" rx="4" fill="#fff" stroke="#1e9e50"></rect><text x="560" y="158" text-anchor="middle" font-size="12" fill="#1e9e50">diffusion</text><text x="590" y="190" text-anchor="middle" font-size="12" fill="#1e9e50">charge leaves here</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — Charge on a gate during the metal etch.</strong>
+      The driver sits on a higher layer and is not connected yet. The diode
+      on the right is the path into diffusion. This is a sketch of that moment.
+      The tech LEF ratios are the table in the next section. No oxide thickness
+      is stated here.
+    </figcaption>
+  </figure>
+
+  
+<h2 id="section-1b">1b. What happens in the process, step by step</h2>
+<p>An antenna violation is not a functional bug and it is not an ESD event in the finished chip. It is damage that occurs <em>while the wafer is being etched</em>, on a net that is not yet complete. The gate oxide of a MOSFET is a few nanometres of silicon dioxide. Once a poly gate has been patterned, that oxide is a capacitor whose bottom plate is the channel and whose top plate is the poly. Any conductor already tied to that poly, and not yet tied to a diffusion (source, drain, or a protection diode), can collect charge from the plasma used to etch or ash the current layer. If the collected charge raises the voltage across the oxide above its breakdown, a tunnel current flows. The oxide can be punctured, thinned, or left with trapped charge. The finished transistor then has a shifted threshold, higher leakage, or a shorter time-dependent dielectric breakdown (TDDB) life, and the die can fail in test or in the field.</p>
+<p>The name “antenna” is the metal itself: during that etch it is a collector for plasma charge, attached only to a small gate. The danger is the ratio of collected area to gate area, not the absolute length. A long, narrow wire on a minimum-size gate is worse than the same wire tied to several gates in parallel, because the charge is shared over more oxide. A connection made on a <em>later</em> layer does not help at this step: that layer has not been deposited yet.</p>
+
+<figure>
+<div class="figwrap" id="fig-antenna-process" tabindex="0">
+<svg viewBox="0 0 940 460" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-labelledby="ap-title ap-desc">
+<title id="ap-title">Figure A — Four process steps that create, then discharge, an antenna</title>
+<desc id="ap-desc">Four cross-sections. 1: a short poly gate on thin oxide. 2: a long met1 wire is attached only to that gate while plasma charge collects; the only path off the wire is through the oxide. 3: a later met2 connection reaches a driver diffusion and the charge can leave. 4: a protection diode already at the gate provides a diffusion path during the met1 etch.</desc>
+<rect width="940" height="460" fill="#ffffff"/>
+<text x="470" y="24" text-anchor="middle" font-size="15" font-weight="650" fill="#1a2833">How an antenna forms, then how it is discharged</text>
+<!-- frames -->
+<rect x="12" y="38" width="226" height="372" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<rect x="246" y="38" width="226" height="372" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<rect x="480" y="38" width="226" height="372" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<rect x="714" y="38" width="214" height="372" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<text x="125" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1a2833">1. After poly etch</text>
+<text x="359" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1a2833">2. After met1 etch</text>
+<text x="593" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1a2833">3. After met2 etch</text>
+<text x="821" y="58" text-anchor="middle" font-size="13" font-weight="650" fill="#1a2833">4. With a diode</text>
+
+<!-- ===== PANEL 1 =====  substrate y=330-368 -->
+<g font-size="11">
+  <rect x="30" y="328" width="190" height="36" fill="#d8c9a8" stroke="#8a7a55"/>
+  <text x="125" y="351" text-anchor="middle" fill="#4a3f28" font-size="12">p-substrate</text>
+  <rect x="48" y="316" width="48" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <rect x="154" y="316" width="48" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <text x="72" y="328" text-anchor="middle" fill="#1d3a18" font-size="11">S</text>
+  <text x="178" y="328" text-anchor="middle" fill="#1d3a18" font-size="11">D</text>
+  <rect x="100" y="312" width="50" height="7" fill="#f4e08a" stroke="#b89420"/>
+  <rect x="106" y="286" width="38" height="26" fill="#c9b8d9" stroke="#6a4d82"/>
+  <text x="125" y="276" text-anchor="middle" fill="#4a3260" font-size="12">poly gate</text>
+  <text x="42" y="298" text-anchor="start" fill="#7a5a00" font-size="11">thin oxide</text>
+  <path d="M70 300 L100 314" stroke="#b89420" stroke-width="1" fill="none"/>
+  <text x="125" y="388" text-anchor="middle" fill="#334155" font-size="12">The antenna is only the</text>
+  <text x="125" y="404" text-anchor="middle" fill="#334155" font-size="12">poly itself. Low ratio.</text>
+</g>
+
+<!-- ===== PANEL 2 ===== -->
+<g font-size="11">
+  <rect x="264" y="328" width="190" height="36" fill="#d8c9a8" stroke="#8a7a55"/>
+  <text x="359" y="351" text-anchor="middle" fill="#4a3f28" font-size="12">p-substrate</text>
+  <rect x="282" y="316" width="48" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <rect x="388" y="316" width="48" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <text x="306" y="328" text-anchor="middle" fill="#1d3a18" font-size="11">S</text>
+  <text x="412" y="328" text-anchor="middle" fill="#1d3a18" font-size="11">D</text>
+  <rect x="334" y="312" width="50" height="7" fill="#f4e08a" stroke="#b89420"/>
+  <rect x="340" y="286" width="38" height="26" fill="#c9b8d9" stroke="#6a4d82"/>
+  <rect x="348" y="268" width="22" height="18" fill="#b0bec8" stroke="#546e7a"/>
+  <rect x="353" y="250" width="12" height="18" fill="#8d6e4c" stroke="#5a3e22"/>
+  <rect x="258" y="230" width="202" height="20" fill="#c0c8d4" stroke="#3d4d62"/>
+  <text x="359" y="244" text-anchor="middle" fill="#1a2833" font-size="12" font-weight="650">long met1</text>
+  <!-- plasma, stopping above the metal, labels to the right of arrows -->
+  <text x="359" y="86" text-anchor="middle" fill="#9b1c1c" font-size="12" font-weight="650">plasma</text>
+  <path d="M300 94 L300 220" stroke="#c0392b" stroke-width="1.6" fill="none" marker-end="url(#arrR)"/>
+  <path d="M340 94 L340 220" stroke="#c0392b" stroke-width="1.6" fill="none" marker-end="url(#arrR)"/>
+  <path d="M378 94 L378 220" stroke="#c0392b" stroke-width="1.6" fill="none" marker-end="url(#arrR)"/>
+  <path d="M418 94 L418 220" stroke="#c0392b" stroke-width="1.6" fill="none" marker-end="url(#arrR)"/>
+  <text x="430" y="160" fill="#9b1c1c" font-size="16" font-weight="700">+</text>
+  <text x="430" y="180" fill="#9b1c1c" font-size="16" font-weight="700">+</text>
+  <!-- tunnel label to the left of oxide, not on it -->
+  <text x="328" y="300" text-anchor="end" fill="#9b1c1c" font-size="11">tunnel</text>
+  <path d="M330 300 L348 314" stroke="#c0392b" stroke-width="1.2" fill="none"/>
+  <text x="359" y="388" text-anchor="middle" fill="#7a1f1f" font-size="12">Charge can leave only</text>
+  <text x="359" y="404" text-anchor="middle" fill="#7a1f1f" font-size="12">through the thin oxide.</text>
+</g>
+
+<!-- ===== PANEL 3 ===== -->
+<g font-size="11">
+  <rect x="498" y="328" width="190" height="36" fill="#d8c9a8" stroke="#8a7a55"/>
+  <text x="593" y="351" text-anchor="middle" fill="#4a3f28" font-size="12">p-substrate</text>
+  <!-- driver diffusion on the left -->
+  <rect x="508" y="316" width="52" height="16" fill="#5b8f4a" stroke="#2d5a22"/>
+  <text x="534" y="328" text-anchor="middle" fill="#fff" font-size="10">driver</text>
+  <!-- gate FET on the right -->
+  <rect x="616" y="316" width="52" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <text x="642" y="328" text-anchor="middle" fill="#1d3a18" font-size="10">gate n+</text>
+  <rect x="600" y="312" width="40" height="6" fill="#f4e08a" stroke="#b89420"/>
+  <rect x="606" y="286" width="28" height="26" fill="#c9b8d9" stroke="#6a4d82"/>
+  <rect x="610" y="268" width="20" height="18" fill="#b0bec8" stroke="#546e7a"/>
+  <rect x="614" y="250" width="12" height="18" fill="#8d6e4c" stroke="#5a3e22"/>
+  <rect x="500" y="230" width="186" height="20" fill="#c0c8d4" stroke="#3d4d62"/>
+  <text x="593" y="244" text-anchor="middle" fill="#1a2833" font-size="12">met1</text>
+  <!-- vias up to met2, and down to driver -->
+  <rect x="520" y="210" width="12" height="20" fill="#8d6e4c" stroke="#5a3e22"/>
+  <rect x="614" y="210" width="12" height="20" fill="#8d6e4c" stroke="#5a3e22"/>
+  <rect x="520" y="190" width="106" height="20" fill="#9bb0c9" stroke="#2c4a68"/>
+  <text x="573" y="204" text-anchor="middle" fill="#fff" font-size="12" font-weight="650">met2</text>
+  <rect x="520" y="250" width="12" height="66" fill="#8d6e4c" stroke="#5a3e22"/>
+  <text x="593" y="170" text-anchor="middle" fill="#2c4a68" font-size="11">via + met2</text>
+  <text x="593" y="388" text-anchor="middle" fill="#1d3a18" font-size="12">A diffusion is now on</text>
+  <text x="593" y="404" text-anchor="middle" fill="#1d3a18" font-size="12">the net. Charge can leave.</text>
+</g>
+
+<!-- ===== PANEL 4 ===== -->
+<g font-size="11">
+  <rect x="730" y="328" width="182" height="36" fill="#d8c9a8" stroke="#8a7a55"/>
+  <text x="821" y="351" text-anchor="middle" fill="#4a3f28" font-size="12">p-substrate</text>
+  <rect x="800" y="316" width="44" height="16" fill="#7aa36a" stroke="#3d6a32"/>
+  <rect x="814" y="312" width="40" height="6" fill="#f4e08a" stroke="#b89420"/>
+  <rect x="820" y="286" width="28" height="26" fill="#c9b8d9" stroke="#6a4d82"/>
+  <rect x="824" y="268" width="20" height="18" fill="#b0bec8" stroke="#546e7a"/>
+  <rect x="828" y="250" width="12" height="18" fill="#8d6e4c" stroke="#5a3e22"/>
+  <rect x="726" y="230" width="186" height="20" fill="#c0c8d4" stroke="#3d4d62"/>
+  <text x="840" y="244" text-anchor="middle" fill="#1a2833" font-size="12">met1</text>
+  <!-- diode block, clearly to the left, connected up -->
+  <rect x="738" y="286" width="56" height="42" rx="3" fill="#f3c97a" stroke="#8a5a10"/>
+  <text x="766" y="304" text-anchor="middle" fill="#4a3200" font-size="11" font-weight="650">diode</text>
+  <text x="766" y="318" text-anchor="middle" fill="#4a3200" font-size="11">n-diffusion</text>
+  <rect x="760" y="250" width="12" height="36" fill="#8d6e4c" stroke="#5a3e22"/>
+  <text x="821" y="388" text-anchor="middle" fill="#1d3a18" font-size="12">Diffusion is already</text>
+  <text x="821" y="404" text-anchor="middle" fill="#1d3a18" font-size="12">there at the met1 etch.</text>
+</g>
+<defs>
+  <marker id="arrR" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+    <path d="M0 0 L8 4 L0 8 z" fill="#c0392b"/>
+  </marker>
+</defs>
+</svg>
+</div>
+<figcaption>Figure A — Four moments in the same net. The dangerous step is panel 2: a long piece of met1 is already tied to a gate, the driver has not been connected yet, and plasma charge can only leave by tunnelling through the thin gate oxide. A later metal (panel 3) or a diode already at the gate (panel 4) gives the charge a diffusion path. The oxide thickness is not to scale.</figcaption>
+</figure>
+
+<p>Panel 2 is the violation. The driver at the far end of the net will eventually sit on a higher metal, but that metal does not exist yet. The charge has nowhere to go except through the oxide. Panel 3 is later: a via and a higher metal finally reach a diffusion, and the same net is safe at subsequent etches. Panel 4 is the diode fix: a diffusion is already present at the gate during the early etch, so the ratio is computed with a diode term (section 2b) and the charge has a leakage path into the well or substrate.</p>
+
+<h2 id="section-1c">1c. Why it matters in layout, and in the factory</h2>
+<p>From the layout side, every route that ends on a gate is an antenna until a diffusion is attached. Long li1 or met1 runs into a single input pin, large fan-in trees, and scan-enable or reset nets that snake across a block are the usual failures. The check is geometric and is run on the routed database; a clean schematic cannot prove it. A repair that adds a diode adds capacitance (0.878&nbsp;fF for <code>diode_2</code> at the typical corner) and a placement site, so timing and density have to be revisited. A repair that jumps the wire to a higher layer changes the resistance and the coupling of that net.</p>
+<p>From the manufacturing side, the failure is already in the silicon when the wafer leaves the etch tool. It does not appear in a functional simulation. It reduces yield (a gate that was punctured may fail a voltage-stress or <em>I</em><sub>DDQ</sub> screen), and it reduces reliability for gates that were only weakened (a shifted <em>V</em><sub>t</sub> or a shorter TDDB lifetime). The foundry therefore publishes a maximum etch-to-gate area ratio, per layer, and the design cannot be taped out until every pin meets it. The ratios in the next section are those limits for SKY130, taken from the HD technology LEF (what the router reads) and from the official antenna-rule tables (what the foundry checks).</p>
+
+<h2 id="section-2">2. The ratios live on specific layers</h2>
+  <p>
+    <code>sky130_fd_sc_hd.tlef</code> does not publish one number for "antenna."
+    Each layer has a piecewise list. The first number in a pair is diffusion
+    area already connected, in µm². The second is the maximum metal area, or
+    metal side area, divided by gate area. A gate that does not yet see any
+    diffusion uses the pair at 0.
+  </p>
+  <table>
+    <tbody><tr><th>Layer</th><th>Keyword</th><th>Limit at 0 diffusion</th></tr>
+    <tr><td class="n">li1</td><td class="n">ANTENNADIFFSIDEAREARATIO</td><td>75</td></tr>
+    <tr><td class="n">met1, met2, met3, met4, met5</td><td class="n">ANTENNADIFFSIDEAREARATIO</td><td>400</td></tr>
+    <tr><td class="n">mcon</td><td class="n">ANTENNADIFFAREARATIO</td><td>3</td></tr>
+    <tr><td class="n">via, via2, via3, via4</td><td class="n">ANTENNADIFFAREARATIO</td><td>6</td></tr>
+  </tbody></table>
+  <p>
+    Side area is the sidewall of the wire. The plain area ratio, the 3 and the
+    6, is on the cut layers, not on the metal layers. <code>li1</code> in this
+    file has a side-area ratio and does not have an area ratio. met1 has a
+    side-area ratio of 400 at zero diffusion and does not have an area-ratio
+    line of its own. The 6 that is easy to quote as "met1" is the via
+    between met1 and met2.
+  </p>
+  <p>
+    Those first-cell values (the limit at 0 diffusion) are the same numbers the SkyWater antenna-rule page publishes as MAX_EGAR, “maximum etch-gate area ratio without a diode.” The official definitions are in <a href="https://skywater-pdk.readthedocs.io/en/main/rules/antenna.html">Antenna Rules, Table 83 and Table Ig</a> (the S8P12 / 5-metal stack that matches SKY130). Two kinds of etched area (EA) are used:
+  </p>
+  <ul>
+    <li><strong>Vertical, or sidewall, for routing layers.</strong> EA = PI × FLT, the perimeter of the interconnect times the final layer thickness. This is what the LEF calls <code>ANTENNADIFFSIDEAREARATIO</code>. For a long, narrow rectangle, PI ≈ 2(L + W) and FLT is the thickness in the LEF (0.10&nbsp;µm for li1, 0.35&nbsp;µm for met1 and met2, 0.80&nbsp;µm for met3 and met4, 1.20&nbsp;µm for met5).</li>
+    <li><strong>Horizontal, or area, for cut layers.</strong> EA = CA, the area of the contact or via. This is <code>ANTENNADIFFAREARATIO</code>. A 0.17&nbsp;µm-square mcon has CA = 0.0289&nbsp;µm².</li>
+  </ul>
+  <p>
+    The foundry check is on EGAR, the etch-gate area ratio, against MAX_EGAR for that layer. With no diode,
+  </p>
+  <p class="equation">EGAR = EA / <em>A</em><sub>gate</sub>, and the layout must satisfy EGAR ≤ MAX_EGAR.</p>
+  <p>
+    <em>A</em><sub>gate</sub> is the drawn gate area W × L of every MOSFET already connected to the net at that etch, taken from the pin’s <code>ANTENNAGATEAREA</code>. For <code>inv_1</code> pin A that is 0.2475&nbsp;µm², which is (0.65 + 1.0) × 0.15. Several gates on the same net add. When a reverse-biased antenna diode is already connected, the official formula is
+  </p>
+  <p class="equation">EGAR = EA / <em>A</em><sub>gate</sub> − <em>K</em> × (diode area in µm²) − diode_bonus,</p>
+  <p>
+    where <em>K</em> and the diode bonus are per-layer constants. The bonus applies once a diode of any size is present. A p+ tap that shorts the net to the substrate (<code>pAntennaShort</code> in the rule text) removes the check entirely; that is a manufacturing short, not a library cell you place for protection.
+  </p>
+  <div class="table-scroll"><table>
+    <caption>SKY130 antenna limits from the official Table Ig (S8P12-10R / five-metal stack) and, in the last two columns, from the HD tech LEF at zero diffusion. FLT is the official final-layer thickness. MAX_EGAR is the limit without a diode. <em>K</em> and the diode bonus enter only when a diode is present. “n/a” means the official table does not give a diode term on that layer.</caption>
+    <thead><tr><th>Layer</th><th>What is measured</th><th>FLT (µm)</th><th>MAX_EGAR</th><th><em>K</em></th><th>Diode bonus</th><th>LEF keyword</th><th>LEF limit at 0 diffusion</th></tr></thead>
+    <tbody>
+      <tr><td>poly</td><td>sidewall</td><td>0.180</td><td>50</td><td>n/a</td><td>n/a</td><td>not in the routing LEF</td><td>—</td></tr>
+      <tr><td>licon</td><td>cut area</td><td>—</td><td>3</td><td>n/a</td><td>n/a</td><td>not in the routing LEF</td><td>—</td></tr>
+      <tr><td>li1</td><td>sidewall</td><td>0.100</td><td>75</td><td>450</td><td>n/a</td><td>ANTENNADIFFSIDEAREARATIO</td><td>75</td></tr>
+      <tr><td>mcon</td><td>cut area</td><td>—</td><td>3</td><td>18</td><td>n/a</td><td>ANTENNADIFFAREARATIO</td><td>3</td></tr>
+      <tr><td>met1</td><td>sidewall</td><td>0.350</td><td>400</td><td>400</td><td>2200</td><td>ANTENNADIFFSIDEAREARATIO</td><td>400</td></tr>
+      <tr><td>via</td><td>cut area</td><td>—</td><td>6</td><td>36</td><td>n/a</td><td>ANTENNADIFFAREARATIO</td><td>6</td></tr>
+      <tr><td>met2</td><td>sidewall</td><td>0.350</td><td>400</td><td>400</td><td>2200</td><td>ANTENNADIFFSIDEAREARATIO</td><td>400</td></tr>
+      <tr><td>via2, via3, via4</td><td>cut area</td><td>—</td><td>6</td><td>36</td><td>n/a</td><td>ANTENNADIFFAREARATIO</td><td>6</td></tr>
+      <tr><td>met3, met4</td><td>sidewall</td><td>0.800</td><td>400</td><td>400</td><td>2200</td><td>ANTENNADIFFSIDEAREARATIO</td><td>400</td></tr>
+      <tr><td>met5</td><td>sidewall</td><td>1.200</td><td>400</td><td>400</td><td>2200</td><td>ANTENNADIFFSIDEAREARATIO</td><td>400</td></tr>
+    </tbody>
+  </table></div>
+  <p>
+    The LEF stores the same zero-diffusion limits as a piecewise-linear function of already-connected diffusion area, not as a single number. For met1 the four knots are (0, 400), (0.0125, 400), (0.0225, 2609) and (22.5, 11600). Once even a small diffusion is attached, the allowed ratio rises sharply; that is how a diode repairs the violation. The router reads this PWL. The official EGAR formula above is what the foundry deck checks. Use both, and treat a hand calculation that uses only the first knot as a teaching estimate, not as signoff.
+  </p>
+  <p>
+    The check is <em>per etch</em>, not a single cumulative number for the finished net. During the met1 etch, only metal that already exists and is already tied to the gate is counted — in practice, that met1 plus anything connected downward through already-etched cuts. A long run that will later sit on met3 does not count at the met1 step, and a diffusion that will be attached through met3 does not reduce the met1 ratio. Some flows also accumulate a weighted history across earlier layers; the SKY130 LEF entries used here are per-layer. Always confirm the accumulation rule of the deck you run.
+  </p>
+
+  <h2 id="section-3">3. The diode the flow inserts is diode_2</h2>
+  <p>
+    <code>sky130_fd_sc_hd__diode_2</code> is class <code>CORE</code>, site
+    <code>unithd</code>, <code>SIZE 0.920 BY 2.720</code>, two sites, area
+    2.5024&nbsp;µm². One signal pin, <code>DIODE</code>, direction input, on
+    <code>li1</code>. Its <code>ANTENNAGATEAREA</code> is 0. The historical OpenLane configuration used separate cell and pin settings.
+    The current <a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">LibreLane configuration</a> stores the pair as
+    <code>sky130_fd_sc_hd__diode_2/DIODE</code>.
+  </p>
+  <p>
+    At the typical corner the pin capacitance is 0.000878&nbsp;pF, which is
+    0.878&nbsp;fF. Rise capacitance is 0.000900&nbsp;pF and fall is
+    0.000857&nbsp;pF. Cell leakage is 6.338421×10<sup>−6</sup>&nbsp;nW. The
+    schematic is one device, <code>sky130_fd_pr__diode_pw2nd</code>, between
+    <code>VNB</code> and <code>DIODE</code>. The <code>p=</code> and
+    <code>a=</code> suffixes on that line were not converted. This page does
+    not quote a diode area in µm² from them.
+  </p>
+  <p>
+    For a digital route, 0.878&nbsp;fF is the cost of fixing the ratio, next
+    to the pin cap in <a href="loads.html">lesson 21</a>. For an analog net, this is a voltage-dependent junction with leakage as well
+    as capacitance. Review whether insertion is acceptable for the signal range,
+    bias, noise, matching, and settling budget; a single Liberty capacitance is not
+    its complete analog model.
+  </p>
+
+  <p>
+      The <code>li1</code> side-area line is
+      <code>PWL ( ( 0 75 ) ( 0.0125 75 ) ( 0.0225 85.125 ) ( 22.5 10200 ) )</code>.
+      met1 through met5 share
+      <code>PWL ( ( 0 400 ) ( 0.0125 400 ) ( 0.0225 2609 ) ( 22.5 11600 ) )</code>.
+      Once some diffusion is already on the net, the allowed ratio climbs.
+      The diffusion-dependent allowance represents the protective effect of
+    connected diffusion; these are two descriptions of the same protection,
+    not two independent bonuses to multiply together. This page does
+      not compute a new ratio from <code>diode_2</code>'s diffusion, because
+      the diode area was not converted from the spice suffixes.
+    </p>
+    <p>
+      <code>mcon</code> area ratio:
+      <code>PWL ( ( 0 3 ) ( 0.0125 3 ) ( 0.0225 3.405 ) ( 22.5 408 ) )</code>.
+      The via cuts use
+      <code>PWL ( ( 0 6 ) ( 0.0125 6 ) ( 0.0225 6.81 ) ( 22.5 816 ) )</code>.
+      There is no separate gate-only <code>ANTENNAAREARATIO</code> on these
+      layers in this tech LEF. The keywords present are the two diffusion
+      ratios above.
+    </p>
+    <p>
+      Some historical flows used a fake-diode placeholder before replacing it with
+    a real diode. The current cited config names the real <code>diode_2</code>.
+    A placement placeholder alone does not provide physical protection.
+    </p>
+  
+
+
+    <aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> OpenROAD’s <code>check_antennas</code> computes each net’s antenna ratios after global routing and again after detailed routing. <code>repair_antennas</code> fixes violations by adding <code>diode_2</code> cells beside the affected gates or by moving wire to a higher layer. LibreLane runs these as CheckAntennas and RepairAntennas, with an optional step that adds diodes in advance; Magic and KLayout check antennas again at signoff.</p><pre>check_antennas -verbose
+repair_antennas sky130_fd_sc_hd__diode_2</pre></aside><h2 id="section-4">4. A jumper moves the long wire to a later etch</h2>
+  <p>
+    The checking model follows manufacturing layer order and the rule’s partial
+    or cumulative ratio definition. A final-layout net can consist of disconnected
+    pieces at an earlier process step. Metal already connected to the gate counts. Metal that will connect through a via that does not exist yet does not count.
+  </p>
+  <p>
+    A jumper uses that. The long run is drawn on the next metal, and only a short stub on the lower metal touches the gate. During the lower etch the antenna is the stub. The long wire joins later, when a diffusion connection already exists somewhere on the net, or when <code>diode_2</code> has been inserted. The entire modified route must still pass the applicable layer rules. Moving
+    a long route upward does not automatically make its later etch safe. <a href="https://openroad.readthedocs.io/en/latest/main/src/grt/README.html">OpenROAD’s repair flow</a> supports diode and jumper repairs.
+  </p>
+  <figure>
+    <div class="figwrap"><svg viewBox="0 0 740 274" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Antenna repair comparison: long lower metal before repair, a short gate-connected stub at the lower-metal etch after repair, then a completed upper-metal route to diffusion.">
+<rect x="15" y="30" width="225" height="208" rx="7" fill="#fff" stroke="#cfd9e4"></rect>
+<rect x="257" y="30" width="225" height="208" rx="7" fill="#fff" stroke="#cfd9e4"></rect>
+<rect x="499" y="30" width="225" height="208" rx="7" fill="#fff" stroke="#cfd9e4"></rect>
+<text x="127" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Before repair: lower etch</text>
+<text x="369" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Jumper: lower etch</text>
+<text x="611" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">Jumper: later stage</text>
+<path d="M45 116 H212 M68 116 V162" fill="none" stroke="#4a72c4" stroke-width="5"></path>
+<rect x="45" y="162" width="47" height="28" rx="4" fill="#f2f5f9" stroke="#33414f"></rect><text x="68" y="181" text-anchor="middle" font-size="12" fill="#33414f">gate</text>
+<text x="127" y="91" text-anchor="middle" font-size="12" fill="#4a72c4">long met1 on the gate</text>
+<text x="127" y="217" text-anchor="middle" font-size="12" fill="#5c6b7a">large early-stage antenna</text>
+<path d="M292 116 H332 M310 116 V162" fill="none" stroke="#4a72c4" stroke-width="5"></path>
+<path d="M310 81 H452" fill="none" stroke="#7a4ea3" stroke-width="3" stroke-dasharray="5 4" opacity="0.5"></path>
+<rect x="287" y="162" width="47" height="28" rx="4" fill="#f2f5f9" stroke="#33414f"></rect><text x="310" y="181" text-anchor="middle" font-size="12" fill="#33414f">gate</text>
+<text x="369" y="104" text-anchor="middle" font-size="11" fill="#7a4ea3">planned met2: not present</text>
+<text x="369" y="217" text-anchor="middle" font-size="12" fill="#5c6b7a">only the short stub counts</text>
+<path d="M552 81 H690" fill="none" stroke="#7a4ea3" stroke-width="5"></path>
+<path d="M552 81 V116 M690 81 V116" fill="none" stroke="#33414f" stroke-width="5"></path>
+<path d="M534 116 H574 M552 116 V162 M672 116 H708 M690 116 V162" fill="none" stroke="#4a72c4" stroke-width="5"></path>
+<rect x="547" y="96" width="10" height="10" fill="#33414f"></rect><rect x="685" y="96" width="10" height="10" fill="#33414f"></rect>
+<rect x="529" y="162" width="47" height="28" rx="4" fill="#f2f5f9" stroke="#33414f"></rect><text x="552" y="181" text-anchor="middle" font-size="12" fill="#33414f">gate</text>
+<rect x="659" y="162" width="57" height="28" rx="4" fill="#f2f7f2" stroke="#1e9e50"></rect><text x="687" y="181" text-anchor="middle" font-size="11" fill="#1e9e50">diffusion</text>
+<text x="611" y="70" text-anchor="middle" font-size="11" fill="#7a4ea3">met2 and vias now join</text>
+<text x="611" y="217" text-anchor="middle" font-size="12" fill="#5c6b7a">check this stage's ratio too</text>
+<text x="370" y="260" text-anchor="middle" font-size="12" fill="#5c6b7a">Logical connectivity sketch; exact etch ordering and ratio definitions come from the process rules.</text>
+</svg></div>
+<figcaption><strong>Figure 3 — Moving the long route to a later layer reduces the early antenna.</strong> The middle and right panels show different stages of the repaired route. The final path reaches driver diffusion or an inserted antenna diode; that does not waive the later-stage checks. Geometry is illustrative.</figcaption>
+  </figure>
+
+<figure>
+<div class="figwrap" id="fig-antenna-jump" tabindex="0">
+<svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-labelledby="aj-title aj-desc">
+<title id="aj-title">Figure — Before and after a layer jump that repairs a met1 antenna</title>
+<desc id="aj-desc">Left: a long minimum-width met1 run from a driver pin to an inv_1 gate. During the met1 etch the whole run is attached only to the gate, and the side-area ratio exceeds 400. Right: the same connection jumps up through a via to met2 for the long span and returns through a via near the gate, so only a short stub of met1 remains attached to the gate during the met1 etch.</desc>
+<rect width="900" height="340" fill="#fff"/>
+<rect x="16" y="40" width="420" height="260" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<rect x="464" y="40" width="420" height="260" rx="6" fill="#f7fafc" stroke="#c5d0da"/>
+<text x="226" y="62" text-anchor="middle" font-size="14" font-weight="650" fill="#1a2833">Before: long run on met1</text>
+<text x="674" y="62" text-anchor="middle" font-size="14" font-weight="650" fill="#1a2833">After: long run on met2</text>
+<!-- LEFT: driver box, long met1, gate box -->
+<rect x="36" y="110" width="90" height="70" rx="4" fill="#e8f0e4" stroke="#3d6a32"/>
+<text x="81" y="140" text-anchor="middle" font-size="13" fill="#1d3a18" font-weight="650">driver</text>
+<text x="81" y="158" text-anchor="middle" font-size="12" fill="#1d3a18">diffusion</text>
+<rect x="126" y="138" width="230" height="16" fill="#c0c8d4" stroke="#3d4d62"/>
+<text x="241" y="128" text-anchor="middle" font-size="12" fill="#3d4d62">200 µm of met1, W = 0.14 µm</text>
+<rect x="356" y="110" width="64" height="70" rx="4" fill="#e8dff0" stroke="#6a4d82"/>
+<text x="388" y="140" text-anchor="middle" font-size="13" fill="#4a3260" font-weight="650">inv_1</text>
+<text x="388" y="158" text-anchor="middle" font-size="12" fill="#4a3260">gate A</text>
+<text x="226" y="214" text-anchor="middle" font-size="13" fill="#7a1f1f" font-weight="650">side-area ratio = 566</text>
+<text x="226" y="234" text-anchor="middle" font-size="13" fill="#7a1f1f">limit at 0 diffusion = 400</text>
+<text x="226" y="254" text-anchor="middle" font-size="13" fill="#7a1f1f">violation during the met1 etch</text>
+<!-- RIGHT -->
+<rect x="484" y="110" width="90" height="70" rx="4" fill="#e8f0e4" stroke="#3d6a32"/>
+<text x="529" y="140" text-anchor="middle" font-size="13" fill="#1d3a18" font-weight="650">driver</text>
+<text x="529" y="158" text-anchor="middle" font-size="13" fill="#1d3a18">diffusion</text>
+<!-- short met1 stubs -->
+<rect x="574" y="138" width="36" height="16" fill="#c0c8d4" stroke="#3d4d62"/>
+<rect x="804" y="138" width="36" height="16" fill="#c0c8d4" stroke="#3d4d62"/>
+<!-- vias -->
+<rect x="598" y="132" width="16" height="28" fill="#8d6e4c" stroke="#5a3e22"/>
+<rect x="810" y="132" width="16" height="28" fill="#8d6e4c" stroke="#5a3e22"/>
+<text x="606" y="122" text-anchor="middle" font-size="11" fill="#5a3e22">via</text>
+<text x="818" y="122" text-anchor="middle" font-size="11" fill="#5a3e22">via</text>
+<!-- long met2 -->
+<rect x="598" y="96" width="228" height="16" fill="#9bb0c9" stroke="#2c4a68"/>
+<text x="712" y="88" text-anchor="middle" font-size="12" fill="#2c4a68">200 µm of met2</text>
+<rect x="840" y="110" width="28" height="70" rx="4" fill="#e8dff0" stroke="#6a4d82"/>
+<text x="854" y="140" text-anchor="middle" font-size="12" fill="#4a3260" font-weight="650">A</text>
+<text x="854" y="158" text-anchor="middle" font-size="11" fill="#4a3260">gate</text>
+<text x="674" y="214" text-anchor="middle" font-size="13" fill="#1d3a18">At the met1 etch, only the</text>
+<text x="674" y="234" text-anchor="middle" font-size="13" fill="#1d3a18">short stub next to the gate is</text>
+<text x="674" y="254" text-anchor="middle" font-size="13" fill="#1d3a18">attached. Ratio well below 400.</text>
+<text x="674" y="280" text-anchor="middle" font-size="12" fill="#4a5560">The met2 etch is a later, separate check.</text>
+<text x="450" y="22" text-anchor="middle" font-size="14" font-weight="650" fill="#1a2833">A layer jump moves the long wire to a later etch</text>
+</svg>
+</div>
+<figcaption>Figure B — The same 200&nbsp;µm connection, before and after a layer jump. Left: the entire run is on met1, so during the met1 etch the side-area ratio is 566 against a zero-diffusion limit of 400 (the worked example in section 5). Right: the long span is on met2. During the met1 etch only a short stub remains on the gate, and the ratio falls below the limit. The met2 run is checked later, at the met2 etch, against its own 400 limit; a connection through a via does not waive that later check.</figcaption>
+</figure>
+<h2 id="section-4b">4b. How OpenROAD and LibreLane detect and repair antennas</h2>
+<p>The open flow checks and repairs antennas after routing, then checks them again at signoff. In OpenROAD the commands are:</p>
+<pre>check_antennas
+repair_antennas sky130_fd_sc_hd__diode_2
+# optional flags: -iterations N    (default 1)
+#                 -ratio_margin M  (0 to 100, extra margin on the ratio)
+#                 -jumper_only     (layer jumps only, no diodes)
+#                 -diode_only      (diodes only, no jumps)</pre>
+<p><code>repair_antennas</code> inspects the global-route guides, inserts jumpers and/or diodes near the gates of violating nets, and iterates. Both methods are applied unless a flag restricts the command to one of them. Fillers must not be in the database when it runs; if any cell is inserted, fillers have to be placed again. If the LEF antenna properties are a constant rather than a PWL, inserting a diode does not change the ratio and OpenROAD reports <code>WARNING GRT-0243</code> and skips diode repair. The SKY130 HD tech LEF uses a PWL, so diode repair is available. If no diode cell is given, OpenROAD looks for a LEF cell of class CORE, ANTENNACELL.</p>
+<p>LibreLane’s Classic flow runs this sequence (step names from the built-in flow list):</p>
+<ol>
+<li><code>OpenROAD.GlobalRouting</code></li>
+<li><code>OpenROAD.CheckAntennas</code></li>
+<li><code>OpenROAD.RepairDesignPostGRT</code></li>
+<li><code>Odb.DiodesOnPorts</code> — optional diodes on every port, a preventive strategy</li>
+<li><code>Odb.HeuristicDiodeInsertion</code> — optional diodes on nets that look at risk</li>
+<li><code>OpenROAD.RepairAntennas</code> — the <code>repair_antennas</code> command, typically with <code>sky130_fd_sc_hd__diode_2</code></li>
+<li><code>OpenROAD.DetailedRouting</code></li>
+<li><code>OpenROAD.CheckAntennas-1</code> — a second check on the detailed route</li>
+<li>at stream-out, <code>Odb.CheckDesignAntennaProperties</code> and the Magic / KLayout decks</li>
+</ol>
+<p>A third structural fix, not done by <code>repair_antennas</code> itself, is to insert a buffer. The buffer places a new gate and a new diffusion (the buffer’s output transistors) in the middle of the long net, so each side is a shorter antenna. It also changes delay and area, so it is a design-repair choice rather than a pure antenna repair.</p>
+<p>After any of these fixes, re-run the check. A jumper that clears the met1 ratio can still fail at met2. A diode that clears the ratio adds 0.878&nbsp;fF and must be extracted and timed. Section 5 works a ratio by hand so the report line has a number you can reconstruct.</p>
+
+<h2 id="section-5">5. Polarity and a hand calculation</h2>
+<p>The HD schematic connects the p-side of <code>diode_pw2nd</code> to <code>VNB</code> and the n-diffusion side to <code>DIODE</code>. With VNB at ground and an ordinary positive signal, that junction is reverse biased. It is not a forward-biased short from a logic 1 to ground. The antenna rule characterizes its manufacturing protection; it is not an ESD or overvoltage qualification for arbitrary inputs.</p>
+<p>For an <em>isolated teaching rectangle</em> on met1, assume <code>L = 100&nbsp;µm</code>, <code>W = 0.14&nbsp;µm</code>, <code>t = 0.35&nbsp;µm</code> (the LEF thickness and the official FLT), and one gate area of <code>0.2475&nbsp;µm²</code> (<code>inv_1</code> pin A). Ignoring connected pin metal and other branches, the sidewall area is <code>EA = 2(L + W)t = 70.098&nbsp;µm²</code>. The ratio is <code>EGAR = 70.098 / 0.2475 = 283.2</code>, below the zero-diffusion met1 limit of 400. At <code>L = 200&nbsp;µm</code>, EA = 140.098&nbsp;µm² and EGAR = 566.1, which exceeds 400. The same 200&nbsp;µm run is the left-hand side of Figure&nbsp;B.</p>
+<p>The longest isolated met1 rectangle that still passes, for this gate and this width, is the L that gives EGAR = 400:</p>
+<p class="equation">2(L + 0.14) × 0.35 / 0.2475 = 400&nbsp;&rarr;&nbsp;L = 141.3&nbsp;µm.</p>
+<p>That is a teaching length. The official table’s “max length of Met1 ≈ 570&nbsp;µm” is for a 1&nbsp;µm² gate at minimum width, which is 1 / 0.2475 ≈ 4 times more gate area, and 4 × 141 ≈ 564&nbsp;µm, in agreement. Several input pins on the same net add their gate areas and raise the allowed length.</p>
+<p>Now attach a diode and keep L = 200&nbsp;µm, still with no other diffusion. The official formula for met1 is EGAR = EA/<em>A</em><sub>gate</sub> − K × (diode area) − 2200, with K = 400. Even a very small diode makes the second and third terms dominate: EGAR = 566.1 − 400 × <em>A</em><sub>diode</sub> − 2200, which is negative for any positive diode area, so the check passes by a wide margin. That is why a two-site <code>diode_2</code> is an effective repair, and why the LEF PWL allows a much higher ratio once a few hundredths of a square micrometre of diffusion are connected. These two calculations ignore via cuts, other branches, and pin metal; they show the arithmetic, they are not a signoff result.</p>
+<p><strong>Source integration detail:</strong> the pinned upstream <code>diode_2.lef</code> lists zero gate area but <em>does not list an ANTENNADIFFAREA for DIODE</em>. A production flow may use a generated or patched abstract. Inspect the installed diode class and diffusion area used by the router; zero gate area alone is insufficient to reproduce diode-based repair. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef">[upstream LEF]</a> <a href="https://openroad.readthedocs.io/en/latest/main/src/ant/README.html">[checker model]</a></p>
+<p><strong>Analog ↔ digital:</strong> at a net whose original load is an assumed 2.0&nbsp;fF, adding the TT example’s 0.878&nbsp;fF increases that lumped load by 43.9%. Digital timing and analog settling both need to be re-evaluated after repair.</p><details class="checkpoint"><summary>Check your understanding — Does adding a diode divide the signal path into two nets?</summary><p>No. It is a branch from the protected signal to a junction/body connection. The original driver and receiver remain on the same functional signal net.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a long met1 wire reaches only a gate when met1 is etched; it gains a diffusion connection later through met3. Is the met1 etch still a risk?</summary><p>Yes. Antenna ratios are checked per etch step. During the met1 etch no diffusion is connected yet, so all of that met1 area counts against the gate. A connection made on a later layer does not help at that step; a diode at the gate, or a jumper that moves the long run to a later layer, does.</p></details><div class="takeaways">
+    <h2 id="section-6">Key takeaways</h2>
+    <ul>
+      <li>Antenna charge on a gate, with no diffusion yet, is limited by a metal-to-gate ratio in the tech LEF.</li>
+      <li>At zero diffusion, <code>li1</code> side-area ratio is 75. met1 through met5 are 400. <code>mcon</code> area ratio is 3. The via cuts are 6.</li>
+      <li>The area ratio of 6 is on the via layer, not on met1. met1's own line is the side-area ratio.</li>
+      <li>The flow inserts <code>diode_2</code>, two sites, gate area 0, pin capacitance 0.878&nbsp;fF, one <code>diode_pw2nd</code>.</li>
+      <li><code>inv_1</code> pin A at 0.2475&nbsp;µm² is the gate being protected. It is not the diode.</li>
+          <li>Antenna ratio is per etch, not one number for the finished net. A jumper keeps the long wire on a later metal; a buffer splits the net; <code>diode_2</code> is the diode this flow inserts.</li>
+      <li>With a diode, EGAR = EA/<em>A</em><sub>gate</sub> − <em>K</em> × diode area − bonus. For met1, <em>K</em> is 400 and the bonus is 2200 (SkyWater Table Ig).</li>
+      <li>OpenROAD <code>check_antennas</code> / <code>repair_antennas</code> insert jumpers and diodes; LibreLane runs CheckAntennas, optional DiodesOnPorts and HeuristicDiodeInsertion, RepairAntennas, then CheckAntennas again after detailed routing.</li>
+      <li>The damage is done at etch: a punctured or weakened gate is a yield and reliability (Vt shift, TDDB) problem, invisible to functional simulation.</li>
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-7">Sources &amp; scope</h2>
+<p>Checked 6 and 11 November 2026. Raw cell data are HD revision ac7fb61f. MAX_EGAR, K, diode bonus and FLT are from the SkyWater antenna-rule tables (Table 83 definitions, Table Ig for the five-metal stack). LEF PWL knots were read from sky130_fd_sc_hd.tlef at that revision. Installed PDKs may generate or patch LEF antenna properties. The side-area example ignores branches, vias, and additional pin geometry and is not signoff.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF — layer-specific antenna tables.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.lef">Upstream diode_2 LEF — size and zero gate area.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2.spice">Diode schematic — device and polarity.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/diode/sky130_fd_sc_hd__diode_2__tt_025C_1v80.lib.json">Diode TT 25°C 1.8 V Liberty JSON.</a></li>
+<li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/antenna.html">SKY130 manufacturing antenna definitions and rules.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/grt/README.html">OpenROAD repair flow.</a></li>
+<li><a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">Current example diode-cell configuration.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/grt/README.html">OpenROAD global routing — <code>check_antennas</code> and <code>repair_antennas</code> options.</a></li>
+<li><a href="https://librelane.readthedocs.io/en/stable/reference/flows.html">LibreLane Classic flow — antenna-check and repair step names.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html" aria-current="page">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="tie_cells.html"><small>← Previous</small>Tie Cells</a><a href="decap.html"><small>Next →</small>Decap Cells</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function gate(x, y) {
+    s += `<rect x="${x}" y="${y}" width="36" height="28" fill="#fff" stroke="${DK}"/>`;
+    s += txt(x + 18, y + 18, 'gate', {s: 11});
+  }
+  s += txt(180, 28, 'metal only', {b: true, s: 14});
+  s += `<line x1="60" y1="70" x2="300" y2="70" stroke="${MET}" stroke-width="4"/>`;
+  s += `<line x1="180" y1="70" x2="180" y2="110" stroke="${DK}" stroke-width="2"/>`;
+  gate(162, 110);
+  s += txt(180, 170, 'ratio climbs', {s: 12, c: PW});
+  s += txt(540, 28, 'diode_2 on the net', {b: true, s: 14, c: CAP});
+  s += `<line x1="420" y1="70" x2="660" y2="70" stroke="${MET}" stroke-width="4"/>`;
+  s += `<line x1="500" y1="70" x2="500" y2="110" stroke="${DK}" stroke-width="2"/>`;
+  gate(482, 110);
+  s += `<line x1="580" y1="70" x2="580" y2="100" stroke="${DK}" stroke-width="2"/>`;
+  s += `<polygon points="566,124 594,124 580,104" fill="#fff" stroke="${CAP}" stroke-width="2"/>`;
+  s += `<line x1="566" y1="100" x2="594" y2="100" stroke="${CAP}" stroke-width="2"/><line x1="580" y1="124" x2="580" y2="144" stroke="${CAP}" stroke-width="2"/><line x1="566" y1="144" x2="594" y2="144" stroke="${CAP}" stroke-width="2"/>`;
+  s += txt(634, 125, '0.878 fF', {s: 12, c: CAP});
+  s += txt(540, 180, 'anode: VNB; cathode: signal', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+(function () {
+  let s = `<svg viewBox="0 0 740 240" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="30" width="400" height="180" rx="8" fill="#f7f4ef" stroke="${DK}"/>`;
+  s += txt(240, 52, 'during the etch', {b: true, s: 14});
+  s += `<rect x="70" y="80" width="220" height="16" fill="${MET}"/>`;
+  s += txt(180, 74, 'metal, still floating', {s: 12, c: MET});
+  s += `<rect x="250" y="96" width="18" height="28" fill="${GD}"/>`;
+  s += `<rect x="230" y="124" width="58" height="36" rx="4" fill="#fff" stroke="${DK}"/>`;
+  s += txt(259, 146, 'gate', {s: 12, b: true});
+  s += `<rect x="300" y="70" width="100" height="16" fill="#e3e9ef" stroke="${DK}" stroke-dasharray="4 3"/>`;
+  s += txt(350, 64, 'higher layer', {s: 11, c: '#5c6b7a'});
+  s += txt(350, 108, 'not connected yet', {s: 11, c: '#5c6b7a'});
+  s += `<rect x="470" y="30" width="240" height="180" rx="8" fill="#f2f7f2" stroke="#1e6b4f"/>`;
+  s += txt(590, 52, 'with diode_2', {b: true, s: 14, c: '#1e6b4f'});
+  s += `<rect x="500" y="80" width="160" height="16" fill="${MET}"/>`;
+  s += `<line x1="560" y1="96" x2="560" y2="140" stroke="${CAP}" stroke-width="2"/>`;
+  s += `<rect x="530" y="140" width="60" height="28" rx="4" fill="#fff" stroke="${CAP}"/>`;
+  s += txt(560, 158, 'diffusion', {s: 12, c: CAP});
+  s += txt(590, 190, 'charge leaves here', {s: 12, c: CAP});
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

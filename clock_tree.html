@@ -1,0 +1,339 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Clock Tree</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 35 / 84 · Part V, Digital implementation</p><h1>The Clock Tree</h1>
+  <p class="subtitle">Synchronous flip-flops need a controlled relationship between their clock edges. A large sink load usually needs a clock distribution network. A tree of clock buffers does, and this library has cells built for that tree.</p>
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain why a large set of flip-flops needs a tree of clock buffers rather than one driver.</li><li>Describe what clock-tree synthesis does, and how timing changes from an ideal to a propagated clock.</li><li>Separate insertion delay from skew, see how skew moves setup and hold slack, and estimate clock power.</li><li>Read a real LibreLane CTS result: buffer count and type, insertion delay, network skew, and post-CTS hold repair.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-6">step 6, clock-tree synthesis</a>.</dd><dt>Tools</dt><dd>OpenROAD: <code>clock_tree_synthesis</code>, then <code>repair_timing</code>. Commercial: Innovus (CCOpt), IC Compiler II.</dd><dt>Why it matters</dt><dd>The clock reaches every flip-flop, so its skew, delay and power affect every path.</dd></dl></aside><p>Physical sizes and typical pin capacitances below were checked against the pinned SKY130 HD LEF and Liberty files. The configuration example is the current <a href="https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">open_pdks LibreLane HD config</a>, read on 6 November 2026; flow defaults can be overridden by the design.</p>
+
+
+  <h2 id="section-1">1. One clock source, many clock pins</h2>
+  <p>A flip-flop samples around its active edge. Define skew as <code>capture clock arrival − launch clock arrival</code>. Positive skew helps a single-cycle setup check and hurts the corresponding hold check. Clock-tree synthesis distributes the clock while controlling load, transition, insertion delay and skew; the goal is a timing budget that closes, not mathematically identical arrival at every pin.</p>
+  <p>
+    The cells are still one row tall. They sit on <code>unithd</code> like
+    <code>inv_1</code>. They are not a new row height. What changes is the
+    input capacitance and how much load the output is allowed to drive
+    (<a href="drive_strength.html">lesson 11</a>,
+    <a href="loads.html">lesson 21</a>).
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — An illustrative buffer tree. clkbuf_16 is the root default in the checked configuration. The clkbuf_4 branches shown are a teaching choice, not a generated CTS result. The actual tree depends on sink locations, routing, constraints and selected legal buffers."><rect x="280" y="16" width="180" height="36" rx="4" fill="#fff" stroke="#c0564a" stroke-width="2"></rect><text x="370" y="32" text-anchor="middle" font-size="12" font-weight="700" fill="#c0564a">clkbuf_16</text><text x="370" y="46" text-anchor="middle" font-size="10" fill="#5c6b7a">root</text><line x1="370" y1="52" x2="180" y2="90" stroke="#33414f"></line><line x1="370" y1="52" x2="560" y2="90" stroke="#33414f"></line><rect x="100" y="90" width="160" height="36" rx="4" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect><text x="180" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">clkbuf_4</text><text x="180" y="120" text-anchor="middle" font-size="10" fill="#5c6b7a">branch</text><rect x="480" y="90" width="160" height="36" rx="4" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect><text x="560" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#4a72c4">clkbuf_4</text><text x="560" y="120" text-anchor="middle" font-size="10" fill="#5c6b7a">branch</text><line x1="180" y1="126" x2="80" y2="164" stroke="#33414f"></line><line x1="180" y1="126" x2="220" y2="164" stroke="#33414f"></line><line x1="560" y1="126" x2="500" y2="164" stroke="#33414f"></line><line x1="560" y1="126" x2="660" y2="164" stroke="#33414f"></line><rect x="80" y="164" width="70" height="28" rx="3" fill="#f7f9fb" stroke="#33414f"></rect><text x="115" y="182" text-anchor="middle" font-size="12" fill="#33414f">CLK</text><rect x="200" y="164" width="70" height="28" rx="3" fill="#f7f9fb" stroke="#33414f"></rect><text x="235" y="182" text-anchor="middle" font-size="12" fill="#33414f">CLK</text><rect x="480" y="164" width="70" height="28" rx="3" fill="#f7f9fb" stroke="#33414f"></rect><text x="515" y="182" text-anchor="middle" font-size="12" fill="#33414f">CLK</text><rect x="640" y="164" width="70" height="28" rx="3" fill="#f7f9fb" stroke="#33414f"></rect><text x="675" y="182" text-anchor="middle" font-size="12" fill="#33414f">CLK</text><text x="370" y="218" text-anchor="middle" font-size="12" fill="#5c6b7a">1.794 fF on each dfxtp_1 clock pin</text></svg></div>
+    <figcaption><strong>Figure 1 — An illustrative buffer tree.</strong> <code>clkbuf_16</code> is the root default in the checked configuration. The <code>clkbuf_4</code> branches shown are a teaching choice, not a generated CTS result. The actual tree depends on sink locations, routing, constraints and selected legal buffers.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. clkbuf is a buffer. clkinv is an inverter.</h2>
+  <p><code>clkbuf</code> has output X with function <code>(A)</code>; <code>clkinv</code> has output Y with function <code>(!A)</code>. The checked LibreLane config selects <code>CTS_ROOT_BUFFER = sky130_fd_sc_hd__clkbuf_16</code> and <code>CTS_CLK_BUFFERS = sky130_fd_sc_hd__clkbuf_*</code>. That wildcard does not exclude the root size. These are defaults, not mandatory process rules.</p><p>The library’s <code>clkbuf_16</code> output maximum is 1.531687 pF. The checked config instead lists a project-overridable <code>MAX_CAPACITANCE_CONSTRAINT</code> of 0.2 pF, <code>MAX_FANOUT_CONSTRAINT</code> of 10, and <code>MAX_TRANSITION_CONSTRAINT</code> of 0.75 ns. The effective rules depend on how the flow applies these constraints; a large cell-level maximum is not permission to ignore tighter design constraints or slew.</p>
+  <table>
+    <tbody><tr><th>Cell</th><th>Sites</th><th>Width</th><th>Input cap</th><th>Output max</th></tr>
+    <tr><td class="n">clkbuf_1</td><td>3</td><td>1.38 µm</td><td>2.098 fF</td><td>130.015 fF</td></tr>
+    <tr><td class="n">clkbuf_2</td><td>4</td><td>1.84 µm</td><td>2.180 fF</td><td>281.077 fF</td></tr>
+    <tr><td class="n">clkbuf_4</td><td>6</td><td>2.76 µm</td><td>2.106 fF</td><td>517.283 fF</td></tr>
+    <tr><td class="n">clkbuf_8</td><td>11</td><td>5.06 µm</td><td>3.917 fF</td><td>909.128 fF</td></tr>
+    <tr><td class="n">clkbuf_16</td><td>20</td><td>9.20 µm</td><td>7.397 fF</td><td>1531.687 fF</td></tr>
+    <tr><td class="n">clkinv_1</td><td>3</td><td>1.38 µm</td><td>3.077 fF</td><td>190.440 fF</td></tr>
+    <tr><td class="n">clkinv_16</td><td>24</td><td>11.04 µm</td><td>37.746 fF</td><td>2348.337 fF</td></tr>
+  </tbody></table>
+  <p>
+    Input capacitance does not step up with the name.
+    <code>clkbuf_2</code> is 2.180&nbsp;fF and <code>clkbuf_4</code> is
+    2.106&nbsp;fF. The output maximum does step up. Read the column you mean.
+  </p>
+
+  <h2 id="section-3">3. The leaf is a clock pin, 1.794 fF</h2>
+  <p>Using only the published lumped pin cap, 853 × 1.794 fF = 1.530282 pF, just below the <code>clkbuf_16</code> library maximum; 854 exceeds it. This is a unit-checking exercise, <strong>not a legal fanout recommendation</strong>. Wire capacitance, slew, fanout policy, skew, power and the design’s tighter capacitance limits can require much smaller branches. Real CTS characterizes buffer behavior and interconnect rather than choosing a sink count by capacitance alone.</p>
+
+  <p>
+      Areas at the typical corner match width times 2.72: <code>clkbuf_16</code>
+      is 25.024&nbsp;µm², <code>clkinv_16</code> is 30.0288&nbsp;µm². Leakage
+      of <code>clkbuf_16</code> is 0.01232311&nbsp;nW. <code>clkinv_16</code>
+      is 0.0114109&nbsp;nW. Their delay and slew tables are in the same Liberty files. A clock
+      buffer still has slew and load, the same two axes as
+      <a href="liberty_tables.html">lesson 23</a>.
+    </p>
+    <p>
+      The cell SPICE netlists show how the strengths are built. Every
+      <code>clkbuf</code> is two inverters in series. In <code>clkbuf_2</code> to
+      <code>clkbuf_16</code> each device is a 0.42&nbsp;µm NMOS or a 1.0&nbsp;µm
+      <code>pfet_01v8_hvt</code>, all at L&nbsp;=&nbsp;0.15&nbsp;µm, and the strength is the
+      number of parallel copies. <code>clkbuf_16</code> has 40 transistors: a first
+      stage of 4 parallel pairs driving an output stage of 16 parallel pairs, a
+      fan-up of 4 inside the cell. <code>clkbuf_1</code> is the exception, with one
+      0.52/0.79&nbsp;µm pair per stage.
+    </p>
+    <div class="table-scroll"><table>
+      <caption>Clock buffers and delay cells in <code>sky130_fd_sc_hd</code>, from the cell SPICE (pinned revision ac7fb61) and the tt_025C_1v80 Liberty file. Delay is interpolated at a 0.05&nbsp;ns input slew and a 5&nbsp;fF load.</caption>
+      <thead><tr><th>Cell</th><th>Stages × parallel pairs</th><th>Inner-stage channel length</th><th>Area</th><th>A cap</th><th>Rise / fall delay</th></tr></thead>
+      <tbody>
+        <tr><td><code>clkbuf_1</code></td><td>1 + 1</td><td>0.15&nbsp;µm</td><td>3.754&nbsp;µm²</td><td>2.098&nbsp;fF</td><td>100 / 100&nbsp;ps</td></tr>
+        <tr><td><code>clkbuf_16</code></td><td>4 + 16</td><td>0.15&nbsp;µm</td><td>25.024&nbsp;µm²</td><td>7.397&nbsp;fF</td><td>112 / 137&nbsp;ps</td></tr>
+        <tr><td><code>clkdlybuf4s15_1</code></td><td>4 stages × 1</td><td>0.15&nbsp;µm</td><td>10.010&nbsp;µm²</td><td>2.199&nbsp;fF</td><td>190 / 195&nbsp;ps</td></tr>
+        <tr><td><code>clkdlybuf4s18_1</code></td><td>4 stages × 1</td><td>0.18&nbsp;µm</td><td>10.010&nbsp;µm²</td><td>2.201&nbsp;fF</td><td>204 / 209&nbsp;ps</td></tr>
+        <tr><td><code>clkdlybuf4s25_1</code></td><td>4 stages × 1</td><td>0.25&nbsp;µm</td><td>10.010&nbsp;µm²</td><td>2.208&nbsp;fF</td><td>260 / 258&nbsp;ps</td></tr>
+        <tr><td><code>clkdlybuf4s50_1</code></td><td>4 stages × 1</td><td>0.50&nbsp;µm</td><td>10.010&nbsp;µm²</td><td>2.171&nbsp;fF</td><td>485 / 435&nbsp;ps</td></tr>
+      </tbody></table></div>
+    <p>
+      The <code>clkdlybuf4s</code> family is four inverters in a row. The first and last
+      stages are normal 0.15&nbsp;µm devices. The two inner stages use the channel length
+      in the cell name: 0.15, 0.18, 0.25 or 0.50&nbsp;µm. A longer channel gives less
+      current for the same width, so the delay grows while the area, the input pin and
+      the output stage stay the same. That is why these cells are useful for adding a
+      controlled delay to a clock branch or a short data path. Hold fixing with them
+      is covered in <a href="timed_path.html">lesson 42</a>.
+    </p>
+    <p>
+      Analog readers should treat the tree as a set of large inverters and
+      buffers switching together, on a net that runs past quiet signals. The
+      per-micrometer capacitance in lesson 28 is a wire alone. A clock neighbor
+      is extra. Digital readers should treat skew as a piece of the period,
+      and the max capacitance as a limit, not a target.
+    </p>
+  
+
+
+    <h2 id="section-4">4. Skew compares locations. Jitter compares edge timing.</h2>
+  <p>
+    Skew is two clock pins seeing one edge at two times. The path between those flops then has a period that is short or long by that difference. Jitter is one clock pin seeing its own edge move from cycle to cycle. A setup check that already spent the whole period feels jitter as a smaller period.
+  </p>
+  <p>Skew compares the arrivals of the same logical edge at different locations. Jitter is timing variation relative to an ideal reference; period jitter and cycle-to-cycle jitter are different measurements. Common jitter can correlate between launch and capture, so timing uncertainty must reflect the actual clock relationship. An ideal H-tree illustrates equal geometric lengths, but unequal loads, process variation and obstacles still affect delay. Figure 1 is a generic buffer-tree sketch, not evidence of an implemented topology.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 340" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Skew against jitter, and an H-tree as the usual equal-length picture."><text x="185" y="22" text-anchor="middle" font-size="14" fill="#33414f" font-weight="700">Skew: two flops, one edge</text><text x="555" y="22" text-anchor="middle" font-size="14" fill="#33414f" font-weight="700">Jitter: one flop, successive cycles</text><text x="26" y="80" text-anchor="start" font-size="11" fill="#33414f" font-weight="700">FF1 CK</text><text x="26" y="130" text-anchor="start" font-size="11" fill="#c0564a" font-weight="700">FF2 CK</text><polyline points="80,86 147.0,86 153.0,56 257.0,56 263.0,86 340,86" fill="none" stroke="#33414f" stroke-width="2.2" stroke-linejoin="round"></polyline><polyline points="80,136 183.0,136 189.0,106 293.0,106 299.0,136 340,136" fill="none" stroke="#c0564a" stroke-width="2.2" stroke-linejoin="round"></polyline><line x1="150" y1="44" x2="150" y2="152" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"></line><line x1="186" y1="44" x2="186" y2="152" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"></line><line x1="150" y1="162" x2="186" y2="162" stroke="#33414f" stroke-width="1.5" stroke-linecap="round"></line><path d="M150,162 l7,-4 v8 z M186,162 l-7,-4 v8 z" fill="#33414f"></path><text x="168" y="180" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">skew</text><text x="185" y="202" text-anchor="middle" font-size="11.5" fill="#5c6b7a">same edge, reaches two clock pins</text><text x="185" y="216" text-anchor="middle" font-size="11.5" fill="#5c6b7a">at different times (space)</text><rect x="446" y="44" width="28" height="56" fill="#fbe9e6"></rect><line x1="460" y1="44" x2="460" y2="100" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"></line><rect x="546" y="44" width="28" height="56" fill="#fbe9e6"></rect><line x1="560" y1="44" x2="560" y2="100" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"></line><rect x="646" y="44" width="28" height="56" fill="#fbe9e6"></rect><line x1="660" y1="44" x2="660" y2="100" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"></line><polyline points="410,92 463.0,92 469.0,58 513.0,58 519.0,92 550.0,92 556.0,58 600.0,58 606.0,92 669.0,92 675.0,58 720,58" fill="none" stroke="#33414f" stroke-width="2.2" stroke-linejoin="round"></polyline><text x="410" y="40" text-anchor="start" font-size="10" fill="#5c6b7a">dashed = ideal edge; shaded = jitter window</text><text x="398" y="80" text-anchor="end" font-size="11" fill="#33414f" font-weight="700">FF1 CK</text><line x1="466" y1="100" x2="466" y2="140" stroke="#9aa6b2" stroke-width="1" stroke-linecap="round"></line><line x1="553" y1="100" x2="553" y2="140" stroke="#9aa6b2" stroke-width="1" stroke-linecap="round"></line><line x1="672" y1="100" x2="672" y2="140" stroke="#9aa6b2" stroke-width="1" stroke-linecap="round"></line><line x1="466" y1="130" x2="553" y2="130" stroke="#33414f" stroke-width="1.5" stroke-linecap="round"></line><path d="M466,130 l7,-4 v8 z M553,130 l-7,-4 v8 z" fill="#33414f"></path><text x="509.5" y="150" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">T₁</text><line x1="553" y1="130" x2="672" y2="130" stroke="#33414f" stroke-width="1.5" stroke-linecap="round"></line><path d="M553,130 l7,-4 v8 z M672,130 l-7,-4 v8 z" fill="#33414f"></path><text x="612.5" y="150" text-anchor="middle" font-size="12" fill="#33414f" font-weight="700">T₂</text><text x="555" y="180" text-anchor="middle" font-size="11.5" fill="#5c6b7a">T₁ ≠ T₂: one pin, its edge moves</text><text x="555" y="194" text-anchor="middle" font-size="11.5" fill="#5c6b7a">cycle to cycle (time)</text><line x1="20" y1="232" x2="720" y2="232" stroke="#e1e6eb" stroke-width="1" stroke-linecap="round"></line><line x1="80" y1="280" x2="200" y2="280" stroke="#4a72c4" stroke-width="2.6" stroke-linecap="round"></line><line x1="80" y1="250" x2="80" y2="310" stroke="#4a72c4" stroke-width="2.6" stroke-linecap="round"></line><line x1="200" y1="250" x2="200" y2="310" stroke="#4a72c4" stroke-width="2.6" stroke-linecap="round"></line><line x1="54" y1="250" x2="106" y2="250" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="54" y1="237" x2="54" y2="263" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="106" y1="237" x2="106" y2="263" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="54" y1="310" x2="106" y2="310" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="54" y1="297" x2="54" y2="323" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="106" y1="297" x2="106" y2="323" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="174" y1="250" x2="226" y2="250" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="174" y1="237" x2="174" y2="263" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="226" y1="237" x2="226" y2="263" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="174" y1="310" x2="226" y2="310" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="174" y1="297" x2="174" y2="323" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><line x1="226" y1="297" x2="226" y2="323" stroke="#4a72c4" stroke-width="1.8" stroke-linecap="round"></line><rect x="50.5" y="233.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="50.5" y="259.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="102.5" y="233.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="102.5" y="259.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="50.5" y="293.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="50.5" y="319.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="102.5" y="293.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="102.5" y="319.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="170.5" y="233.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="170.5" y="259.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="222.5" y="233.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="222.5" y="259.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="170.5" y="293.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="170.5" y="319.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="222.5" y="293.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><rect x="222.5" y="319.5" width="7" height="7" fill="#fff" stroke="#33414f" stroke-width="1.4"></rect><circle cx="140" cy="280" r="5" fill="#c0564a"></circle><text x="140" y="271" text-anchor="middle" font-size="10" fill="#c0564a" font-weight="700">root</text><text x="270" y="254" text-anchor="start" font-size="12" fill="#33414f" font-weight="700">H-tree: every root-to-sink path has the same</text><text x="270" y="270" text-anchor="start" font-size="12" fill="#33414f" font-weight="700">wire length (16 sinks shown as squares).</text><text x="270" y="290" text-anchor="start" font-size="11.5" fill="#5c6b7a">Equal length is not equal delay: unequal sink loads, process variation</text><text x="270" y="306" text-anchor="start" font-size="11.5" fill="#5c6b7a">and routing obstacles still create skew, so CTS balances measured delay.</text><text x="270" y="330" text-anchor="start" font-size="11" fill="#5c6b7a" font-style="italic">Illustrative waveforms and topology, not measured data.</text></svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Skew against jitter, and an H-tree as the usual equal-length picture.</strong> Left: one clock edge reaches FF1 and FF2 at different times; the gap is skew. Right: one flop's edges wander around their ideal positions (dashed), so successive periods T₁ and T₂ differ; that is jitter. Bottom: an H-tree gives every sink the same wire length, which is not the same as equal delay. Illustrative waveforms, not measured data.</figcaption>
+  </figure>
+
+<h2 id="section-5">5. The clock also draws analog current</h2><p>For an illustrative 1 pF total switched clock load at 1.8 V and 100 MHz, <code>P ≈ CV²f = 0.324 mW</code>, excluding buffer internal and leakage power. A clock has one 0→1 transition per cycle; this convention avoids a factor-of-two error. Current arrives in short edge pulses and flows through the shared supply and return network. Shielding, return paths, local decoupling and placement matter to nearby references and sampling circuits.</p><details class="checkpoint"><summary>Checkpoint: can a clock gate be an arbitrary AND gate?</summary><p>No. Changing enable while the clock is active can create a runt pulse. Use a characterized clock-gating structure and verify its enable timing, test bypass, minimum pulse widths and CTS treatment.</p></details>
+<h2 id="section-6">6. Why a tree: one buffer cannot drive every flip-flop</h2>
+<p>Each <code>dfxtp_1</code> clock pin is 1.794 fF. The configuration’s root buffer, <code>clkbuf_16</code>, is limited
+to 1.531687 pF of output load, which is about 853 bare clock pins with no wire at all. A design with 4,096 flip-flops has 7.35 pF on
+its clock pins alone, before any wire. Even if one buffer could drive it, the edge would be slow, and a slow clock edge stretches every
+clock-to-Q delay and setup time (<a href="timing.html">lesson 25</a>).</p>
+<p>A tree divides the load. Each buffer drives only a few dozen sinks or further buffers, so every edge stays sharp. With a fanout of
+f per buffer, N sinks need ⌈log<sub>f</sub> N⌉ levels: 4,096 sinks at a fanout of 8 need four levels (8⁴ = 4,096); at a fanout of 16,
+three (16³ = 4,096).</p>
+<figure><div class="figwrap"><svg viewBox="0 0 760 345" xmlns="http://www.w3.org/2000/svg" style="min-width:560px" font-family="system-ui, -apple-system, Segoe UI, sans-serif" role="img" aria-label="A clock tree with a fanout of eight: one root buffer, then 8, 64 and 512 buffers, then 4,096 flip-flop clock pins."><rect x="330.00" y="16.00" width="100.00" height="28.00" rx="4" fill="#fbecea" stroke="#c0564a" stroke-width="1.2"/><text x="380.0" y="34.0" text-anchor="middle" font-size="11" font-weight="700" fill="#8f3b31">clkbuf_16</text><line x1="380.00" y1="44.00" x2="88.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="60.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="88.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="180.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="152.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="180.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="272.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="244.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="272.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="364.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="336.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="364.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="456.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="428.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="456.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="548.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="520.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="548.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="640.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="612.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="640.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="380.00" y1="44.00" x2="732.00" y2="83.00" stroke="#718096" stroke-width="0.9"/><rect x="704.00" y="83.00" width="56.00" height="24.00" rx="4" fill="#eef3fb" stroke="#4a72c4" stroke-width="1"/><text x="732.0" y="99.0" text-anchor="middle" font-size="9.5" fill="#4a72c4">clkbuf</text><line x1="88.00" y1="107.00" x2="35.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="24.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="65.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="54.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="95.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="84.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="125.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="114.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="155.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="144.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="185.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="174.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="215.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="204.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><line x1="88.00" y1="107.00" x2="245.00" y2="151.00" stroke="#718096" stroke-width="0.7"/><rect x="234.00" y="151.00" width="22.00" height="18.00" rx="3" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.8"/><text x="560.0" y="164.0" text-anchor="middle" font-size="10.5" fill="#5c6b7a">… and 8 more under each level-1 buffer</text><line x1="35.00" y1="169.00" x2="21.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="16.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="35.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="30.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="49.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="44.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="63.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="58.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="77.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="72.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="91.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="86.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="105.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="100.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><line x1="35.00" y1="169.00" x2="119.00" y2="218.00" stroke="#718096" stroke-width="0.6"/><rect x="114.00" y="218.00" width="10.00" height="14.00" rx="2" fill="#eef3fb" stroke="#4a72c4" stroke-width="0.7"/><text x="560.0" y="229.0" text-anchor="middle" font-size="10.5" fill="#5c6b7a">… repeated under every level-2 buffer</text><line x1="21.00" y1="232.00" x2="14.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="12.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="20.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="18.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="26.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="24.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="32.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="30.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="38.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="36.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="44.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="42.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="50.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="48.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><line x1="21.00" y1="232.00" x2="56.00" y2="284.00" stroke="#718096" stroke-width="0.5"/><rect x="54.00" y="284.00" width="4.00" height="10.00" rx="0" fill="#f3eee4" stroke="#b59a6a" stroke-width="0.5"/><text x="560.0" y="294.0" text-anchor="middle" font-size="10.5" fill="#5c6b7a">8 flops per level-3 buffer</text><text x="380.0" y="330.0" text-anchor="middle" font-size="11" fill="#5c6b7a">Fanout of 8 per buffer: 1 → 8 → 64 → 512 → 4,096. Each buffer drives only a few loads, so every edge stays sharp.</text></svg></div><figcaption><strong>Figure 3 — A clock tree, level by level.</strong> Teaching diagram with an assumed fanout of eight. Real trees cluster sinks by location, so branch sizes vary.</figcaption></figure>
+<h2 id="section-7">7. Clock-tree synthesis builds and balances the tree</h2>
+<p><strong>Clock-tree synthesis</strong> runs after placement, once the flip-flops have positions. Its inputs are the
+clock definitions from the timing constraints (<a href="rtl_synthesis_constraints.html">lesson 34</a>), the sink locations, the cells it may use — the
+<code>clkbuf</code> and <code>clkinv</code> families here — and targets for maximum slew, capacitance and skew. It clusters nearby
+sinks, inserts buffers, and adjusts branches so that every sink sees nearly the same delay. The H-tree in Figure 2 is the geometric
+ideal it approximates; in the open SKY130 flow, OpenROAD’s clock-tree synthesis does this work.</p>
+<p>Before this step the timer uses an <strong>ideal clock</strong>: every flop receives the edge at the same instant. Afterward it uses a
+<strong>propagated clock</strong>, with the real buffer and wire delays to each sink, which is when skew starts to affect slack.</p>
+<aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> LibreLane’s CTS step calls OpenROAD’s <code>clock_tree_synthesis</code> with the buffer list from the PDK configuration; ResizerTimingPostCTS then repairs setup and hold using propagated clocks. Innovus (CCOpt) and IC Compiler II do the same job in commercial flows.</p><pre>clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_16 \
+    -buf_list {sky130_fd_sc_hd__clkbuf_8 sky130_fd_sc_hd__clkbuf_4 sky130_fd_sc_hd__clkbuf_2} \
+    -sink_clustering_enable -apply_ndr half
+set_propagated_clock [all_clocks]
+repair_timing -hold -hold_margin 0.10 -setup_margin 0.05</pre>
+<p>That is the command LibreLane 3.0.17 actually issued on the run in section 8, including the 0.10&nbsp;ns hold margin on the post-CTS repair. The buffer list is taken from the PDK/flow configuration and can change with the LibreLane version; the section 8 result shows which cells were really inserted.</p></aside><h2 id="section-8">8. A measured result: 64 sinks, nine clkbuf_16 cells</h2>
+<p>On 11 November 2026 this course ran LibreLane 3.0.17 on the bundled 32-bit serial/parallel multiplier example (<code>spm</code>), with PDK sky130A (ciel revision <code>8afc8346a57fe1ab7934ba5a6056ea8b43078e71</code>), library <code>sky130_fd_sc_hd</code>, and a 10&nbsp;ns clock period, stopping after <code>OpenROAD.ResizerTimingPostCTS</code>. The reports are in <a href="labs/analysis_examples/cts_spm/README.txt"><code>labs/analysis_examples/cts_spm/</code></a>. This is mid-place-and-route: placement-based estimated parasitics, not routed, and not a signoff result.</p>
+<p>TritonCTS built an H-tree of three levels for one clock net with 64 sinks. It was allowed <code>clkbuf_2</code>, <code>clkbuf_4</code> and <code>clkbuf_8</code> as intermediate buffers and <code>clkbuf_16</code> as the root, and it inserted <strong>nine <code>sky130_fd_sc_hd__clkbuf_16</code></strong> cells — the root plus eight leaves — and nothing from the smaller list. Every clock path has the same depth: two buffers. The eight leaf nets each have fanout 8. Average sink wire length was 103.41&nbsp;µm. Clock-buffer area is 225.216&nbsp;µm². No leaf-level extra buffers and no dummy loads were added.</p>
+<figure>
+  <div class="figwrap" id="fig-spm-cts">
+    <svg viewBox="0 0 820 280" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — The SPM clock tree: one clkbuf_16 at the root driving eight clkbuf_16 leaves, each driving eight flip-flop clock pins.">
+      <text x="410" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">clk (chip pin)</text>
+      <line x1="410" y1="34" x2="410" y2="52" stroke="#33414f" stroke-width="1.8"/>
+      <rect x="330" y="52" width="160" height="44" rx="4" fill="#e8eef6" stroke="#2468a0" stroke-width="2"/>
+      <text x="410" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="410" y="86" text-anchor="middle" font-size="11" fill="#1d4a72">root</text>
+      <!-- 8 leaves -->
+      <line x1="410" y1="96" x2="67.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="23.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="67.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="67.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 1</text>
+      <line x1="67.0" y1="200" x2="67.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="46.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="52.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="58.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="64.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="70.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="76.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="82.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="88.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="165.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="121.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="165.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="165.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 2</text>
+      <line x1="165.0" y1="200" x2="165.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="144.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="150.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="156.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="162.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="168.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="174.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="180.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="186.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="263.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="219.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="263.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="263.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 3</text>
+      <line x1="263.0" y1="200" x2="263.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="242.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="248.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="254.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="260.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="266.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="272.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="278.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="284.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="361.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="317.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="361.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="361.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 4</text>
+      <line x1="361.0" y1="200" x2="361.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="340.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="346.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="352.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="358.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="364.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="370.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="376.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="382.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="459.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="415.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="459.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="459.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 5</text>
+      <line x1="459.0" y1="200" x2="459.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="438.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="444.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="450.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="456.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="462.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="468.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="474.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="480.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="557.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="513.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="557.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="557.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 6</text>
+      <line x1="557.0" y1="200" x2="557.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="536.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="542.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="548.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="554.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="560.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="566.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="572.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="578.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="655.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="611.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="655.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="655.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 7</text>
+      <line x1="655.0" y1="200" x2="655.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="634.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="640.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="646.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="652.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="658.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="664.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="670.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="676.0" cy="222" r="2.2" fill="#33414f"/>
+      <line x1="410" y1="96" x2="753.0" y2="150" stroke="#2468a0" stroke-width="1.3"/>
+      <rect x="709.0" y="150" width="88" height="50" rx="3" fill="#fff" stroke="#2468a0" stroke-width="1.5"/>
+      <text x="753.0" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4a72">clkbuf_16</text>
+      <text x="753.0" y="188" text-anchor="middle" font-size="10" fill="#5c6b7a">leaf 8</text>
+      <line x1="753.0" y1="200" x2="753.0" y2="214" stroke="#33414f" stroke-width="1"/>
+      <circle cx="732.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="738.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="744.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="750.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="756.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="762.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="768.0" cy="222" r="2.2" fill="#33414f"/>
+      <circle cx="774.0" cy="222" r="2.2" fill="#33414f"/>
+      <text x="410" y="268" text-anchor="middle" font-size="12" fill="#5c6b7a">Each leaf drives eight clock pins · 64 sinks · path depth 2</text>
+    </svg>
+  </div>
+  <figcaption><strong>Figure 4 — The tree TritonCTS actually built on this <code>spm</code> run.</strong> Nine <code>clkbuf_16</code> cells, path depth two, fanout eight at each leaf. The geometry is schematic; the cell count, depth and fanout are from the CTS report.</figcaption>
+</figure>
+<table>
+  <thead><tr><th>Quantity</th><th>Value on this run</th><th>Where it was read</th></tr></thead>
+  <tbody>
+    <tr><td>Clock roots / sinks / buffers</td><td>1 / 64 / 9, all <code>clkbuf_16</code></td><td><code>cts.rpt</code></td></tr>
+    <tr><td>Path depth, max level</td><td>2–2, max level 3</td><td>TritonCTS log</td></tr>
+    <tr><td>Insertion delay, rise</td><td>0.3349–0.3737&nbsp;ns</td><td>mid-PnR STA, <code>nom_tt_025C_1v80</code></td></tr>
+    <tr><td>Network skew, rise / fall</td><td>38.8&nbsp;ps / 36.6&nbsp;ps</td><td>same report, min-to-max latency</td></tr>
+    <tr><td>Setup worst slack (10&nbsp;ns period)</td><td>+5.882&nbsp;ns (WNS 0)</td><td>mid-PnR STA, <code>nom_tt</code></td></tr>
+    <tr><td>Hold worst slack</td><td>+185.4&nbsp;ps (WNS 0)</td><td>mid-PnR STA, <code>nom_tt</code>, before the hold repair below</td></tr>
+    <tr><td>Post-CTS hold repair</td><td>33 hold buffers, 0 setup buffers</td><td><code>repair_timing -hold</code> with a 0.10&nbsp;ns hold margin; 64 endpoints reported</td></tr>
+  </tbody>
+</table>
+<p>Two different “skew” numbers appear in the same STA view and must not be mixed up. The <em>network</em> skew, 38.8&nbsp;ps rise, is the difference between the fastest and slowest clock arrivals — the tree imbalance. The report’s “setup skew” of 0.268&nbsp;ns is that network term plus the 0.250&nbsp;ns clock uncertainty from the SDC, minus 21&nbsp;ps of CRPR (clock reconvergence pessimism removal). Uncertainty and CRPR belong to the timing check, not to the tree’s geometry. The 10&nbsp;ns period is an easy target for this small block, which is why setup slack is several nanoseconds; the useful facts here are the insertion delay, the network skew, and that a balanced two-level tree of <code>clkbuf_16</code> was enough for 64 sinks.</p>
+<h2 id="section-9">9. Insertion delay, skew and hold fixing</h2>
+<p><strong>Insertion delay</strong> (clock latency) is the time from the clock source to a sink; <strong>skew</strong> is the
+difference between two sinks. On the section 8 run those were 0.335–0.374&nbsp;ns of rise insertion and 38.8&nbsp;ps of rise network skew, with two <code>clkbuf_16</code> cells on every path — a measured pair, not an assumed 0.15&nbsp;ns per level. Insertion delay is shared by the launching and capturing flops of a same-clock path, so it largely cancels. Skew does not.</p>
+<p>If the capturing flop’s clock arrives 30 ps later than the launching flop’s, setup slack improves by 30 ps and hold slack worsens by
+30 ps (<a href="setup_hold.html">lesson 26</a>). Short paths that fail hold after clock-tree synthesis are fixed by adding delay to the data path — hold
+fixing — not by slowing the clock. Where a clock leaves the chip or meets another domain, insertion delay no longer cancels and must
+be budgeted (<a href="cdc_reset.html">lesson 39</a>).</p>
+<h2 id="section-10">10. The clock tree’s power is C·V²·f</h2>
+<p>The clock toggles every cycle, which makes its network the most active capacitance on the chip. Its switching power is
+P = C·V²·f. For the 4,096-flop example: 4,096 × 1.794 fF = 7.35 pF of clock pins; assume 5 pF more for wires and buffer inputs, about
+12.4 pF in total. At 1.8 V and 50 MHz, P = 12.4 pF × (1.8 V)² × 50 MHz ≈ 2.0 mW — before the flops’ own internal clock power. That is
+why clock gating targets the tree (<a href="clock_gating_power_states.html">lesson 37</a>).</p>
+<details class="checkpoint"><summary>Check your understanding — a design has 2,000 flip-flops, and clock-tree synthesis limits each buffer to a fanout of 10. What is the minimum number of buffer levels?</summary><p>10³ = 1,000 is too few and 10⁴ = 10,000 is enough, so at least four levels. Real trees can differ, because wire load and placement, not only sink count, limit each buffer.</p></details>
+<details class="checkpoint"><summary>Check your understanding — timing was clean with an ideal clock; after clock-tree synthesis, hold violations appear. Why?</summary><p>With an ideal clock every flop sees the edge at the same instant. After clock-tree synthesis real skew appears; where a capturing flop’s clock arrives later than its launching flop’s, a short data path can change the captured value too early. The fix is delay on those data paths, or rebalancing the tree.</p></details><p><a href="timed_path.html">Lesson 42</a> shows what insertion delay and skew do to the setup and hold slack of one register-to-register path.</p><div class="takeaways">
+    <p>The source of the edge — a pad, a ring oscillator, a DCO, or a PLL — is <a href="clock_generation.html">lesson 36</a>. This lesson is the tree that distributes it.</p>
+<h2 id="section-11">Key takeaways</h2>
+    <ul>
+      <li>A clock tree is buffers between one source and many <code>CLK</code> pins, so the edge arrives together and the load stays legal.</li>
+      <li><code>clkbuf</code> is function <code>(A)</code>. <code>clkinv</code> is function <code>(!A)</code>. Both are one row tall.</li>
+      <li>The checked config’s root default is <code>clkbuf_16</code>, 20 sites, input 7.397&nbsp;fF, output max 1.531687&nbsp;pF.</li>
+      <li>853 <code>dfxtp_1</code> clock pins are 1.530&nbsp;pF as arithmetic only. Fanout, slew, wire capacitance, and design constraints impose much tighter practical limits.</li>
+      <li>Input cap is not a clean step with the drive number. <code>clkbuf_2</code> is 2.180&nbsp;fF and <code>clkbuf_4</code> is 2.106&nbsp;fF.</li>
+          <li>Skew compares clock arrival at two sinks. Jitter describes edge-time variation relative to a specified timing reference. The implemented topology must be checked in the design.</li>
+    <li>One <code>clkbuf_16</code> can drive at most about 853 bare <code>dfxtp_1</code> clock pins; a real tree needs ⌈log<sub>f</sub> N⌉ levels.</li><li>Clock-tree synthesis builds and balances the tree after placement; timing then uses propagated clock arrivals.</li>
+<li>On the course’s LibreLane 3.0.17 <code>spm</code> run (64 sinks, 10&nbsp;ns period, mid-PnR), TritonCTS inserted nine <code>clkbuf_16</code> cells at path depth 2; rise insertion was 0.335–0.374&nbsp;ns and rise network skew was 38.8&nbsp;ps. That is not a signoff result.</li><li>Skew moves setup and hold slack in opposite directions; hold is fixed with data-path delay, not a slower clock.</li><li>Clock power is C·V²·f on the most active net: about 2 mW for 4,096 flops at 50 MHz in the worked example.</li></ul>
+  </div>
+
+<section class="sources"><h2 id="section-12">Sources &amp; scope</h2><p>Technical review: 11 November 2026. Cell data use HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. Configuration statements refer to the linked snapshot, not all OpenLane or LibreLane versions. The section 8 CTS numbers are from a LibreLane 3.0.17 run of the bundled <code>spm</code> example on sky130A (ciel <code>8afc8346a57fe1ab7934ba5a6056ea8b43078e71</code>), library <code>sky130_fd_sc_hd</code>, stopped after <code>OpenROAD.ResizerTimingPostCTS</code> on 11 November 2026; mid-PnR estimated parasitics, not routed, not signoff. The unedited reports are in <code>labs/analysis_examples/cts_spm/</code>.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/sky130_fd_sc_hd__clkbuf_16__tt_025C_1v80.lib.json">SKY130 clkbuf_16 characterization</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/tree/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/">SKY130 clock-buffer cell views</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp_1__tt_025C_1v80.lib.json">SKY130 dfxtp_1 clock-pin capacitance</a></li><li><a href="https://github.com/RTimothyEdwards/open_pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">open_pdks LibreLane HD configuration</a></li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/cts/README.html">OpenROAD clock-tree synthesis documentation</a></li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html" aria-current="page">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="rtl_synthesis_constraints.html"><small>← Previous</small>RTL, Synthesis &amp; Timing Constraints</a><a href="clock_generation.html"><small>Next →</small>Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function box(x, y, w, label, sub, color) {
+    s += `<rect x="${x}" y="${y}" width="${w}" height="36" rx="4" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+    s += txt(x + w / 2, y + 16, label, {b: true, s: 12, c: color});
+    s += txt(x + w / 2, y + 30, sub, {s: 10, c: '#5c6b7a'});
+  }
+  box(280, 16, 180, 'clkbuf_16', 'root', PW);
+  s += `<line x1="370" y1="52" x2="180" y2="90" stroke="${DK}"/>`;
+  s += `<line x1="370" y1="52" x2="560" y2="90" stroke="${DK}"/>`;
+  box(100, 90, 160, 'clkbuf_4', 'branch', MET);
+  box(480, 90, 160, 'clkbuf_4', 'branch', MET);
+  s += `<line x1="180" y1="126" x2="80" y2="164" stroke="${DK}"/>`;
+  s += `<line x1="180" y1="126" x2="220" y2="164" stroke="${DK}"/>`;
+  s += `<line x1="560" y1="126" x2="500" y2="164" stroke="${DK}"/>`;
+  s += `<line x1="560" y1="126" x2="660" y2="164" stroke="${DK}"/>`;
+  ['80','200','480','640'].forEach(x => {
+    s += `<rect x="${x}" y="164" width="70" height="28" rx="3" fill="#f7f9fb" stroke="${DK}"/>`;
+    s += txt(Number(x) + 35, 182, 'CLK', {s: 12});
+  });
+  s += txt(370, 218, '1.794 fF on each dfxtp_1 clock pin', {s: 12, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

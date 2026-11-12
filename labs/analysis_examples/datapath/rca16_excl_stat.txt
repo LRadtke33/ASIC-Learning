@@ -1,0 +1,4 @@
+Number of cells:                 16
+     sky130_fd_sc_hd__fa_1          16
+
+   Chip area for module '\rca16': 320.307200

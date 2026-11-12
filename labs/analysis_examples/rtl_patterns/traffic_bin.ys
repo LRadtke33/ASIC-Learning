@@ -1,0 +1,12 @@
+
+read_verilog traffic_bin.v
+hierarchy -check -top traffic_bin
+proc; flatten
+opt; memory; opt
+techmap; opt
+dfflibmap -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+opt
+abc -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+clean
+stat -liberty /tmp/n10f/tt_025C_1v80_librelane_excluded.lib
+write_verilog -noattr traffic_bin_mapped.v

@@ -1,0 +1,30 @@
+* 11-stage inv_1 ring, tt 25C, VDD=1.8
+.lib "../../../workspace/learn/learning/labs/common/models/sky130_course.lib.spice" tt
+.temp 25
+.options reltol=1e-5 abstol=1e-14 vntol=1e-8
+.subckt inv1 A VGND VNB VPB VPWR Y
+XN0 Y A VGND VNB sky130_fd_pr__nfet_01v8 w=0.65 l=0.15
+XP0 Y A VPWR VPB sky130_fd_pr__pfet_01v8_hvt w=1.0 l=0.15
+.ends
+VDD VPWR 0 1.8
+VSS VGND 0 0
+X1 n1 VGND VGND VPWR VPWR n2 inv1
+X2 n2 VGND VGND VPWR VPWR n3 inv1
+X3 n3 VGND VGND VPWR VPWR n4 inv1
+X4 n4 VGND VGND VPWR VPWR n5 inv1
+X5 n5 VGND VGND VPWR VPWR n6 inv1
+X6 n6 VGND VGND VPWR VPWR n7 inv1
+X7 n7 VGND VGND VPWR VPWR n8 inv1
+X8 n8 VGND VGND VPWR VPWR n9 inv1
+X9 n9 VGND VGND VPWR VPWR n10 inv1
+X10 n10 VGND VGND VPWR VPWR n11 inv1
+X11 n11 VGND VGND VPWR VPWR n1 inv1
+.ic v(n1)=0
+.tran 1e-12 2e-08 0 1e-12
+.control
+unset askquit
+run
+wrdata n1.csv v(n1)
+echo DONE
+.endc
+.end

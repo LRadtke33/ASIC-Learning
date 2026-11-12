@@ -1,0 +1,191 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock Generation: Oscillators, DCO, PLL &amp; Jitter</title>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+<nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+<p class="lesson-meta">Lesson 36 / 84 · Part V, Digital implementation</p>
+
+<h1>Clock Generation: Oscillators, DCO, PLL &amp; Jitter</h1>
+<p class="subtitle">An 11-stage ring of <code>inv_1</code>, simulated in ngspice 44.2 with this course’s models at tt 25&nbsp;°C, runs at <strong>1.849&nbsp;GHz</strong> at 1.80&nbsp;V (stage delay 24.58&nbsp;ps). That is 0.341 of the lesson&nbsp;27 FO4 delay recorded under the same conditions (72.15&nbsp;ps).</p>
+<p class="scope-note"><strong>Where the numbers come from.</strong> The ring frequencies and stage delays were measured on 11 November 2026, America/Chicago, with ngspice 44.2. Each stage is the <code>inv_1</code> device pair of <a href="delay_physics.html">lesson 29</a> (NMOS <code>sky130_fd_pr__nfet_01v8</code> W=0.65&nbsp;µm L=0.15&nbsp;µm, HVT PMOS W=1.0&nbsp;µm L=0.15&nbsp;µm), schematic only, no cell-layout parasitics. Decks, logs and <code>ring_osc.json</code> are in <code>labs/analysis_examples/ring_osc/</code>. FO4 values quoted for comparison are that lesson’s existing record (same models, same simulator, same day), not a new FO4 run. Caravel’s DCO trim and frequency range are from the official housekeeping documentation; this page does not simulate or measure that oscillator. PLL and jitter figures are teaching diagrams.</p>
+<div class="objectives"><p><strong>What you will learn</strong></p><ul>
+<li>Write a ring oscillator’s frequency as <code>f ≈ 1/(2 N t<sub>d</sub>)</code> and measure it on a SKY130 <code>inv_1</code> ring.</li>
+<li>Relate that stage delay to the course’s FO4 number, and see how both move with V<sub>DD</sub>.</li>
+<li>Read Caravel’s 26-bit thermometer DCO trim from the housekeeping documents, and place a PLL around a VCO.</li>
+<li>Name the usual jitter types and connect them to the sampling formula in <a href="sampling_aliasing.html">lesson 79</a>.</li>
+</ul></div>
+
+<h2 id="section-1">1. A ring of inverters is a clock if N is odd</h2>
+<p>An odd-length loop of inverting stages has no stable DC solution: the only consistent behaviour is oscillation. If each stage has an average delay <code>t<sub>d</sub></code> (the mean of a rising and a falling transition), the signal travels around the loop once in <code>N t<sub>d</sub></code>, and a full period — high then low at any node — takes two trips, so</p>
+<p style="text-align:center"><code>f ≈ 1 / (2 N t<sub>d</sub>)</code></p>
+<p>Once <code>f</code> is measured, this equation <em>defines</em> the average stage delay. The delay itself depends on the load (here, one identical inverter — a fanout of one, plus the stage’s own drain capacitance), on V<sub>DD</sub>, and on the input slew, which in a ring is produced by the previous stage. An even-length loop can sit in a static state and is not used this way.</p>
+
+<figure class="diagram" role="img" aria-label="Eleven inverters in a closed loop.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" width="760" height="210" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="210" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">An 11-stage ring — each triangle is one inv_1</text>
+  <text x="24" y="42" font-size="12" fill="#5c6b7a">teaching schematic of the simulated netlist, not a layout</text>
+  <path d="M40 120 H70 L70 95 L110 120 L70 145 L70 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <path d="M130 120 H160 L160 95 L200 120 L160 145 L160 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <path d="M220 120 H250 L250 95 L290 120 L250 145 L250 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <text x="340" y="126" text-anchor="middle" font-size="22" fill="#33414f">…</text>
+  <path d="M390 120 H420 L420 95 L460 120 L420 145 L420 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <path d="M480 120 H510 L510 95 L550 120 L510 145 L510 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <path d="M570 120 H600 L600 95 L640 120 L600 145 L600 120" fill="none" stroke="#33414f" stroke-width="1.8"/>
+  <text x="90" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">1</text>
+  <text x="180" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">2</text>
+  <text x="270" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">3</text>
+  <text x="440" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">9</text>
+  <text x="530" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">10</text>
+  <text x="620" y="168" text-anchor="middle" font-size="12" fill="#5c6b7a">11</text>
+  <!-- feedback -->
+  <path d="M640 120 H680 V50 H40 V120" fill="none" stroke="#2b6cb0" stroke-width="1.6"/>
+  <polygon points="40,120 48,114 48,126" fill="#2b6cb0"/>
+  <text x="400" y="68" text-anchor="middle" font-size="12" fill="#2b6cb0">feedback (n1, where frequency is read)</text>
+</svg>
+<figcaption><strong>Figure — The ring that was simulated.</strong> Eleven <code>inv_1</code> stages, output of stage 11 tied to the input of stage 1. Node <code>n1</code> is initialised at 0&nbsp;V so the transient starts cleanly. The frequency reported below is measured on that node.</figcaption>
+</figure>
+
+<h2 id="section-2">2. A recorded ring: frequency and stage delay versus V<sub>DD</sub></h2>
+<p>The ring was run at six supplies, tt 25&nbsp;°C. After discarding the first quarter of each transient, the period is the mean interval between successive V<sub>DD</sub>/2 rising crossings on <code>n1</code>. Stage delay is <code>t<sub>d</sub> = T / (2 × 11)</code>. At 1.80&nbsp;V the period is 540.79&nbsp;ps, so</p>
+<p style="text-align:center"><code>f = 1 / 540.79&nbsp;ps = 1.849&nbsp;GHz,  t<sub>d</sub> = 24.58&nbsp;ps</code></p>
+<p>Lesson 29’s fanout-of-1 delay for the same inverter, under a prescribed input slew rather than the ring’s self-consistent slew, was 25.05&nbsp;ps. The two numbers sit within 0.5&nbsp;ps. The same lesson’s FO4 delay at 1.80&nbsp;V is 72.15&nbsp;ps, so this ring’s stage is 24.58 / 72.15 = <strong>0.341&nbsp;FO4</strong>. A ring of fanout-1 inverters is not an FO4 path, and this ratio should not be used as a new FO4 measurement.</p>
+
+<table>
+<thead><tr><th>V<sub>DD</sub> (V)</th><th>Period (ps)</th><th>Frequency</th><th>t<sub>d</sub> (ps)</th><th>Lesson-27 FO4 (ps)</th><th>FO4 / t<sub>d</sub></th></tr></thead>
+<tbody>
+<tr><td>1.00</td><td>5405.54</td><td>185.0&nbsp;MHz</td><td>245.71</td><td>710.38</td><td>2.89</td></tr>
+<tr><td>1.20</td><td>1788.46</td><td>559.1&nbsp;MHz</td><td>81.29</td><td>234.97</td><td>2.89</td></tr>
+<tr><td>1.40</td><td>1000.96</td><td>999.0&nbsp;MHz</td><td>45.50</td><td>132.16</td><td>2.90</td></tr>
+<tr><td>1.60</td><td>695.23</td><td>1.438&nbsp;GHz</td><td>31.60</td><td>92.33</td><td>2.92</td></tr>
+<tr><td>1.80</td><td>540.79</td><td>1.849&nbsp;GHz</td><td>24.58</td><td>72.15</td><td>2.94</td></tr>
+<tr><td>1.95</td><td>469.44</td><td>2.130&nbsp;GHz</td><td>21.34</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<p>The FO4 column is from <code>labs/analysis_examples/delay_physics/results/spice_summary.json</code>. That sweep stopped at 1.80&nbsp;V, so the 1.95&nbsp;V row has no FO4 companion. Period-to-period variation in these noiseless schematic runs is about 0.007&nbsp;ps at 1.80&nbsp;V — a numerical grain, not a jitter figure, and not a silicon result.</p>
+
+<figure class="diagram" role="img" aria-label="Two periods of the recorded 1.80 volt ring waveform on node n1.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 260" width="760" height="260" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="260" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">n1 at 1.80 V — two recorded periods, T = 540.8 ps</text>
+  <text x="24" y="42" font-size="12" fill="#5c6b7a">from the ngspice 44.2 transient, after 5 ns of startup; not a scope capture</text>
+  <line x1="90" y1="192.0" x2="690" y2="192.0" stroke="#d5dee8"/>
+  <line x1="90" y1="98.2" x2="690" y2="98.2" stroke="#d5dee8"/>
+  <line x1="90" y1="145.1" x2="690" y2="145.1" stroke="#c0564a" stroke-dasharray="4 3"/>
+  <text x="80" y="196.0" text-anchor="end" font-size="11" fill="#5c6b7a">0</text>
+  <text x="80" y="102.2" text-anchor="end" font-size="11" fill="#5c6b7a">1.80</text>
+  <text x="698" y="149.1" font-size="11" fill="#c0564a">VDD/2</text>
+  <line x1="90" y1="40" x2="90" y2="220" stroke="#33414f"/>
+  <line x1="90" y1="220" x2="700" y2="220" stroke="#33414f"/>
+  <polyline fill="none" stroke="#2b6cb0" stroke-width="1.8" points="90.2,144.2 98.5,116.8 106.9,106.9 115.2,101.1 123.5,99.0 131.8,98.5 140.1,98.3 148.5,98.3 156.8,98.2 165.1,98.2 173.4,98.2 181.8,98.2 190.1,98.2 198.4,98.2 206.7,98.7 215.0,98.4 223.4,89.8 231.7,102.3 240.0,164.7 248.3,190.6 256.6,191.4 265.0,191.4 273.3,191.6 281.6,191.8 289.9,191.9 298.2,192.0 306.6,192.0 314.9,192.0 323.2,192.0 331.5,192.0 339.9,192.0 348.2,192.0 356.5,191.7 364.8,192.2 373.1,196.7 381.5,187.1 389.8,146.0 398.1,117.8 406.4,107.2 414.7,101.3 423.1,99.1 431.4,98.5 439.7,98.3 448.0,98.3 456.3,98.2 464.7,98.2 473.0,98.2 481.3,98.2 489.6,98.2 498.0,98.2 506.3,98.7 514.6,98.8 522.9,90.3 531.2,100.0 539.6,161.3 547.9,190.4 556.2,191.4 564.5,191.3 572.8,191.6 581.2,191.8 589.5,191.9 597.8,192.0 606.1,192.0 614.4,192.0 622.8,192.0 631.1,192.0 639.4,192.0 647.7,192.0 656.1,191.7 664.4,192.2 672.7,196.2 681.0,189.2 689.3,147.9 689.9,145.5"/>
+  <line x1="390.0" y1="220" x2="390.0" y2="226" stroke="#7a8794"/>
+  <text x="390.0" y="242" text-anchor="middle" font-size="12" fill="#5c6b7a">540.8 ps</text>
+  <text x="690.0" y="242" text-anchor="middle" font-size="12" fill="#5c6b7a">1.082 ns</text>
+  <text x="390" y="256" text-anchor="middle" font-size="12" fill="#33414f">time from a VDD/2 rising crossing</text>
+</svg>
+<figcaption><strong>Figure — Recorded waveform.</strong> Two periods of <code>n1</code> at 1.80&nbsp;V, taken from the same transient as the table, starting at a V<sub>DD</sub>/2 rising crossing after 5&nbsp;ns. Overshoot around the rails is a property of this schematic, not a package measurement.</figcaption>
+</figure>
+
+<figure class="diagram" role="img" aria-label="Ring frequency versus supply from the recorded sweep.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 310" width="760" height="310" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="310" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">Frequency versus VDD — recorded 11-stage inv_1 ring</text>
+  <text x="24" y="42" font-size="12" fill="#5c6b7a">tt 25 °C, course models, schematic only</text>
+  <line x1="100" y1="250" x2="700" y2="250" stroke="#33414f" stroke-width="1.2"/>
+  <line x1="100" y1="65" x2="100" y2="250" stroke="#33414f" stroke-width="1.2"/>
+  <polyline fill="none" stroke="#2b6cb0" stroke-width="2" points="100.0,235.7 210.5,206.9 321.0,173.0 431.4,139.1 541.9,107.5 624.8,85.8"/>
+  <circle cx="100.0" cy="235.7" r="4.5" fill="#2b6cb0"/>
+  <line x1="100.0" y1="250" x2="100.0" y2="256" stroke="#7a8794"/><text x="100.0" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.00</text><line x1="210.5" y1="250" x2="210.5" y2="256" stroke="#7a8794"/><text x="210.5" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.20</text><line x1="321.0" y1="250" x2="321.0" y2="256" stroke="#7a8794"/><text x="321.0" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.40</text><line x1="431.4" y1="250" x2="431.4" y2="256" stroke="#7a8794"/><text x="431.4" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.60</text><line x1="541.9" y1="250" x2="541.9" y2="256" stroke="#7a8794"/><text x="541.9" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.80</text><line x1="624.8" y1="250" x2="624.8" y2="256" stroke="#7a8794"/><text x="624.8" y="274" text-anchor="middle" font-size="12" fill="#5c6b7a">1.95</text>
+  <line x1="94" y1="250.0" x2="100" y2="250.0" stroke="#7a8794"/><text x="90" y="254.0" text-anchor="end" font-size="11" fill="#5c6b7a">0</text><line x1="94" y1="211.5" x2="100" y2="211.5" stroke="#7a8794"/><text x="90" y="215.5" text-anchor="end" font-size="11" fill="#5c6b7a">500</text><line x1="94" y1="172.9" x2="100" y2="172.9" stroke="#7a8794"/><text x="90" y="176.9" text-anchor="end" font-size="11" fill="#5c6b7a">1000</text><line x1="94" y1="134.4" x2="100" y2="134.4" stroke="#7a8794"/><text x="90" y="138.4" text-anchor="end" font-size="11" fill="#5c6b7a">1500</text><line x1="94" y1="95.8" x2="100" y2="95.8" stroke="#7a8794"/><text x="90" y="99.8" text-anchor="end" font-size="11" fill="#5c6b7a">2000</text>
+  <text x="551.9" y="97.5" font-size="12" fill="#1a365d">1.849 GHz</text>
+  <text x="110.0" y="225.7" font-size="12" fill="#1a365d">185 MHz</text>
+  <text x="614.8" y="73.8" text-anchor="end" font-size="12" fill="#1a365d">2.130 GHz</text>
+  <text x="400" y="296" text-anchor="middle" font-size="12" fill="#33414f">VDD (V)</text>
+  <text x="24" y="160" text-anchor="middle" font-size="12" fill="#33414f" transform="rotate(-90 24 160)">frequency (MHz)</text>
+</svg>
+<figcaption><strong>Figure — Recorded f vs V<sub>DD</sub>.</strong> The same six points as the table. Frequency is a strong function of supply, which is why a free-running ring is a poor system clock unless it is locked or trimmed, and why a shmoo of f versus V<sub>DD</sub> (see <a href="post_silicon_bringup.html">lesson 71</a>) is a bring-up staple.</figcaption>
+</figure>
+
+<details class="checkpoint"><summary>Check your understanding — if you double the number of stages to 22, what happens?</summary><p>22 is even, so the loop can sit in a static, consistent state (half the nodes high, half low) and may never oscillate. The formula <code>1/(2 N t<sub>d</sub>)</code> is for an oscillating odd-length ring. If you want a slower clock from a ring, use a larger <em>odd</em> N (for example 21), accepting that <code>t<sub>d</sub></code> itself is almost unchanged because each stage still sees one similar load. A divider after a shorter ring is the more usual way to get a lower frequency with a single edge to distribute.</p></details>
+
+<h2 id="section-3">3. From a free-running ring to a DCO</h2>
+<p>A <strong>digitally controlled oscillator</strong> (DCO) is a ring (or another VCO topology) whose delay is steered by a digital code: extra loading, extra current, or extra delay stages switched in. Caravel, the SKY130 harness of <a href="caravel_integration.html">lesson 56</a>, includes a ring used both as a free-running DCO and as the oscillator inside a digital PLL. The housekeeping SPI documentation is the source for the following; this course has not measured that oscillator on silicon or in simulation.</p>
+<p>The trim is a <strong>26-bit thermometer code</strong>, in registers <code>0x0D</code> through the lower two bits of <code>0x10</code>. The same page says each set bit adds approximately 250&nbsp;ps of delay on top of a fixed 4.67&nbsp;ns, that <code>0x0</code> is fastest and <code>0x3ffffff</code> is slowest, and that the approximate range is 215&nbsp;MHz down to 90&nbsp;MHz. A neighbouring sentence on the PLL-DCO-enable bit describes the same oscillator as “approximately 90 to 200&nbsp;MHz.” This lesson quotes both wordings and does not pick a winner.</p>
+<p><strong>Worked arithmetic on the documentation’s own model</strong> (not a measurement): a period of 4.67&nbsp;ns is 214&nbsp;MHz, matching the “approximately 215&nbsp;MHz” end. With all 26 trim bits set, the period is 4.67&nbsp;ns + 26 × 0.250&nbsp;ns = 11.17&nbsp;ns, which is 89.5&nbsp;MHz — the “approximately 90&nbsp;MHz” end. The default trim is given as <code>0x3ffefff</code> (slow, minus one). Thermometer codes and trim-range thinking are the subject of <a href="calibration_trim.html">lesson 82</a>.</p>
+<p>Housekeeping SPI can be used even when the management CPU is held in reset — which is why it appears in the bring-up order of <a href="post_silicon_bringup.html">lesson 71</a>. On startup the CPU clock is the external pin, not this DCO; firmware (or SPI) has to enable DCO or PLL mode deliberately.</p>
+
+<details class="checkpoint"><summary>Check your understanding — is Caravel’s 215&nbsp;MHz the same kind of number as this lesson’s 1.849&nbsp;GHz?</summary><p>No. 1.849&nbsp;GHz is a schematic <code>inv_1</code> ring of 11 unloaded stages at tt 25&nbsp;°C, with no layout parasitics. Caravel’s 90–215&nbsp;MHz (or 90–200&nbsp;MHz) is a documented range for a trimmed on-chip oscillator in the harness, with a completely different stage count, loading, and trim network, stated as approximate. They share a topology class, not a frequency.</p></details>
+
+<h2 id="section-4">4. A PLL wraps a VCO in a feedback loop</h2>
+<p>A phase-locked loop compares a reference (often a board crystal, or Caravel’s external clock on pin C9) to a divided copy of a VCO, and steers the VCO until the edges line up. In lock, the VCO frequency is <code>N<sub>fb</sub> × f<sub>ref</sub></code>, and the output may be divided again for the core. Caravel’s digital PLL does this with a frequency-locked loop around the same trimmed ring: a feedback divider (5 bits, register <code>0x12</code>) and two 3-bit output dividers (register <code>0x11</code>) — one for the core, one for the user-project secondary clock. Values 0 and 1 on an output divider pass the undivided PLL clock; the documentation warns that the processor is not intended to run at that rate. The PLL-enable bit should be set <em>before</em> bypass is cleared, so the loop can settle.</p>
+
+<figure class="diagram" role="img" aria-label="Phase-locked loop block diagram: reference, phase detector, filter, VCO, and dividers.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230" width="760" height="230" font-family="Source Sans 3, Segoe UI, sans-serif">
+  <rect width="760" height="230" fill="#fbfcfd"/>
+  <text x="24" y="24" font-size="15" font-weight="700" fill="#33414f">A PLL around a VCO — teaching block diagram</text>
+  <text x="24" y="42" font-size="12" fill="#5c6b7a">not a simulation of Caravel’s digital PLL</text>
+  <rect x="40" y="90" width="100" height="48" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="90" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#33414f">f_ref</text>
+  <rect x="180" y="90" width="110" height="48" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="235" y="112" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">phase</text>
+  <text x="235" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">detector</text>
+  <rect x="330" y="90" width="100" height="48" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="380" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#33414f">filter</text>
+  <rect x="470" y="90" width="100" height="48" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="520" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#33414f">VCO / DCO</text>
+  <rect x="610" y="90" width="100" height="48" rx="6" fill="#edf5fc" stroke="#2b6cb0"/>
+  <text x="660" y="112" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">÷ N_out</text>
+  <text x="660" y="128" text-anchor="middle" font-size="12" fill="#33414f">clk</text>
+  <rect x="330" y="168" width="100" height="40" rx="6" fill="#f7f3ea" stroke="#b54708"/>
+  <text x="380" y="192" text-anchor="middle" font-size="12" font-weight="600" fill="#33414f">÷ N_fb</text>
+  <path d="M140 114 H180" stroke="#33414f" stroke-width="1.5" fill="none"/>
+  <path d="M290 114 H330" stroke="#33414f" stroke-width="1.5" fill="none"/>
+  <path d="M430 114 H470" stroke="#33414f" stroke-width="1.5" fill="none"/>
+  <path d="M570 114 H610" stroke="#33414f" stroke-width="1.5" fill="none"/>
+  <path d="M660 138 V158 H430 V168" stroke="#b54708" stroke-width="1.5" fill="none"/>
+  <path d="M330 188 H235 V138" stroke="#b54708" stroke-width="1.5" fill="none"/>
+</svg>
+<figcaption><strong>Figure — PLL loop.</strong> Teaching diagram. The feedback divider sets <code>f<sub>VCO</sub> = N<sub>fb</sub> f<sub>ref</sub></code> in lock. Jitter on the reference, on the detector, and on the VCO itself all appear at the output, each filtered differently by the loop.</figcaption>
+</figure>
+
+<h2 id="section-5">5. Jitter is more than one number</h2>
+<p>A clock’s edges do not land at exact multiples of a period. The usual names:</p>
+<table>
+<thead><tr><th>Name</th><th>What is measured</th><th>Typical question</th></tr></thead>
+<tbody>
+<tr><td>Period jitter</td><td>Variation of one period, T<sub>n</sub> = t<sub>n+1</sub> − t<sub>n</sub></td><td>Will this cycle’s setup path still close?</td></tr>
+<tr><td>Cycle-to-cycle jitter</td><td>Variation of T<sub>n+1</sub> − T<sub>n</sub></td><td>How abruptly does the period change?</td></tr>
+<tr><td>Phase (long-term) jitter</td><td>Deviation of edge n from n × T<sub>ideal</sub></td><td>How far has the clock wandered over many cycles?</td></tr>
+<tr><td>Deterministic vs random</td><td>Bounded (spurs, supply ripple) vs unbounded (thermal, 1/f)</td><td>Which part of the budget is a peak, and which is an RMS?</td></tr>
+</tbody>
+</table>
+<p>For a sampled signal, random jitter on the sampling edge limits SNR as in <a href="sampling_aliasing.html">lesson 79</a>: <code>SNR<sub>jitter</sub> = −20 log<sub>10</sub>(2π f<sub>in</sub> σ<sub>t</sub>)</code>. That formula uses an RMS time σ<sub>t</sub> and the input frequency, not the clock frequency. A PLL can reject some close-in VCO jitter and can pass (or amplify) reference jitter, depending on the loop bandwidth — which is why “the VCO’s jitter” is not automatically “the core clock’s jitter.”</p>
+<p>The clock tree of <a href="clock_tree.html">lesson 35</a> then <em>adds</em> its own power-supply-induced jitter as the edges travel. A clean generator is necessary; it is not sufficient.</p>
+
+<details class="checkpoint"><summary>Check your understanding — does a 10&nbsp;ps RMS period jitter at 100&nbsp;MHz and at 1&nbsp;GHz have the same effect on a 10&nbsp;MHz sampled sine?</summary><p>The sampling formula depends on <code>f<sub>in</sub></code> and <code>σ<sub>t</sub></code>, not on the sampling clock’s frequency. If σ<sub>t</sub> is really 10&nbsp;ps RMS in both cases, the SNR is the same. In practice the two clocks will not have the same σ<sub>t</sub>, and a 1&nbsp;GHz clock’s 10&nbsp;ps is a much larger fraction of its period, which matters for digital setup — a different budget.</p></details>
+
+<h2 id="key-takeaways">Key takeaways</h2>
+<ul>
+<li>A ring of N odd inverters oscillates at <code>f ≈ 1/(2 N t<sub>d</sub>)</code>. This 11-stage <code>inv_1</code> ring was measured at 1.849&nbsp;GHz at 1.80&nbsp;V, t<sub>d</sub> = 24.58&nbsp;ps, which is 0.341 of the course FO4 (72.15&nbsp;ps) under the same models — a correlation, not a new FO4.</li>
+<li>Frequency is a strong function of V<sub>DD</sub> (185&nbsp;MHz at 1.00&nbsp;V to 2.130&nbsp;GHz at 1.95&nbsp;V in this schematic). A free-running ring is rarely a system clock.</li>
+<li>Caravel’s DCO is a trimmed ring documented as a 26-bit thermometer code, approximately 90–215&nbsp;MHz (the same page also says 90–200&nbsp;MHz). Those figures are from the housekeeping docs, not from a run on this page.</li>
+<li>A PLL locks a VCO to a reference through dividers. Jitter has several names; the sampling SNR formula uses RMS edge uncertainty and the input frequency.</li>
+</ul>
+
+<section class="sources"><h2 id="sources">Sources &amp; scope</h2>
+<p>Ring results recorded 11 November 2026, America/Chicago, ngspice 44.2, course models, tt 25&nbsp;°C, schematic <code>inv_1</code> device pair, no layout parasitics. FO4 comparison from the lesson 29 record in <code>labs/analysis_examples/delay_physics/results/spice_summary.json</code>.</p>
+<ol>
+<li>This lesson’s decks and <code>ring_osc.json</code>: <code>labs/analysis_examples/ring_osc/</code>.</li>
+<li><a href="https://caravel-harness.readthedocs.io/en/latest/housekeeping-spi.html">Caravel housekeeping SPI</a> — 26-bit thermometer trim, 250&nbsp;ps per bit, 4.67&nbsp;ns fixed, 90–215&nbsp;MHz in the trim-register table; “90 to 200&nbsp;MHz” in the PLL-DCO-enable description. Divider registers <code>0x11</code> and <code>0x12</code>. Not measured here.</li>
+<li><a href="https://caravel-harness.readthedocs.io/en/latest/external-clock.html">Caravel external clock</a> — startup clock is the external pin; DCO/PLL mode is a later choice.</li>
+<li><a href="delay_physics.html">Lesson 29</a> — FO4 72.15&nbsp;ps and the FO1 25.05&nbsp;ps companion, same models.</li>
+</ol>
+</section>
+
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html" aria-current="page">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details>
+<div class="lesson-footer"><a href="clock_tree.html"><small>← Previous</small>The Clock Tree</a><a href="clock_gating_power_states.html"><small>Next →</small>Clock Gating &amp; Power States</a></div>
+<p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p>
+</main></body></html>

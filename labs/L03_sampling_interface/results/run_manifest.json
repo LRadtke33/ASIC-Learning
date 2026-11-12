@@ -1,0 +1,32 @@
+{
+  "kind": "Actual ngspice runs: SKY130 switch models and an explicitly generic lumped reference-load circuit",
+  "tool": "******\n** ngspice-44.2 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2024, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Sun Jan 12 08:19:15 UTC 2025\n******",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "models_revision": "f62031a1be9aefe902d6d54cddd6f59b57627436",
+  "model_wrapper_sha256": "93b4a996977c95caade912278bb47c46381ce71fdc87c52bd77ae36848748c26",
+  "conditions": {
+    "corner": "tt",
+    "temperature_C": 25,
+    "supply_V": 1.8,
+    "sample_C_pF": 2,
+    "clock_edge_ns": 0.1,
+    "model": "zero explicit diffusion geometry; no extracted layout"
+  },
+  "acquisition_cases": 57,
+  "reference_cases": 3,
+  "switch_dimensions_um": {
+    "nfet_W": 0.65,
+    "pfet_hvt_W": 1.0,
+    "L": 0.15,
+    "multiplier": {
+      "base_cases": 1,
+      "tg_x8": 8
+    }
+  },
+  "limitations": [
+    "No transient-noise or mismatch run; kT/C is an analytical exercise, not noise visible in these deterministic traces.",
+    "Observed edge shift includes residual acquisition during the edge and model charge redistribution; it is not an isolated measurement of channel-charge injection.",
+    "Reference source R, package L, ESR and load pulse are assumed teaching parameters."
+  ]
+}

@@ -1,0 +1,18 @@
+Images in this folder are reproduced from Apache-2.0 licensed documentation.
+Full license text: LICENSE-Apache-2.0.txt. Retrieved 9 November 2026.
+
+sky130_process_stack.svg
+  Source: google/skywater-pdk, docs/_static/metal_stack.svg (main branch)
+  https://github.com/google/skywater-pdk/blob/main/docs/_static/metal_stack.svg
+  Copyright 2020 The SkyWater PDK Authors. Unmodified.
+
+caravel_layout.jpg
+  Source: efabless/caravel, docs/source/_static/caravel.png (main branch)
+  https://github.com/efabless/caravel/tree/main/docs/source/_static
+  Copyright Efabless Corporation. Modified: resized to 760 px and converted to JPEG.
+
+caravel_wlcsp_bond_plan.svg, caravel_pcb_route_pattern.svg
+  Source: efabless/caravel, docs/source/_static/bond_plan.svg and pcb_example_route_pattern.svg
+  Copyright Efabless Corporation. Unmodified.
+
+All other figures in the foundation lessons are original drawings generated for this course.

@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endcaps</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 49 / 84 · Part VI, Physical cells and the floorplan</p><h1>Endcaps</h1>
+  <p class="subtitle">The last cell in a row was drawn to touch a neighbor. The end of the row has no neighbor. An endcap is the cell placed there so the rails and the well still finish.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> There is no cell named endcap in <code>sky130_fd_sc_hd</code>. The historical name is <code>FP_ENDCAP_CELL</code> in open_pdks/OpenLane;
+    current LibreLane uses <code>ENDCAP_CELL</code>. Both examples select the same cell. <a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">[pinned flow configuration]</a> The size and the devices are the <code>decap_3</code> LEF and schematic spice.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain why a row cannot stop on a bare cell edge.</li><li>Identify <code>decap_3</code> as the SKY130 HD endcap, and what the flow configuration says about it.</li><li>Terminate row fragments around macros, not only the outer edges of the core.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd><a href="design_flow.html#step-4">step 4, floorplan and power grid</a>, inserted together with the well taps.</dd><dt>Tools</dt><dd>OpenROAD’s <code>tapcell</code> places the endcaps too. Commercial: endcap insertion in Innovus and IC Compiler II.</dd><dt>Why it matters</dt><dd>Rows must end in a way that satisfies the well and implant rules.</dd></dl></aside><h2 id="section-1">1. A row should not stop on a bare edge</h2>
+  <p>
+    Cells in a row are drawn to abut
+    (<a href="site_rows.html">lesson 13</a>). The power rail, the well, and the
+    implant of one cell are meant to land on the same shapes in the next cell.
+    The last site of the row has nothing on its outer side. An
+    <strong>endcap</strong> is a cell placed at that edge so those shapes still
+    have a neighbor.
+  </p>
+  <p>
+    It is not a logic gate, and it is not the spacer that fills a hole in the
+    middle of the row (<a href="fill_cells.html">lesson 47</a>). The spacer
+    continues a row that already has cells on both sides. The endcap is the
+    cell that is allowed to be the last one.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Both ends of one row. The flow's endcap cell
+      is decap_3, three sites wide. Logic sits between the two
+      ends. The drawing shows both ends because that is the job. A placed chip
+      was not measured for this figure."><rect x="40" y="50" width="660" height="90" fill="#f7f9fb" stroke="#718096"></rect><rect x="48" y="58" width="120" height="74" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect><text x="108" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">decap_3</text><text x="108" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a">3 sites</text><rect x="176" y="58" width="70" height="74" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="211" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">inv</text><text x="211" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a"></text><rect x="254" y="58" width="90" height="74" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="299" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">nand</text><text x="299" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a"></text><rect x="352" y="58" width="110" height="74" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="407" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">flop</text><text x="407" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a"></text><rect x="470" y="58" width="70" height="74" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="505" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">inv</text><text x="505" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a"></text><rect x="548" y="58" width="120" height="74" fill="#fff" stroke="#1e9e50" stroke-width="2"></rect><text x="608" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1e9e50">decap_3</text><text x="608" y="114" text-anchor="middle" font-size="11" fill="#5c6b7a">3 sites</text><text x="370" y="175" text-anchor="middle" font-size="13" fill="#5c6b7a">endcap is decap_3, not a cell named endcap</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Both ends of one row.</strong> The flow's endcap cell
+      is <code>decap_3</code>, three sites wide. Logic sits between the two
+      ends. The drawing shows both ends because that is the job. A placed chip
+      was not measured for this figure.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. In this library the endcap is <code>decap_3</code></h2>
+  <p>
+    Searching this library for a cell named <code>endcap</code> does not find one.
+    The historical OpenLane config sets
+  </p>
+  <p style="text-align:center"><code>FP_ENDCAP_CELL sky130_fd_sc_hd__decap_3</code></p>
+  <p>
+    <code>decap_3</code> is class <code>CORE</code>, site <code>unithd</code>,
+    <code>SIZE 1.380 BY 2.720</code>. Three sites. Same outline as
+    <code>inv_1</code>. The schematic is two MOS capacitors, both  the same
+    widths on every decap in the family
+    (<a href="decap.html">lesson 52</a>):
+  </p>
+  <ul>
+    <li>High-Vt PMOS, 0.87&nbsp;µm wide, 0.59&nbsp;µm long. Gate on <code>VGND</code>. Both channel ends on <code>VPWR</code>.</li>
+    <li>NMOS, 0.55&nbsp;µm wide, 0.59&nbsp;µm long. Gate on <code>VPWR</code>. Both channel ends on <code>VGND</code>.</li>
+  </ul>
+  <p>
+    Logic transistors in this library are 0.15&nbsp;µm long. This channel is
+    0.59&nbsp;µm. The cell is a capacitor between the rails, and it is also the
+    cell the flow drops at the end of the row. It is one row tall on
+    <code>unithd</code>, so it abuts the logic cell beside it.
+  </p>
+
+  <p>
+      The decap-insertion setting names a family, not the row-end master.
+    In the current <a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">LibreLane example</a>, <code>DECAP_CELLS</code> uses
+    <code>sky130_fd_sc_hd__decap*</code>, while <code>ENDCAP_CELL</code> names one master. The endcap line is the one that names <code>decap_3</code>
+      exactly. Lesson 52 is the family. This page is only the row-end use.
+    </p>
+    <p>
+      Whether <code>decap_3</code> has special boundary geometry — boundary poly, a drawn well edge, an implant that stops inside the cell — is a layout question answered by its GDS. The configuration, the LEF outline and the schematic establish which cell is used, its size and its two devices.
+    </p>
+    <p>
+      Three sites is 1.38&nbsp;µm. A row whose width is an integer number of
+      0.46&nbsp;µm sites can hold that cell on the end and still land on the
+      grid. How many endcaps the placer actually drops, and whether both ends
+      get one, is the placer's rule. The config names the cell.
+    </p>
+  
+
+
+    <h2 id="section-3">3. The rail and the well do not start at the first logic cell</h2>
+  <p>
+    <code>decap_3</code> at each end of the row is a full template: met1 rails, well, and the edge contract from <a href="cell_template.html">lesson 17</a>. The first logic cell then abuts another legal edge, on the left as well as on the right.
+  </p>
+  <p>
+    The rail the logic cell uses is the same stripe that runs through the endcap. Removing a required endcap changes the boundary conditions assumed by the flow.
+    Whether a particular exposed edge is legal must be decided by the approved boundary cells
+    and DRC rules; ordinary abutment by itself is not proof of a legal row termination. The row picture in section 1 is this stripe, seen from above.
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Metal 1 continuing from decap_3 into the logic cells. Both rails are one stripe.">
+<rect x="40" y="36" width="660" height="14" rx="0" fill="#c0564a" stroke="#c0564a" stroke-width="0"></rect>
+<rect x="40" y="150" width="660" height="14" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<rect x="50" y="50" width="140" height="100" rx="0" fill="#f2f7f2" stroke="#1e9e50" stroke-width="2"></rect>
+<text x="120" y="104" text-anchor="middle" font-size="14" font-weight="700" fill="#1e9e50">decap_3</text>
+<rect x="190" y="50" width="120" height="100" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<text x="250" y="104" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">inv</text>
+<rect x="310" y="50" width="140" height="100" rx="0" fill="#fff" stroke="#33414f" stroke-width="1.5"></rect>
+<text x="380" y="104" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">nand</text>
+<text x="370" y="190" text-anchor="middle" font-size="13" fill="#33414f">The metal-1 rail does not start at the first logic cell</text>
+<text x="370" y="212" text-anchor="middle" font-size="13" fill="#5c6b7a">The endcap is the legal neighbor on that edge</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — met1 continuing from <code>decap_3</code> into the logic cells. Both rails are one stripe.</strong></figcaption>
+  </figure>
+
+<h2 id="section-4">4. Row fragments matter as much as the outside edge</h2>
+<p>A macro or placement blockage can split one row into several fragments. Each relevant boundary may need termination, including the new edges beside the macro. The endcap rule follows the remaining row geometry; it is not just “two cells per chip.” <a href="https://openroad.readthedocs.io/en/latest/main/src/tap/README.html">OpenROAD’s tap/endcap insertion</a> handles row cutting and boundary placement.</p>
+<table><thead><tr><th>Physical cell</th><th>Job</th><th>What it does not automatically establish</th></tr></thead><tbody><tr><td>Endcap</td><td class="n">Legal row boundary in a specified flow</td><td class="n">Interior tap coverage or enough local decoupling</td></tr><tr><td>Well tap</td><td class="n">Contact to well/substrate</td><td class="n">Every boundary pattern is terminated</td></tr><tr><td>Decap</td><td class="n">Supply capacitance</td><td class="n">An arbitrary decap is an approved endcap</td></tr><tr><td>Filler</td><td class="n">Continue the row template across a gap</td><td class="n">A legal exterior boundary in every library</td></tr></tbody></table>
+<p><strong>Worked example:</strong> if a placement region contains 100 independent row fragments and this flow inserts one <code>decap_3</code> at each end, the reservation is <code>100 × 2 × 3 = 600</code> sites. At <code>0.46 × 2.72&nbsp;µm²</code> per site, that is 750.72&nbsp;µm². The count is assumed; it must be taken from the actual row-fragment geometry in a design.</p>
+<p><strong>Analog ↔ digital:</strong> a wide analog macro changes the nearby digital row boundaries. Its placement halo and well arrangement can affect endcaps, taps, routing access, and supply continuity together.</p><details class="checkpoint"><summary>Check your understanding — May any same-size decap replace the endcap?</summary><p>No. Matching the outline is necessary for placement, but the approved edge pattern, orientation, well/implant geometry, and flow/library rules also matter.</p></details>
+<details class="checkpoint"><summary>Check your understanding — a macro splits a row into two fragments. How many endcaps does that row need?</summary><p>Four: one at each end of each fragment. The cells beside the macro have no neighbor either, so the fragment ends need terminating exactly like the outer edges of the core.</p></details><div class="takeaways">
+    <h2 id="section-5">Key takeaways</h2>
+    <ul>
+      <li>An endcap is the cell at the outer edge of a row, so the rail and the well still have a neighbor.</li>
+      <li>This library has no cell named endcap. The LibreLane configuration uses <code>decap_3</code>.</li>
+      <li><code>decap_3</code> is 3 sites, 1.38 × 2.72&nbsp;µm, class <code>CORE</code>.</li>
+      <li>Its devices are a 0.87&nbsp;µm high-Vt PMOS and a 0.55&nbsp;µm NMOS, both 0.59&nbsp;µm long, wired as capacitors between the rails.</li>
+      <li>Boundary geometry inside <code>decap_3</code> is a layout (GDS) question; the configuration, LEF and schematic establish the cell, its size and its devices.</li>
+          <li>The endcap continues the rail and gives the first logic cell a legal neighbor on its outer edge.</li>
+    </ul>
+  </div>
+
+
+<section class="sources" id="sources"><h2 id="section-6">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. HD revision ac7fb61f and open-pdks c6df28c1 are the examples. The lesson does not certify every GDS boundary orientation or derive a universal endcap requirement.</p><ol>
+<li><a href="https://github.com/fossi-foundation/open-pdks/blob/c6df28c1fccb05c286aa0a15e9c4c7dcd8502607/sky130/librelane/sky130_fd_sc_hd/config.tcl">Pinned open-pdks configuration — ENDCAP_CELL and DECAP_CELLS.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.lef">decap_3 physical abstract.</a></li>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap_3.spice">decap_3 transistor connections and dimensions.</a></li>
+<li><a href="https://openroad.readthedocs.io/en/latest/main/src/tap/README.html">OpenROAD boundary and tap-cell insertion.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html" aria-current="page">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="well_taps.html"><small>← Previous</small>Well Taps and Latch-up</a><a href="tie_cells.html"><small>Next →</small>Tie Cells</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  s += `<rect x="40" y="50" width="660" height="90" fill="#f7f9fb" stroke="${GD}"/>`;
+  function block(x, w, label, color, sub) {
+    s += `<rect x="${x}" y="58" width="${w}" height="74" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+    s += txt(x + w / 2, 92, label, {b: true, s: 13, c: color});
+    s += txt(x + w / 2, 114, sub, {s: 11, c: '#5c6b7a'});
+  }
+  block(48, 120, 'decap_3', CAP, '3 sites');
+  block(176, 70, 'inv', DK, '');
+  block(254, 90, 'nand', DK, '');
+  block(352, 110, 'flop', DK, '');
+  block(470, 70, 'inv', DK, '');
+  block(548, 120, 'decap_3', CAP, '3 sites');
+  s += txt(370, 175, 'endcap is decap_3, not a cell named endcap', {s: 13, c: '#5c6b7a'});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

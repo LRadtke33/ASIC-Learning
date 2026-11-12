@@ -1,0 +1,400 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metal Layers, Vias &amp; the Stackup</title>
+<style>
+.legend {display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: #33414f; margin: 8px 0 0;}
+.legend span {display: inline-flex; align-items: center; gap: 6px;}
+.sw {display: inline-block; width: 22px; height: 10px; border-radius: 2px;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 15 / 84 · Part III, Standard-cell layout</p><h1>Metal Layers, Vias &amp; the Stackup</h1>
+  <p class="subtitle">How wires are built in layers above the transistors, how vias connect them, and how to read a top-down layout view.</p>
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Read the SKY130 routing stack (li1, met1–met5) and the job of each layer.</li><li>Apply the via rules: adjacent layers only, enclosure on both sides, and via arrays for current.</li><li>Read a top-down layout view and relate it to a cross-section.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Used by <a href="design_flow.html#step-4">step 4, floorplan and power grid</a> for power, <a href="design_flow.html#step-7">step 7, routing</a> for signals and <a href="design_flow.html#step-8">step 8, extraction and timing</a> for extraction.</dd><dt>Tools</dt><dd>The technology LEF tells OpenROAD each layer’s direction, pitch and resistance; KLayout and Magic show the layers.</dd><dt>Why it matters</dt><dd>The layer a wire uses sets its resistance, capacitance and current limit.</dd></dl></aside><h2 id="section-1">1. The stackup</h2>
+  <p>
+    <a href="fabrication_layers.html">Lesson 3</a> showed how a SKY130 die is built in layers, with the official stack diagram and thicknesses. This lesson reads the same stack the way routing and layout tools do. In this course li1 and met1–met5 are the SKY130 layer names; generic teaching diagrams label the same idea M1, M2 and so on. This ordered list of layers — how many metals, how thick
+    each one is, what the minimum width and spacing are on each — is called the
+    <strong>stackup</strong>. It is defined by the foundry process; a design picks one of the
+    offered metal options (for example, a "6-metal stackup") and every tool, from the router to
+    the extractor, works from that definition.
+  </p>
+  <p>
+    A common pattern is that <strong>upper routing layers are thicker and permit wider wires</strong>.
+    Adjacent layers can have the same thickness, and width is still a design choice within the rules.
+    The lowest metals are thin and packed at a fine pitch — perfect for the millions of short,
+    local connections between neighboring cells. The top metals are much thicker, so they have
+    far lower resistance — that's where long routes, clocks, and the
+    <a href="power_grid.html">power grid</a> live. It's a highway system: many small streets at
+    the bottom, a few wide freeways on top.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 680 315" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — Cross-section of the SKY130 example: local interconnect plus five metals (not to scale). Each metal
+      layer is a set of wires at one height; you're looking at them end-on, so each wire is a
+      small rectangle. Dielectric fills all the space between. On the right, a single connection
+      climbs the whole stack: diffusion/poly → licon → li1 → mcon → met1 → via → met2 → … → met5. Above the top metal
+      come the passivation layer and the pads/bumps that connect the die to the package."><rect x="72" y="72" width="408" height="180" fill="#f7f4ed"></rect><rect x="72" y="252" width="408" height="42" fill="#e8e0d2"></rect><text x="236" y="285" text-anchor="middle" font-size="11" fill="#7d7259">silicon substrate &amp; transistors</text><text x="88" y="247" font-size="10" font-style="italic" fill="#8a7d5c">dielectric fills everything in between</text><rect x="408" y="254" width="44" height="12" fill="#b09468" stroke="#8a7048" stroke-width="1"></rect><text x="430" y="280" text-anchor="middle" font-size="10" fill="#7d7259">transistor</text><rect x="425" y="236" width="10" height="16" fill="#2c3540"></rect><text x="74" y="248" text-anchor="end" font-size="9.5" fill="#7a8794">licon</text><rect x="84" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="102" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="120" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="138" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="156" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="174" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="192" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="210" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="228" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="246" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="264" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="282" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="300" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="318" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="336" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="354" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="372" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="390" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="408" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="426" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="444" y="229" width="8" height="7" fill="#7a4ea3"></rect><rect x="426" y="229" width="8" height="7" fill="#7a4ea3"></rect><text x="74" y="236.5" text-anchor="end" font-size="11" font-weight="700" fill="#7a4ea3">li1</text><rect x="424" y="216" width="12" height="13" fill="#2c3540"></rect><text x="74" y="226" text-anchor="end" font-size="9.5" fill="#7a8794">mcon</text><rect x="84" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="102" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="120" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="138" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="156" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="174" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="192" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="210" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="228" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="246" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="264" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="282" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="300" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="318" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="336" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="354" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="372" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="390" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="408" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="426" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="444" y="207" width="8" height="9" fill="#4a72c4"></rect><rect x="426" y="207" width="8" height="9" fill="#4a72c4"></rect><text x="74" y="215.5" text-anchor="end" font-size="11" font-weight="700" fill="#4a72c4">met1</text><rect x="424" y="194" width="12" height="13" fill="#2c3540"></rect><text x="74" y="204" text-anchor="end" font-size="9.5" fill="#7a8794">via</text><rect x="84" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="104" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="124" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="144" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="164" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="184" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="204" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="224" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="244" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="264" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="284" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="304" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="324" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="344" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="364" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="384" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="404" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="424" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="444" y="185" width="9" height="9" fill="#e0862e"></rect><rect x="425.5" y="185" width="9" height="9" fill="#e0862e"></rect><text x="74" y="193.5" text-anchor="end" font-size="11" font-weight="700" fill="#e0862e">met2</text><rect x="424" y="172" width="12" height="13" fill="#2c3540"></rect><text x="74" y="182" text-anchor="end" font-size="9.5" fill="#7a8794">via2</text><rect x="84" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="120" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="156" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="192" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="228" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="264" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="300" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="336" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="372" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="408" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="444" y="157" width="16" height="15" fill="#2e9e9e"></rect><rect x="422" y="157" width="16" height="15" fill="#2e9e9e"></rect><text x="74" y="168.5" text-anchor="end" font-size="11" font-weight="700" fill="#2e9e9e">met3</text><rect x="424" y="144" width="12" height="13" fill="#2c3540"></rect><text x="74" y="154" text-anchor="end" font-size="9.5" fill="#7a8794">via3</text><rect x="84" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="120" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="156" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="192" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="228" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="264" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="300" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="336" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="372" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="408" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="444" y="129" width="16" height="15" fill="#9b59b6"></rect><rect x="422" y="129" width="16" height="15" fill="#9b59b6"></rect><text x="74" y="140.5" text-anchor="end" font-size="11" font-weight="700" fill="#9b59b6">met4</text><rect x="424" y="116" width="12" height="13" fill="#2c3540"></rect><text x="74" y="126" text-anchor="end" font-size="9.5" fill="#7a8794">via4</text><rect x="84" y="92" width="34" height="24" fill="#58a55c"></rect><rect x="156" y="92" width="34" height="24" fill="#58a55c"></rect><rect x="228" y="92" width="34" height="24" fill="#58a55c"></rect><rect x="300" y="92" width="34" height="24" fill="#58a55c"></rect><rect x="372" y="92" width="34" height="24" fill="#58a55c"></rect><rect x="413" y="92" width="34" height="24" fill="#58a55c"></rect><text x="74" y="108" text-anchor="end" font-size="11" font-weight="700" fill="#58a55c">met5</text><line x1="486" y1="185" x2="486" y2="236" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="185" x2="486" y2="185" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="236" x2="486" y2="236" stroke="#7a8794" stroke-width="1.2"></line><text x="494" y="208.5" font-size="10.5" fill="#33414f">fine local wiring</text><text x="494" y="222.5" font-size="10.5" fill="#33414f">li1 then met1–met2</text><line x1="486" y1="129" x2="486" y2="172" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="129" x2="486" y2="129" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="172" x2="486" y2="172" stroke="#7a8794" stroke-width="1.2"></line><text x="494" y="148.5" font-size="10.5" fill="#33414f">met3–met4</text><text x="494" y="162.5" font-size="10.5" fill="#33414f">clock, signals, power</text><line x1="486" y1="92" x2="486" y2="116" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="92" x2="486" y2="92" stroke="#7a8794" stroke-width="1.2"></line><line x1="482" y1="116" x2="486" y2="116" stroke="#7a8794" stroke-width="1.2"></line><text x="494" y="102" font-size="10.5" fill="#33414f">met5 — top routing</text><text x="494" y="116" font-size="10.5" fill="#33414f">pad access and power</text><text x="276" y="64" text-anchor="middle" font-size="10.5" font-style="italic" fill="#7a8794">… passivation and pads/bumps above the top metal</text></svg></div>
+    <figcaption>
+      <strong>Figure 1 — Cross-section of the SKY130 example: local interconnect plus five metals (not to scale).</strong> Each metal
+      layer is a set of wires at one height; you're looking at them end-on, so each wire is a
+      small rectangle. Dielectric fills all the space between. On the right, a single connection
+      climbs the whole stack: diffusion/poly → licon → li1 → mcon → met1 → via → met2 → … → met5. Above the top metal
+      come the passivation layer and the pads/bumps that connect the die to the package.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-2">2. What each layer is used for</h2>
+  <table>
+<thead><tr><th>SKY130 conductor</th><th>Example role</th><th>What to watch</th></tr></thead>
+<tbody><tr><td>li1</td><td class="n">Local transistor and cell connections; many HD signal pins</td><td class="n">High sheet resistance; not a long-distance signal layer</td></tr>
+<tr><td>met1–met2</td><td class="n">Cell rails, pin access, local routes</td><td class="n">Fine pitch; via enclosure and pin access matter</td></tr>
+<tr><td>met3–met4</td><td class="n">Longer signals, clocks, and power straps</td><td class="n">Trade routing capacity against resistance and coupling</td></tr>
+<tr><td>met5</td><td class="n">Wide power routes and pad connections</td><td class="n">Coarse pitch and large minimum width in this HD routing LEF</td></tr></tbody></table>
+  <p>
+    Remember from <a href="power_grid.html">lesson 14</a> that each layer also has a preferred
+    routing direction, alternating horizontal/vertical as you go up, and its own routing grid.
+    The coarser pitch of the upper layers means wider track spacing. Preferred directions are
+    routing conventions in the technology file, not a physical ban on a legal jog in the other
+    direction. This lesson uses the HD routing LEF's <code>li1</code> plus <code>met1–met5</code>;
+    other process options and PDK files can describe additional structures. <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">[HD technology LEF]</a>
+  </p>
+
+  <h2 id="section-3">3. Vias: the vertical connections</h2>
+  <p>
+    A <strong>via</strong> is a small hole etched in the dielectric between two metal layers and
+    filled with conductor. This generic diagram calls the adjacent-metal cuts V1 and V2;
+    the corresponding SKY130 layer names are <code>via</code> and <code>via2</code>. <code>V1</code> connects M1 to M2,
+    <code>V2</code> connects M2 to M3, and so on. In this SKY130 stack the bottom path is more explicit: <code>licon</code> joins
+    diffusion or poly to <code>li1</code>, then <code>mcon</code> joins <code>li1</code> to <code>met1</code>. Three rules cover most of what matters:
+  </p>
+  <ul>
+    <li><strong>These process vias connect adjacent conductors.</strong> To get from M1 to M3 you need a
+        <em>stacked via</em>: V1, a small landing pad on M2, then V2. You pass through every layer
+        on the way — there is no express elevator.</li>
+    <li><strong>A via must be enclosed by metal on both layers.</strong> Each layer needs a shape
+        (a wire or a landing pad) overlapping the via, with a required margin of metal around it —
+        the enclosure rule.</li>
+    <li><strong>Vias are resistive.</strong> A single via is a narrow constriction, so power nets
+        and other high-current connections use <em>via arrays</em> — many vias in parallel — like
+        the dark squares in lesson 14's power grid.</li>
+  </ul>
+
+  <figure>
+    <div class="figwrap" id="fig2"><svg viewBox="0 0 700 185" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Via anatomy (cross-sections). Left: a single V1 joining an M1
+      wire to an M2 wire. Middle: a stacked via from M1 to M3 — note the M2 landing pad that must
+      exist even though M2 isn't &quot;used&quot; for routing here. Right: a via array between two power
+      straps — parallel vias share the current and lower the resistance."><text x="125" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">single via</text><rect x="35" y="46" width="180" height="90" fill="#f7f4ed"></rect><rect x="45" y="58" width="160" height="10" fill="#e0862e"></rect><text x="210" y="66" font-size="10.5" font-weight="700" fill="#e0862e">M2</text><rect x="119" y="68" width="12" height="14" fill="#2c3540"></rect><text x="137" y="80" font-size="10.5" font-weight="700" fill="#2c3540">V1</text><rect x="65" y="82" width="120" height="10" fill="#4a72c4"></rect><text x="210" y="91" font-size="10.5" font-weight="700" fill="#4a72c4">M1</text><text x="125" y="158" text-anchor="middle" font-size="10.5" fill="#5c6b7a">a metal-filled hole joining two</text><text x="125" y="172" text-anchor="middle" font-size="10.5" fill="#5c6b7a">adjacent layers</text><text x="355" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">stacked via (M1 → M3)</text><rect x="265" y="36" width="180" height="106" fill="#f7f4ed"></rect><rect x="275" y="44" width="160" height="10" fill="#2e9e9e"></rect><text x="440" y="53" font-size="10.5" font-weight="700" fill="#2e9e9e">M3</text><rect x="349" y="54" width="12" height="14" fill="#2c3540"></rect><text x="367" y="66" font-size="10.5" font-weight="700" fill="#2c3540">V2</text><rect x="327" y="68" width="56" height="10" fill="#e0862e"></rect><text x="389" y="77" font-size="10.5" font-weight="700" fill="#e0862e">M2 landing pad</text><rect x="349" y="78" width="12" height="14" fill="#2c3540"></rect><text x="367" y="90" font-size="10.5" font-weight="700" fill="#2c3540">V1</text><rect x="285" y="92" width="140" height="10" fill="#4a72c4"></rect><text x="440" y="101" font-size="10.5" font-weight="700" fill="#4a72c4">M1</text><text x="355" y="158" text-anchor="middle" font-size="10.5" fill="#5c6b7a">no express elevator: a landing pad</text><text x="355" y="172" text-anchor="middle" font-size="10.5" fill="#5c6b7a">on every layer passed through</text><text x="585" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">via array</text><rect x="495" y="46" width="180" height="90" fill="#f7f4ed"></rect><rect x="505" y="56" width="160" height="14" fill="#58a55c"></rect><text x="670" y="67" font-size="10.5" font-weight="700" fill="#58a55c">M5</text><rect x="527" y="70" width="12" height="14" fill="#2c3540"></rect><rect x="559" y="70" width="12" height="14" fill="#2c3540"></rect><rect x="591" y="70" width="12" height="14" fill="#2c3540"></rect><rect x="623" y="70" width="12" height="14" fill="#2c3540"></rect><rect x="505" y="84" width="160" height="14" fill="#9b59b6"></rect><text x="670" y="95" font-size="10.5" font-weight="700" fill="#9b59b6">M4</text><text x="585" y="158" text-anchor="middle" font-size="10.5" fill="#5c6b7a">vias in parallel share current —</text><text x="585" y="172" text-anchor="middle" font-size="10.5" fill="#5c6b7a">used on power nets</text></svg></div>
+    <figcaption>
+      <strong>Figure 2 — Via anatomy (cross-sections).</strong> Left: a single V1 joining an M1
+      wire to an M2 wire. Middle: a stacked via from M1 to M3 — note the M2 landing pad that must
+      exist even though M2 isn't "used" for routing here. Right: a via array between two power
+      straps — parallel vias share the current and lower the resistance.
+    </figcaption>
+  </figure>
+
+  <h2 id="section-4">4. Looking down: how layout is viewed and drawn</h2>
+  <p>
+    Layout editors usually show the layout <strong>from directly above</strong>,
+    looking down through the whole stack as if every layer were transparent. Each layer gets its
+    own color and fill pattern, and all layers are drawn overlapping in one 2-D picture — every
+    figure in lessons <a href="site_rows.html">13</a> and <a href="power_grid.html">14</a> was exactly this kind of view. You never <em>see</em> depth; you
+    <em>read</em> it from the layer colors. A teal wire crossing an orange wire isn't touching it —
+    they're on different floors, and they only connect where a via is drawn.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig3"><svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — The same net, top-down and in cross-section. Left: the layout
+      view. The net goes pin&nbsp;A (M1) → V1 → up an M2 wire → V2 (via&nbsp;A) → across an M3 wire
+      → V2 (via&nbsp;B) → down an M2 wire → V1 → pin&nbsp;B. Right: a cross-section cut along the
+      line X–X′, which runs along the M3 wire. The M3 wire appears as a long bar; the two M2 wires
+      cross the cut so they appear as small end-on rectangles, joined to M3 by the two vias. The
+      M1 pins don't appear at all — they're not on this cut. What a cross-section shows depends
+      entirely on where you cut; the top-down view is the complete picture."><text x="180" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">top-down view (what the layout tool shows)</text><line x1="54" y1="46" x2="54" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="90" y1="46" x2="90" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="126" y1="46" x2="126" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="162" y1="46" x2="162" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="198" y1="46" x2="198" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="234" y1="46" x2="234" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="270" y1="46" x2="270" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="306" y1="46" x2="306" y2="256" stroke="#e0862e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="64" x2="320" y2="64" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="100" x2="320" y2="100" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="136" x2="320" y2="136" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="172" x2="320" y2="172" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="208" x2="320" y2="208" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><line x1="40" y1="244" x2="320" y2="244" stroke="#2e9e9e" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"></line><rect x="85" y="100" width="10" height="110" fill="#e0862e"></rect><rect x="265" y="100" width="10" height="70" fill="#e0862e"></rect><rect x="90" y="95" width="180" height="10" fill="#2e9e9e"></rect><rect x="82" y="202" width="16" height="16" fill="#4a72c4"></rect><rect x="86" y="206" width="8" height="8" fill="#2c3540"></rect><text x="90" y="232" text-anchor="middle" font-size="10.5" fill="#33414f">pin A (M1)</text><rect x="262" y="162" width="16" height="16" fill="#4a72c4"></rect><rect x="266" y="166" width="8" height="8" fill="#2c3540"></rect><text x="270" y="192" text-anchor="middle" font-size="10.5" fill="#33414f">pin B (M1)</text><rect x="84" y="94" width="12" height="12" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><rect x="264" y="94" width="12" height="12" fill="#2c3540" stroke="#fff" stroke-width="1"></rect><text x="78" y="88" text-anchor="end" font-size="10.5" fill="#33414f">via A</text><text x="282" y="88" font-size="10.5" fill="#33414f">via B</text><text x="102" y="155" font-size="10.5" font-weight="600" fill="#e0862e">M2</text><text x="180" y="122" text-anchor="middle" font-size="10.5" font-weight="600" fill="#2e9e9e">M3</text><line x1="40" y1="100" x2="320" y2="100" stroke="#26313c" stroke-width="1.2" stroke-dasharray="8 5"></line><text x="32" y="104" text-anchor="end" font-size="12" font-weight="700" fill="#26313c">X</text><text x="328" y="104" font-size="12" font-weight="700" fill="#26313c">X′</text><text x="534.4" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">cross-section along X–X′</text><rect x="400" y="60" width="268.79999999999995" height="120" fill="#f7f4ed"></rect><text x="392" y="92" text-anchor="end" font-size="10.5" font-weight="700" fill="#2e9e9e">M3</text><text x="392" y="116" text-anchor="end" font-size="10.5" font-weight="700" fill="#e0862e">M2</text><text x="392" y="140" text-anchor="end" font-size="10.5" fill="#b8c1ca">M1</text><rect x="448" y="84" width="172.79999999999995" height="10" fill="#2e9e9e"></rect><rect x="442" y="94" width="12" height="14" fill="#2c3540"></rect><rect x="441" y="108" width="14" height="10" fill="#e0862e"></rect><text x="448" y="134" text-anchor="middle" font-size="10" fill="#33414f">via A</text><rect x="614.8" y="94" width="12" height="14" fill="#2c3540"></rect><rect x="613.8" y="108" width="14" height="10" fill="#e0862e"></rect><text x="620.8" y="134" text-anchor="middle" font-size="10" fill="#33414f">via B</text><text x="534.4" y="166" text-anchor="middle" font-size="10" font-style="italic" fill="#7a8794">M1 pins are not on this cut, so they don't appear</text><text x="402" y="76" font-size="12" font-weight="700" fill="#26313c">X</text><text x="666.8" y="76" text-anchor="end" font-size="12" font-weight="700" fill="#26313c">X′</text><text x="534.4" y="216" text-anchor="middle" font-size="10.5" fill="#5c6b7a">the two M2 wires appear end-on: small</text><text x="534.4" y="231" text-anchor="middle" font-size="10.5" fill="#5c6b7a">rectangles, one metal level below M3</text></svg></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#4a72c4"></span> M1 (pins)</span>
+      <span><span class="sw" style="background:#e0862e"></span> M2 (vertical)</span>
+      <span><span class="sw" style="background:#2e9e9e"></span> M3 (horizontal)</span>
+      <span><span class="sw" style="background:#2c3540;width:10px"></span> via</span>
+    </div>
+    <figcaption>
+      <strong>Figure 3 — The same net, top-down and in cross-section.</strong> Left: the layout
+      view. The net goes pin&nbsp;A (M1) → V1 → up an M2 wire → V2 (via&nbsp;A) → across an M3 wire
+      → V2 (via&nbsp;B) → down an M2 wire → V1 → pin&nbsp;B. Right: a cross-section cut along the
+      line X–X′, which runs along the M3 wire. The M3 wire appears as a long bar; the two M2 wires
+      cross the cut so they appear as small end-on rectangles, joined to M3 by the two vias. The
+      M1 pins don't appear at all — they're not on this cut. What a cross-section shows depends
+      entirely on where you cut; the top-down view is the complete picture.
+    </figcaption>
+  </figure>
+
+    <h2 id="section-5">5. The routing abstraction stops at met5</h2>
+  <p>
+    Figure 1 and the high-density tech LEF use the same routing stack: local interconnect plus five metals: <code>li1</code>, then <code>met1</code> through <code>met5</code>.
+  </p>
+  <p>
+    Direction and pitch are the routing grid. On a vertical layer the first pitch number is the spacing of the vertical tracks. <code>li1</code> is <code>PITCH 0.46 0.34</code>, so its track pitch is the same 0.46&nbsp;µm as the site width. Minimum width is the <code>WIDTH</code> line. Thickness is in the same layer block, and it is why the upper metals are less resistive per square (<a href="parasitics.html">lesson 28</a>).
+  </p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 190" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — Direction, pitch, and minimum width from sky130_fd_sc_hd tech LEF. Bar thickness in the drawing is only enough to tell the layers apart.">
+<text x="370" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">Preferred direction, pitch, minimum width</text>
+<rect x="40" y="36" width="280" height="22" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<text x="36" y="57" text-anchor="end" font-size="12" font-weight="700" fill="#4a72c4">met5</text>
+<text x="360" y="57" text-anchor="start" font-size="12" fill="#33414f">horizontal</text>
+<text x="500" y="57" text-anchor="start" font-size="12" fill="#33414f">3.40</text>
+<text x="640" y="57" text-anchor="start" font-size="12" fill="#33414f">1.60 µm</text>
+<rect x="40" y="66" width="280" height="14" rx="0" fill="#7a4ea3" stroke="#7a4ea3" stroke-width="0"></rect>
+<text x="36" y="79" text-anchor="end" font-size="12" font-weight="700" fill="#7a4ea3">met4</text>
+<text x="360" y="79" text-anchor="start" font-size="12" fill="#33414f">vertical</text>
+<text x="500" y="79" text-anchor="start" font-size="12" fill="#33414f">0.92</text>
+<text x="640" y="79" text-anchor="start" font-size="12" fill="#33414f">0.30 µm</text>
+<rect x="40" y="88" width="280" height="14" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<text x="36" y="101" text-anchor="end" font-size="12" font-weight="700" fill="#4a72c4">met3</text>
+<text x="360" y="101" text-anchor="start" font-size="12" fill="#33414f">horizontal</text>
+<text x="500" y="101" text-anchor="start" font-size="12" fill="#33414f">0.68</text>
+<text x="640" y="101" text-anchor="start" font-size="12" fill="#33414f">0.30 µm</text>
+<rect x="40" y="110" width="280" height="10" rx="0" fill="#7a4ea3" stroke="#7a4ea3" stroke-width="0"></rect>
+<text x="36" y="119" text-anchor="end" font-size="12" font-weight="700" fill="#7a4ea3">met2</text>
+<text x="360" y="119" text-anchor="start" font-size="12" fill="#33414f">vertical</text>
+<text x="500" y="119" text-anchor="start" font-size="12" fill="#33414f">0.46</text>
+<text x="640" y="119" text-anchor="start" font-size="12" fill="#33414f">0.14 µm</text>
+<rect x="40" y="128" width="280" height="10" rx="0" fill="#4a72c4" stroke="#4a72c4" stroke-width="0"></rect>
+<text x="36" y="137" text-anchor="end" font-size="12" font-weight="700" fill="#4a72c4">met1</text>
+<text x="360" y="137" text-anchor="start" font-size="12" fill="#33414f">horizontal</text>
+<text x="500" y="137" text-anchor="start" font-size="12" fill="#33414f">0.34</text>
+<text x="640" y="137" text-anchor="start" font-size="12" fill="#33414f">0.14 µm</text>
+<rect x="40" y="146" width="280" height="8" rx="0" fill="#7a4ea3" stroke="#7a4ea3" stroke-width="0"></rect>
+<text x="36" y="153" text-anchor="end" font-size="12" font-weight="700" fill="#7a4ea3">li1</text>
+<text x="360" y="153" text-anchor="start" font-size="12" fill="#33414f">vertical</text>
+<text x="500" y="153" text-anchor="start" font-size="12" fill="#33414f">0.46 x 0.34</text>
+<text x="640" y="153" text-anchor="start" font-size="12" fill="#33414f">0.17 µm</text>
+<text x="500" y="178" text-anchor="middle" font-size="11" fill="#5c6b7a">pitch, µm</text>
+<text x="640" y="178" text-anchor="middle" font-size="11" fill="#5c6b7a">min width</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 4 — Direction, pitch, and minimum width from <code>sky130_fd_sc_hd</code> tech LEF. Bar thickness in the drawing is only enough to tell the layers apart.</strong></figcaption>
+  </figure>
+
+<h2 id="section-6">6. Worked example: a vertical connection has a budget</h2>
+<p>Suppose an extracted cut is <em>assumed</em> to be 2&nbsp;Ω. Four identical cuts in parallel have an ideal resistance of <code>2/4 = 0.5&nbsp;Ω</code>. At 1&nbsp;mA they drop 0.5&nbsp;mV. A stack of three such four-cut arrays has <code>3 × 0.5 = 1.5&nbsp;Ω</code>, before the landing metals. The 2&nbsp;Ω value is a teaching assumption, not a SKY130 via specification. SkyWater’s published extraction table (Table 91 of the PDK documentation) lists 4.5&nbsp;Ω per via cut, 3.41&nbsp;Ω for via2 and via3, 0.38&nbsp;Ω for via4 and 152&nbsp;Ω for mcon; <a href="delay_physics.html">lesson 29</a> compares those values with the ones OpenROAD uses for estimates. Actual arrays need legal enclosure, spacing, current sharing, and extraction.</p>
+<p><strong>Analog ↔ digital:</strong> a signal via affects delay and coupling; a supply via affects reference error, rail droop, and lifetime. Count every vertical transition, including the path from a local-interconnect pin up to the routed metal.</p><details class="checkpoint"><summary>Check your understanding — Can a met1–met3 connection omit met2?</summary><p>Not with the adjacent-layer via stack shown here. It needs met2 landing metal plus both via and via2. The intermediate layer is electrically and geometrically present even when no long route uses it.</p></details>
+<details class="checkpoint"><summary>Check your understanding — why do power straps usually run on met4 and met5 rather than met1?</summary><p>The upper metals are thicker and have lower sheet resistance: 0.047 Ω/□ on met3 and met4 and 0.0285 Ω/□ on met5, against 0.125 Ω/□ on met1 in the HD tech LEF. Long straps therefore lose less voltage, and the lower layers stay free for dense local routing and pin access.</p></details><div class="takeaways">
+    <h2 id="section-7">Key takeaways</h2>
+    <ul>
+      <li>The <strong>stackup</strong> is the foundry-defined ladder of metal + via + dielectric layers above the silicon; the design picks one and every tool works from it.</li>
+      <li>Lower metals: thin, fine pitch, for dense local wiring. Upper metals: thick, low resistance, for long routes, clock, and power.</li>
+      <li>A via connects only <strong>adjacent</strong> layers; going up several layers takes a stacked via with a landing pad on every layer in between.</li>
+      <li>Vias need metal enclosure on both layers and are resistive — power uses via arrays.</li>
+      <li>The usual layout editor view is top-down with layers overlaid; color = layer, and depth is read, not seen. Crossing wires on different layers don't connect unless a via joins them.</li>
+          <li>The HD stack is <code>li1</code> plus met1 through met5. Additional process/package layers are outside this routing abstraction; see <a href="rdl.html">RDL routing</a>.</li>
+    </ul>
+  </div>
+
+<section class="sources" id="sources"><h2 id="section-8">Sources &amp; scope</h2>
+<p>Checked 6 November 2026. Technology values are pinned to HD revision ac7fb61f. Cross-sections are original teaching diagrams, not fabrication drawings. The worked via resistance is assumed.</p><ol>
+<li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/tech/sky130_fd_sc_hd.tlef">HD technology LEF — routing stack, pitch, width, resistance.</a></li>
+<li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/periphery.html">SKY130 periphery rules — process contacts, vias, and layer-specific requirements.</a></li>
+<li><a href="https://skywater-pdk.readthedocs.io/en/main/rules/assumptions.html">SKY130 process stack and assumptions.</a></li>
+</ol></section>
+<details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html" aria-current="page">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="power_grid.html"><small>← Previous</small>The Power Grid &amp; Routing Grids</a><a href="cell_layout.html"><small>Next →</small>Inside a Standard Cell's Layout</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const LIc = '#7a4ea3', M1c = '#4a72c4', M2c = '#e0862e', M3c = '#2e9e9e',
+      M4c = '#9b59b6', M5c = '#58a55c', M6c = '#c0605a',
+      VIAc = '#2c3540', DIEL = '#f7f4ed';
+
+// ---------- Figure 1: stackup cross-section ----------
+(function () {
+  const LAYERS = [
+    { name: 'li1', t: 7, pitch: 18, w: 8, color: LIc },
+    { name: 'met1', t: 9, pitch: 18, w: 8, color: M1c },
+    { name: 'met2', t: 9, pitch: 20, w: 9, color: M2c },
+    { name: 'met3', t: 15, pitch: 36, w: 16, color: M3c },
+    { name: 'met4', t: 15, pitch: 36, w: 16, color: M4c },
+    { name: 'met5', t: 24, pitch: 72, w: 34, color: M5c },
+  ];
+  const X0 = 84, X1 = 468, VIA_X = 430, viaH = 13, contactH = 16;
+  const VW = 680, VH = 315;
+
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  // dielectric background and silicon
+  s += `<rect x="${X0 - 12}" y="72" width="${X1 - X0 + 24}" height="${252 - 72}" fill="${DIEL}"/>`;
+  s += `<rect x="${X0 - 12}" y="252" width="${X1 - X0 + 24}" height="42" fill="#e8e0d2"/>`;
+  s += `<text x="${(X0 + X1) / 2 - 40}" y="285" text-anchor="middle" font-size="11" fill="#7d7259">silicon substrate &amp; transistors</text>`;
+  s += `<text x="${X0 + 4}" y="247" font-size="10" font-style="italic" fill="#8a7d5c">dielectric fills everything in between</text>`;
+
+  // transistor cartoon + contact
+  s += `<rect x="${VIA_X - 22}" y="254" width="44" height="12" fill="#b09468" stroke="#8a7048" stroke-width="1"/>`;
+  s += `<text x="${VIA_X}" y="280" text-anchor="middle" font-size="10" fill="#7d7259">transistor</text>`;
+  s += `<rect x="${VIA_X - 5}" y="${252 - contactH}" width="10" height="${contactH}" fill="${VIAc}"/>`;
+  s += `<text x="${X0 - 10}" y="${252 - contactH / 2 + 4}" text-anchor="end" font-size="9.5" fill="#7a8794">licon</text>`;
+
+  // metals and vias, built bottom-up
+  let y = 252 - contactH;                 // top of contact band
+  const bands = [];
+  for (let i = 0; i < LAYERS.length; i++) {
+    const L = LAYERS[i];
+    y -= L.t;
+    bands.push({ ...L, yTop: y });
+    if (i < LAYERS.length - 1) {
+      y -= viaH;
+      bands.push({ via: ['mcon','via','via2','via3','via4'][i], yTop: y, t: viaH });
+    }
+  }
+  for (const b of bands) {
+    if (b.via) {
+      s += `<rect x="${VIA_X - 6}" y="${b.yTop}" width="12" height="${b.t}" fill="${VIAc}"/>`;
+      s += `<text x="${X0 - 10}" y="${b.yTop + b.t / 2 + 3.5}" text-anchor="end" font-size="9.5" fill="#7a8794">${b.via}</text>`;
+    } else {
+      for (let x = X0; x + b.w <= X1; x += b.pitch)
+        s += `<rect x="${x}" y="${b.yTop}" width="${b.w}" height="${b.t}" fill="${b.color}"/>`;
+      s += `<rect x="${VIA_X - b.w / 2}" y="${b.yTop}" width="${b.w}" height="${b.t}" fill="${b.color}"/>`;
+      s += `<text x="${X0 - 10}" y="${b.yTop + b.t / 2 + 4}" text-anchor="end" font-size="11" font-weight="700" fill="${b.color}">${b.name}</text>`;
+    }
+  }
+
+  // right-side annotations grouping the thickness classes
+  const grp = (top, bot, l1, l2) => {
+    let g = `<line x1="486" y1="${top}" x2="486" y2="${bot}" stroke="#7a8794" stroke-width="1.2"/>`;
+    g += `<line x1="482" y1="${top}" x2="486" y2="${top}" stroke="#7a8794" stroke-width="1.2"/>`;
+    g += `<line x1="482" y1="${bot}" x2="486" y2="${bot}" stroke="#7a8794" stroke-width="1.2"/>`;
+    const mid = (top + bot) / 2;
+    g += `<text x="494" y="${mid - 2}" font-size="10.5" fill="#33414f">${l1}</text>`;
+    g += `<text x="494" y="${mid + 12}" font-size="10.5" fill="#33414f">${l2}</text>`;
+    return g;
+  };
+  const bandOf = n => bands.find(b => b.name === n);
+  s += grp(bandOf('met2').yTop, bandOf('li1').yTop + 7, 'fine local wiring', 'li1 then met1–met2');
+  s += grp(bandOf('met4').yTop, bandOf('met3').yTop + 15, 'met3–met4', 'clock, signals, power');
+  s += grp(bandOf('met5').yTop, bandOf('met5').yTop + 24, 'met5 — top routing', 'pad access and power');
+
+  s += `<text x="${(X0 + X1) / 2}" y="64" text-anchor="middle" font-size="10.5" font-style="italic" fill="#7a8794">… passivation and pads/bumps above the top metal</text>`;
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+
+// ---------- Figure 2: via anatomy ----------
+(function () {
+  const VW = 700, VH = 185;
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  const label = (x, y, txt, color) =>
+    `<text x="${x}" y="${y}" font-size="10.5" font-weight="700" fill="${color}">${txt}</text>`;
+  const cap = (ox, y, txt) =>
+    `<text x="${ox + 110}" y="${y}" text-anchor="middle" font-size="10.5" fill="#5c6b7a">${txt}</text>`;
+  const title = (ox, txt) =>
+    `<text x="${ox + 110}" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">${txt}</text>`;
+
+  // panel A: single via
+  let ox = 15;
+  s += title(ox, 'single via');
+  s += `<rect x="${ox + 20}" y="46" width="180" height="90" fill="${DIEL}"/>`;
+  s += `<rect x="${ox + 30}" y="58" width="160" height="10" fill="${M2c}"/>` + label(ox + 195, 66, 'M2', M2c);
+  s += `<rect x="${ox + 104}" y="68" width="12" height="14" fill="${VIAc}"/>` + label(ox + 122, 80, 'V1', VIAc);
+  s += `<rect x="${ox + 50}" y="82" width="120" height="10" fill="${M1c}"/>` + label(ox + 195, 91, 'M1', M1c);
+  s += cap(ox, 158, 'a metal-filled hole joining two');
+  s += cap(ox, 172, 'adjacent layers');
+
+  // panel B: stacked via M1 -> M3
+  ox = 245;
+  s += title(ox, 'stacked via (M1 → M3)');
+  s += `<rect x="${ox + 20}" y="36" width="180" height="106" fill="${DIEL}"/>`;
+  s += `<rect x="${ox + 30}" y="44" width="160" height="10" fill="${M3c}"/>` + label(ox + 195, 53, 'M3', M3c);
+  s += `<rect x="${ox + 104}" y="54" width="12" height="14" fill="${VIAc}"/>` + label(ox + 122, 66, 'V2', VIAc);
+  s += `<rect x="${ox + 82}" y="68" width="56" height="10" fill="${M2c}"/>` + label(ox + 144, 77, 'M2 landing pad', M2c);
+  s += `<rect x="${ox + 104}" y="78" width="12" height="14" fill="${VIAc}"/>` + label(ox + 122, 90, 'V1', VIAc);
+  s += `<rect x="${ox + 40}" y="92" width="140" height="10" fill="${M1c}"/>` + label(ox + 195, 101, 'M1', M1c);
+  s += cap(ox, 158, 'no express elevator: a landing pad');
+  s += cap(ox, 172, 'on every layer passed through');
+
+  // panel C: via array
+  ox = 475;
+  s += title(ox, 'via array');
+  s += `<rect x="${ox + 20}" y="46" width="180" height="90" fill="${DIEL}"/>`;
+  s += `<rect x="${ox + 30}" y="56" width="160" height="14" fill="${M5c}"/>` + label(ox + 195, 67, 'M5', M5c);
+  for (let k = 0; k < 4; k++)
+    s += `<rect x="${ox + 52 + k * 32}" y="70" width="12" height="14" fill="${VIAc}"/>`;
+  s += `<rect x="${ox + 30}" y="84" width="160" height="14" fill="${M4c}"/>` + label(ox + 195, 95, 'M4', M4c);
+  s += cap(ox, 158, 'vias in parallel share current —');
+  s += cap(ox, 172, 'used on power nets');
+
+  s += `</svg>`;
+  document.getElementById('fig2').innerHTML = s;
+})();
+
+// ---------- Figure 3: top-down view + matching cross-section ----------
+(function () {
+  const VW = 700, VH = 300;
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+
+  // ----- left: top-down -----
+  s += `<text x="180" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">top-down view (what the layout tool shows)</text>`;
+  // faint routing tracks, as in lesson 14
+  for (let x = 54; x <= 306; x += 36)
+    s += `<line x1="${x}" y1="46" x2="${x}" y2="256" stroke="${M2c}" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"/>`;
+  for (let y = 64; y <= 244; y += 36)
+    s += `<line x1="40" y1="${y}" x2="320" y2="${y}" stroke="${M3c}" stroke-width="1" stroke-dasharray="4 4" opacity="0.22"/>`;
+
+  const ax = 90, bx = 270, my = 100, ay = 210, by = 170; // net geometry
+  // M2 verticals
+  s += `<rect x="${ax - 5}" y="${my}" width="10" height="${ay - my}" fill="${M2c}"/>`;
+  s += `<rect x="${bx - 5}" y="${my}" width="10" height="${by - my}" fill="${M2c}"/>`;
+  // M3 horizontal
+  s += `<rect x="${ax}" y="${my - 5}" width="${bx - ax}" height="10" fill="${M3c}"/>`;
+  // M1 pins with V1 vias on them
+  for (const [px, py, name, dy] of [[ax, ay, 'pin A (M1)', 22], [bx, by, 'pin B (M1)', 22]]) {
+    s += `<rect x="${px - 8}" y="${py - 8}" width="16" height="16" fill="${M1c}"/>`;
+    s += `<rect x="${px - 4}" y="${py - 4}" width="8" height="8" fill="${VIAc}"/>`;
+    s += `<text x="${px}" y="${py + dy}" text-anchor="middle" font-size="10.5" fill="#33414f">${name}</text>`;
+  }
+  // vias 1 and 2 at the M2/M3 corners
+  s += `<rect x="${ax - 6}" y="${my - 6}" width="12" height="12" fill="${VIAc}" stroke="#fff" stroke-width="1"/>`;
+  s += `<rect x="${bx - 6}" y="${my - 6}" width="12" height="12" fill="${VIAc}" stroke="#fff" stroke-width="1"/>`;
+  s += `<text x="${ax - 12}" y="${my - 12}" text-anchor="end" font-size="10.5" fill="#33414f">via A</text>`;
+  s += `<text x="${bx + 12}" y="${my - 12}" font-size="10.5" fill="#33414f">via B</text>`;
+  // wire labels
+  s += `<text x="${ax + 12}" y="${(my + ay) / 2}" font-size="10.5" font-weight="600" fill="${M2c}">M2</text>`;
+  s += `<text x="${(ax + bx) / 2}" y="${my + 22}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${M3c}">M3</text>`;
+  // cut line X–X'
+  s += `<line x1="40" y1="${my}" x2="320" y2="${my}" stroke="#26313c" stroke-width="1.2" stroke-dasharray="8 5"/>`;
+  s += `<text x="32" y="${my + 4}" text-anchor="end" font-size="12" font-weight="700" fill="#26313c">X</text>`;
+  s += `<text x="328" y="${my + 4}" font-size="12" font-weight="700" fill="#26313c">X′</text>`;
+
+  // ----- right: cross-section along X–X' -----
+  const cx = x => 400 + (x - 40) * 0.96;
+  s += `<text x="${cx(180)}" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="#33414f">cross-section along X–X′</text>`;
+  s += `<rect x="${cx(40)}" y="60" width="${cx(320) - cx(40)}" height="120" fill="${DIEL}"/>`;
+  const yM3 = 84, yV2 = 94, yM2 = 108, hM = 10, hV = 14;
+  // level labels
+  s += `<text x="${cx(40) - 8}" y="${yM3 + 8}" text-anchor="end" font-size="10.5" font-weight="700" fill="${M3c}">M3</text>`;
+  s += `<text x="${cx(40) - 8}" y="${yM2 + 8}" text-anchor="end" font-size="10.5" font-weight="700" fill="${M2c}">M2</text>`;
+  s += `<text x="${cx(40) - 8}" y="${yM2 + 32}" text-anchor="end" font-size="10.5" fill="#b8c1ca">M1</text>`;
+  // M3 wire runs along the cut -> long bar
+  s += `<rect x="${cx(ax)}" y="${yM3}" width="${cx(bx) - cx(ax)}" height="${hM}" fill="${M3c}"/>`;
+  // M2 wires cross the cut -> end-on squares, joined by vias
+  for (const [x, v] of [[ax, 'via A'], [bx, 'via B']]) {
+    s += `<rect x="${cx(x) - 6}" y="${yV2}" width="12" height="${hV}" fill="${VIAc}"/>`;
+    s += `<rect x="${cx(x) - 7}" y="${yM2}" width="14" height="${hM}" fill="${M2c}"/>`;
+    s += `<text x="${cx(x)}" y="${yM2 + 26}" text-anchor="middle" font-size="10" fill="#33414f">${v}</text>`;
+  }
+  s += `<text x="${cx(180)}" y="166" text-anchor="middle" font-size="10" font-style="italic" fill="#7a8794">M1 pins are not on this cut, so they don't appear</text>`;
+  s += `<text x="${cx(40) + 2}" y="${yM3 - 8}" font-size="12" font-weight="700" fill="#26313c">X</text>`;
+  s += `<text x="${cx(320) - 2}" y="${yM3 - 8}" text-anchor="end" font-size="12" font-weight="700" fill="#26313c">X′</text>`;
+  // note under both
+  s += `<text x="${cx(180)}" y="216" text-anchor="middle" font-size="10.5" fill="#5c6b7a">the two M2 wires appear end-on: small</text>`;
+  s += `<text x="${cx(180)}" y="231" text-anchor="middle" font-size="10.5" fill="#5c6b7a">rectangles, one metal level below M3</text>`;
+
+  s += `</svg>`;
+  document.getElementById('fig3').innerHTML = s;
+})();
+</script>
+
+
+</body></html>

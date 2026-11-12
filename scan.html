@@ -1,0 +1,289 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan</title>
+<style>
+.level {font-size: 0.9rem; color: #7a8794; margin: 0.4em 0 0;}
+.level button {font: inherit; color: #2b6cb0; background: #fff;
+    border: 1px solid #d5dee8; border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; cursor: pointer;}
+.level button.on {background: #2b6cb0; color: #fff; border-color: #2b6cb0;}
+</style>
+<link rel="stylesheet" href="assets/course.css"><script defer="" src="assets/course.js"></script></head>
+<body><a class="skip-link" href="#main-content">Skip to content</a>
+<main id="main-content">
+  <nav class="course-nav" aria-label="Course"><a class="course-brand" href="index.html">ASIC DESIGN · SHARED FOUNDATIONS</a><div class="course-tools"><a href="index.html#lessons">All lessons</a><a href="labs.html">Labs</a><a href="glossary.html">Glossary</a><a href="review.html">Review notes</a></div></nav>
+
+  <p class="lesson-meta">Lesson 40 / 84 · Part V, Digital implementation</p><h1>Scan</h1>
+  <p class="subtitle">A scan flop is the same storage, with a second data pin. A test mode shifts a pattern in through that pin, and the chip's own logic never has to do it.</p>
+  <p class="scope-note"><strong>Where the numbers come from.</strong> <code>sdfxtp_1</code> size, pins, and antenna are the LEF. The 32 transistors are the schematic spice. Function, caps, and the constraint cells are <code>tt_025C_1v80</code>. The plain flop is <a href="dff_inside.html">lesson 20</a>.</p>
+
+
+  <div class="objectives"><p><strong>What you will learn</strong></p><ul><li>Explain how a scan flop adds a second data input (SCD) selected by SCE.</li><li>Compare the scan flop <code>sdfxtp_1</code> with <code>dfxtp_1</code> in area, transistor count and setup time.</li><li>Draw a shift/capture sequence and compute test time from chain length, pattern count and shift frequency.</li><li>Name the OpenROAD <code>dft</code> commands and why LibreLane’s default flow does not run them.</li><li>Explain shift-path hold, lockup latches, and why test mode can be the noisiest mode.</li></ul></div><aside class="context-panel" aria-label="Where this lesson fits"><p class="cp-title">Where this fits <span>· the flow map is <a href="design_flow.html">lesson 8</a></span></p><dl><dt>In the flow</dt><dd>Scan flops are inserted during or just after <a href="design_flow.html#step-3">step 3, synthesis</a>; test patterns are generated once the netlist is final.</dd><dt>Tools</dt><dd>Commercial: Synopsys DFT Compiler and TestMAX, Cadence Modus, Siemens Tessent. Open source: the OpenROAD <code>dft</code> module (<code>scan_replace</code>, <code>execute_dft_plan</code>, <code>scan_opt</code>), and the Fault toolchain for ATPG and JTAG insertion.</dd><dt>Why it matters</dt><dd>Scan is how production test finds manufacturing defects in every chip.</dd></dl></aside><aside class="review-note"><p><strong>Verified source.</strong> The mux function, all quoted constraint entries, LEF dimensions and 32-device count were checked in the archived <a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1__tt_025C_1v80.lib.json">sdfxtp_1 files</a> at HD revision <code>ac7fb61f06e6</code>. These cells do not by themselves establish test coverage.</p></aside>
+<h2 id="section-1">1. Two data pins, one clock</h2>
+  <p>
+    A production test wants to set every flop to a known value and read every
+    flop back, without depending on the logic between them. Scan does that by
+    giving the flop a second input and a select. In mission mode the flop
+    takes D. In scan mode it takes the scan data from the previous flop, and
+    the flops form one long shift register.
+  </p>
+  <p>
+    The foundry note on the HD library says latches and flip-flops have scan
+    equivalents. The scan equivalent of the positive-edge flop
+    <code>dfxtp_1</code> is <code>sdfxtp_1</code>.
+  </p>
+
+  <figure>
+    <div class="figwrap" id="fig1"><svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 1 — What the Liberty function says. next_state is (D &amp; !SCE) | (SCD &amp; SCE), clocked on CLK: with SCE at 0 the flop captures D, and with SCE at 1 it captures SCD. The output Q follows the internal state IQ."><text x="70" y="50" text-anchor="end" font-size="14" font-weight="700" fill="#33414f">D</text><line x1="78" y1="46" x2="250" y2="46" stroke="#33414f" stroke-width="2"></line><text x="70" y="100" text-anchor="end" font-size="14" font-weight="700" fill="#33414f">SCD</text><line x1="78" y1="96" x2="250" y2="96" stroke="#33414f" stroke-width="2"></line><rect x="250" y="28" width="90" height="90" rx="6" fill="#fff" stroke="#4a72c4" stroke-width="2"></rect><text x="295" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#4a72c4">select</text><text x="295" y="90" text-anchor="middle" font-size="12" fill="#5c6b7a">SCE</text><line x1="340" y1="73" x2="430" y2="73" stroke="#33414f" stroke-width="2"></line><rect x="430" y="48" width="120" height="50" rx="6" fill="#fff" stroke="#33414f" stroke-width="2"></rect><text x="490" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">flop</text><line x1="550" y1="73" x2="640" y2="73" stroke="#33414f" stroke-width="2"></line><text x="670" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#33414f">Q</text><text x="370" y="160" text-anchor="middle" font-size="14" fill="#33414f">SCE = 0 selects D.  SCE = 1 selects SCD.</text></svg></div>
+    <figcaption><strong>Figure 1 — What the Liberty function says.</strong> <code>next_state</code> is <code>(D &amp; !SCE) | (SCD &amp; SCE)</code>, clocked on <code>CLK</code>: with <code>SCE</code> at 0 the flop captures D, and with <code>SCE</code> at 1 it captures <code>SCD</code>. The output Q follows the internal state <code>IQ</code>.</figcaption>
+  </figure>
+
+  <h2 id="section-2">2. Twenty-one sites, thirty-two transistors</h2>
+  <p>
+    <code>sdfxtp_1</code> is class <code>CORE</code>, site <code>unithd</code>,
+    <code>SIZE 9.660 BY 2.720</code>. That is 21 sites. Area 26.2752&nbsp;µm².
+    <code>dfxtp_1</code> is 16 sites and 24 transistors.
+    <code>sdfxtp_2</code> is 10.12 × 2.72&nbsp;µm, 22 sites.
+    <code>sdfxtp_4</code> is 11.04 × 2.72&nbsp;µm, 24 sites. Timing below is
+    only <code>sdfxtp_1</code>.
+  </p>
+  <p>
+    The schematic has 32 MOSFETs, every one <code>l=150000u</code>, which evaluates to 0.15 in this subcircuit wrapper’s micrometer geometry convention. Preserve the model wrapper and simulator scaling when reproducing the simulation. Sixteen are <code>nfet_01v8</code> and sixteen are
+    <code>pfet_01v8_hvt</code>. Pins are <code>D</code>, <code>SCD</code>,
+    <code>SCE</code>, <code>CLK</code>, and <code>Q</code>, plus the rails.
+    <code>CLK</code> is <code>USE CLOCK</code>.
+  </p>
+  <table>
+    <tbody><tr><th>Pin</th><th>Capacitance</th><th>Antenna</th></tr>
+    <tr><td>D</td><td>1.696 fF</td><td class="n">gate 0.159 µm²</td></tr>
+    <tr><td>SCD</td><td>1.811 fF</td><td class="n">gate 0.159 µm²</td></tr>
+    <tr><td>SCE</td><td>3.387 fF</td><td class="n">gate 0.318 µm²</td></tr>
+    <tr><td>CLK</td><td>1.776 fF</td><td class="n">gate 0.159 µm²</td></tr>
+    <tr><td>Q</td><td class="n">max 162.974 fF</td><td class="n">diffusion 0.429 µm²</td></tr>
+  </tbody></table>
+
+  <h2 id="section-3">3. Setup and hold at a 0.01 ns edge</h2>
+  <p>
+    These are the first cells of the constraint tables at the typical corner,
+    both the clock slew and the data slew at 0.01&nbsp;ns. They are table
+    cells, not an interpolation. Hold is negative in the same sense as
+    <a href="timing.html">lesson 25</a>: the data may change that early
+    before the clock.
+  </p>
+  <table>
+    <tbody><tr><th>Pin</th><th>Setup fall</th><th>Setup rise</th><th>Hold fall</th><th>Hold rise</th></tr>
+    <tr><td>D</td><td>0.202 ns</td><td>0.098 ns</td><td>−0.124 ns</td><td>−0.069 ns</td></tr>
+    <tr><td>SCD</td><td>0.258 ns</td><td>0.130 ns</td><td>−0.164 ns</td><td>−0.094 ns</td></tr>
+    <tr><td>SCE</td><td>0.224 ns</td><td>0.260 ns</td><td>−0.144 ns</td><td>−0.081 ns</td></tr>
+  </tbody></table>
+  <p>
+    <code>dfxtp_1</code> setup for falling D, at the same corner and the same
+    0.01&nbsp;ns edges, is 0.103&nbsp;ns. The scan flop's D setup on that
+    falling edge is 0.202&nbsp;ns. The mux in front of the latch is visible
+    in the extra tenth of a nanosecond, and in the five extra sites.
+    How those numbers become slack is <a href="setup_hold.html">lesson 26</a>.
+  </p>
+
+  <p>
+      The raw first cells, so the rounding above can be checked:
+      D setup fall 0.2021953&nbsp;ns, rise 0.0984355&nbsp;ns, hold fall
+      −0.1237324&nbsp;ns, rise −0.0688008&nbsp;ns. SCD setup fall
+      0.2583477&nbsp;ns, rise 0.1301738&nbsp;ns. SCE setup fall
+      0.224168&nbsp;ns, rise 0.2595684&nbsp;ns. The minimum pulse width on
+      <code>CLK</code> at a 0.01&nbsp;ns slew is rise constraint
+      0.1675876&nbsp;ns and fall constraint 0.2400893&nbsp;ns.
+    </p>
+    <p>
+      Q is driven by one 1.0&nbsp;µm high-Vt PMOS and one 0.65&nbsp;µm NMOS,
+      the same widths as <code>inv_1</code>. The spice line for each of those
+      two devices has <code>Q</code> on a channel terminal. There is a second
+      1.0&nbsp;µm PMOS on an internal node. Widths of the other devices:
+      NMOS 0.36&nbsp;µm × 4, 0.42&nbsp;µm × 9, 0.64&nbsp;µm × 1, 0.65&nbsp;µm × 2.
+      PMOS high-Vt 0.42&nbsp;µm × 6, 0.64&nbsp;µm × 7, 0.75&nbsp;µm × 1, 1.0&nbsp;µm × 2.
+    </p>
+    <p>
+      Cell leakage is 0.009600667&nbsp;nW. Q max capacitance 0.162974&nbsp;pF
+      is close to <code>dfxtp_1</code>'s 0.162058&nbsp;pF and is not the same
+      number. Other scan families are in the library by name. This page read
+      <code>sdfxtp</code>.
+    </p>
+  
+
+
+    <h2 id="section-4">4. The chain is Q of one flop into SCD of the next</h2>
+  <p>With <code>SCE=1</code>, Q feeds the next flop’s <code>SCD</code>, forming a shift register. With <code>SCE=0</code>, each flop captures its functional D. A simple stuck-at pattern uses a capture pulse; transition-delay testing may use a launch/capture sequence and different enable timing. Scan architecture and test protocol determine the required clocks.</p>
+  <p>Scan provides controllability and observability for test generation. In a stuck-at example, ATPG (automatic test pattern generation) selects a pattern that excites a fault and propagates its effect to an observed flop. A wrong output bit means a test response mismatch; it does not uniquely identify the faulty net. At-speed scan can also test transition and path-delay behavior, and many physical defects require other fault models or tests.</p>
+  <figure>
+    <div class="figwrap">
+      <svg viewBox="0 0 740 214" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 2 — Three scan flops. Shift uses the top links. Capture uses D. Stuck-at is one example of a scan-test fault model.">
+<rect x="40" y="50" width="160" height="80" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="120" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">flop 1</text>
+<text x="120" y="106" text-anchor="middle" font-size="12" fill="#5c6b7a">D    SCD</text>
+<line x1="200" y1="90" x2="270" y2="90" stroke="#1e9e50" stroke-width="2"></line>
+<text x="235" y="80" text-anchor="middle" font-size="11" fill="#1e9e50">Q to SCD</text>
+<rect x="270" y="50" width="160" height="80" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="350" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">flop 2</text>
+<text x="350" y="106" text-anchor="middle" font-size="12" fill="#5c6b7a">D    SCD</text>
+<line x1="430" y1="90" x2="500" y2="90" stroke="#1e9e50" stroke-width="2"></line>
+<text x="465" y="80" text-anchor="middle" font-size="11" fill="#1e9e50">Q to SCD</text>
+<rect x="500" y="50" width="160" height="80" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"></rect>
+<text x="580" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">flop 3</text>
+<text x="580" y="106" text-anchor="middle" font-size="12" fill="#5c6b7a">D    SCD</text>
+<text x="120" y="160" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">shift: SCE picks SCD</text>
+<text x="500" y="160" text-anchor="middle" font-size="13" font-weight="700" fill="#33414f">capture: SCE picks D</text>
+<text x="370" y="196" text-anchor="middle" font-size="12" fill="#5c6b7a">Scan helps excite faults and observe their effects; diagnosis is a separate task.</text>
+      </svg>
+    </div>
+
+    <figcaption><strong>Figure 2 — Three scan flops in a chain.</strong> In shift mode each flop loads its neighbor’s Q through the top links; in capture mode each takes its functional D input. A stuck-at fault is one example of the fault models that scan tests target.</figcaption>
+  </figure>
+
+<aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> Scan insertion is a design-for-test step run during or just after synthesis: the tool swaps ordinary flops for scan flops and stitches the chain, and automatic test pattern generation later produces the test vectors. Commercial tools are Synopsys DFT Compiler and TestMAX, Cadence Modus and Siemens Tessent. Fault is an open-source design-for-test toolchain built around Yosys; LibreLane’s default flow has no scan step.</p></aside><h2 id="section-5">5. Shift loads the chain; capture uses the functional path</h2>
+<p>A typical stuck-at protocol has three phases. <strong>Shift</strong> drives <code>SCE</code> high and clocks the chain until every flop holds a chosen bit. <strong>Capture</strong> drives <code>SCE</code> low and applies one (sometimes two) clock pulse so each flop samples its functional <code>D</code>, which is the result of the combinational logic under the shifted-in pattern. <strong>Unload</strong> drives <code>SCE</code> high again and shifts the captured bits out, often overlapping the load of the next pattern. Transition-delay and path-delay tests use a launch/capture pair at-speed; the shift clock is usually slower.</p>
+<figure>
+  <div class="figwrap" id="fig-shift-capture">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 3 — Shift, capture and unload timing. SCE is high while the chain shifts, low for one capture edge, then high again.">
+      <text x="16" y="36" font-size="13" font-weight="700" fill="#33414f">CLK</text>
+      <text x="16" y="96" font-size="13" font-weight="700" fill="#33414f">SCE</text>
+      <text x="16" y="156" font-size="13" font-weight="700" fill="#33414f">SI</text>
+      <text x="16" y="216" font-size="13" font-weight="700" fill="#33414f">SO</text>
+      <!-- CLK pulses: 8 shift, 1 capture, 5 unload. x from 70 to 800, period 50 -->
+      <!-- baseline and pulses -->
+      <path d="M70 48 H100 V18 H120 V48 H150 V18 H170 V48 H200 V18 H220 V48 H250 V18 H270 V48 H300 V18 H320 V48 H350 V18 H370 V48 H400 V18 H420 V48 H470 V18 H490 V48 H530 V18 H550 V48 H580 V18 H600 V48 H630 V18 H650 V48 H680 V18 H700 V48 H730 V18 H750 V48 H800" fill="none" stroke="#33414f" stroke-width="1.8"/>
+      <!-- SCE: high 70-445, low 445-515, high 515-800 -->
+      <path d="M70 70 H70 V70" fill="none"/>
+      <path d="M70 78 V68 H445 V118 H515 V68 H800" fill="none" stroke="#2468a0" stroke-width="2"/>
+      <!-- SI activity during first shift only (stylized bits) -->
+      <path d="M70 168 H100 V138 H120 V168 H150 V138 H170 V168 H200 V138 H220 V168 H250 V138 H270 V168 H300 V138 H320 V168 H350 V138 H370 V168 H400 V138 H420 V168 H800" fill="none" stroke="#45846b" stroke-width="1.8"/>
+      <!-- SO: valid during unload (after capture), idle-ish during shift-in; show bits after capture -->
+      <path d="M70 228 H515 V198 H530 V228 H550 V198 H580 V228 H600 V198 H630 V228 H650 V198 H680 V228 H700 V198 H730 V228 H750 V198 H800" fill="none" stroke="#bb6f33" stroke-width="1.8"/>
+      <!-- region bands -->
+      <rect x="70" y="248" width="375" height="36" fill="#e8f2ea" stroke="#45846b" stroke-width="0.8"/>
+      <text x="257" y="271" text-anchor="middle" font-size="13" font-weight="700" fill="#2d5a3d">shift in (SCE = 1)</text>
+      <rect x="445" y="248" width="70" height="36" fill="#f4efe4" stroke="#bb6f33" stroke-width="0.8"/>
+      <text x="480" y="271" text-anchor="middle" font-size="12" font-weight="700" fill="#7a4e18">capture</text>
+      <rect x="515" y="248" width="285" height="36" fill="#e8eef6" stroke="#2468a0" stroke-width="0.8"/>
+      <text x="657" y="271" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4a72">shift out / load next</text>
+    </svg>
+  </div>
+  <figcaption><strong>Figure 3 — A stuck-at shift / capture / unload sequence.</strong> <code>SCE</code> selects the scan mux. The capture edge is the one that samples functional <code>D</code>. Waveform spacing is schematic; it is not a SKY130 timing specification.</figcaption>
+</figure>
+<p>The tester sees only the scan-in and scan-out pins (and the clocks and <code>SCE</code>). Everything between those pins is a shift register during shift, and is the functional circuit during capture. ATPG chooses the shifted-in bits so that a modelled fault, if present, changes a captured bit. A mismatch on scan-out says the test failed; it does not, by itself, name the defective net.</p>
+
+<h2 id="section-6">6. OpenROAD inserts and stitches the chains</h2>
+<p>OpenROAD’s <code>dft</code> module is the open-source insertion path that matches the Tools list at the top of this lesson. The documented command sequence is:</p>
+<ol>
+  <li><code>set_dft_config</code> — optional limits such as <code>-max_length</code> (bits per chain), <code>-max_chains</code>, and <code>-clock_mixing</code> (<code>no_mix</code> keeps one clock and edge per chain; <code>clock_mix</code> may mix clocks, stitching falling-edge cells before rising-edge cells).</li>
+  <li><code>scan_replace</code> — swap ordinary flops for scan equivalents. This changes cell area, so it runs <em>before</em> placement.</li>
+  <li>Global placement, then <code>report_dft_plan -verbose</code> — a preview that does not modify the design. Use it to iterate the configuration.</li>
+  <li><code>execute_dft_plan</code> — architect the chains and connect them, after placement, in a way that aims to reduce wirelength.</li>
+  <li><code>scan_opt</code> — reorder cells inside each chain (and optionally <code>-rebalance_chains</code> between chains of the same clock and edge) using the current placement, then rewire. Chains with unplaced cells are skipped. Falling-edge cells stay ahead of rising-edge cells, and the cell that drives scan-out stays last.</li>
+</ol>
+<p>Those are OpenROAD commands. LibreLane Classic 3.0.17’s default flow has no DFT step: it will not call <code>scan_replace</code> for you. If you want scan in that flow, you run the commands yourself (or through a wrapper) at the points above. Commercial tools and the Fault toolchain remain the usual sources of ATPG patterns and of JTAG / test-access structures that OpenROAD’s <code>dft</code> module does not generate.</p>
+<aside class="flow-note"><p><strong>In the open SKY130 flow.</strong> The HD library already contains the scan equivalents (<code>sdfxtp</code>, <code>sdfrtp</code>, and the other <code>s*</code> flops). Insertion is a netlist transformation plus stitching, not a new foundry cell. Fault (built around Yosys) is an open-source ATPG and JTAG path. This lesson does not run ATPG, and it does not claim a coverage number for any design.</p></aside>
+
+<h2 id="section-7">7. Test time, area and shift power</h2>
+<p>Test time for a full-scan campaign is arithmetic on the chain architecture, the pattern count and the shift clock — not a process speed rating. If unloading the previous response overlaps loading the next pattern, a useful estimate is</p>
+<p style="text-align:center;font-family:ui-monospace,monospace;">T ≈ N<sub>patterns</sub> × (L<sub>chain</sub> + N<sub>capture</sub>) / f<sub>shift</sub></p>
+<p>where <em>L</em><sub>chain</sub> is the longest chain (the tester is limited by the slowest chain) and <em>N</em><sub>capture</sub> is the number of capture clocks per pattern (one for a basic stuck-at sequence).</p>
+<p><strong>Worked example.</strong> A block has 2,000 scan flops and 500 patterns, shifted at 25&nbsp;MHz, with one capture clock and overlapping unload/load.</p>
+<table>
+  <thead><tr><th>Architecture</th><th>Longest chain</th><th>Cycles per pattern</th><th>Test time</th></tr></thead>
+  <tbody>
+    <tr><td>One chain</td><td>2,000</td><td>2,001</td><td>500 × 2,001 / 25&nbsp;MHz = <strong>40.02&nbsp;ms</strong></td></tr>
+    <tr><td>Four chains of 500</td><td>500</td><td>501</td><td>500 × 501 / 25&nbsp;MHz = <strong>10.02&nbsp;ms</strong></td></tr>
+  </tbody>
+</table>
+<p>Four chains cut test time by about four, at the cost of four scan-in pins and four scan-out pins (or an equivalent test-access compressor). If load and unload do <em>not</em> overlap, each pattern pays about two chain lengths, and the four-chain time becomes 500 × 1,001 / 25&nbsp;MHz = 20.02&nbsp;ms. Loading a 1,000-bit chain at 10&nbsp;MHz takes 100&nbsp;µs before capture and unload. None of these frequencies is a SKY130 rating; shift rate is set by hold, power and the tester.</p>
+<p><strong>Area.</strong> Replacing every <code>dfxtp_1</code> (16 sites, 20.0192&nbsp;µm²) with <code>sdfxtp_1</code> (21 sites, 26.2752&nbsp;µm²) grows those flop cells by 21/16 = 31.25%. For 2,000 such replacements the extra cell area is 2,000 × 6.256&nbsp;µm² = 12,512&nbsp;µm². That is only the standard-cell footprints. Scan routing, any lockup cells, and extra clock-tree load add more. It is not a 31% growth of the whole die.</p>
+<p><strong>Shift power.</strong> Random patterns can toggle about half the scan bits on every shift edge, and every scan flop is clocked at <em>f</em><sub>shift</sub>. Functional activity is often much lower, which is why section 8’s warning about supply droop is a power problem as well as a test-quality problem. The clock-power lesson treats <em>C·V²·f</em> for a clock pin; during shift you pay that term on the whole chain, plus the data-activity term on every Q→SCD net.</p>
+<details class="checkpoint"><summary>Check your understanding — four chains of 500 at 10&nbsp;MHz, 200 patterns, overlapping unload, one capture clock: how long is the test?</summary><p>L<sub>chain</sub> = 500, so T = 200 × (500 + 1) / 10&nbsp;MHz = 200 × 501 / 10<sup>7</sup> = 10.02&nbsp;ms. The four chains run in parallel; the length of the longest chain, not the 2,000-bit total, sets the time. A slower shift clock lengthens the test in proportion.</p></details>
+
+<h2 id="section-8">8. Hold, lockup latches, and a noisy test mode</h2>
+<p>A slow shift clock relaxes shift <em>setup</em> and reduces shift power, but it does not cure <em>hold</em>. The Q→SCD path is a short route between adjacent flops, and the hold figures in section 3 are already negative at a 0.01&nbsp;ns edge: the data is allowed to change slightly <em>before</em> the clock. Clock skew on the scan path can still create a hold violation. That check uses the actual scan-clock arrival times, in the shift mode where <code>SCE</code> is held high. <a href="timed_path.html">Lesson 42</a> works a Q→SCD hold check on these same cells.</p>
+<figure>
+  <div class="figwrap" id="fig-lockup">
+    <svg viewBox="0 0 820 230" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img" aria-label="Figure 4 — A lockup latch on a scan path between two clock domains. The latch is transparent while the launching clock is low.">
+      <rect x="30" y="50" width="170" height="80" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"/>
+      <text x="115" y="82" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">scan flop A</text>
+      <text x="115" y="104" text-anchor="middle" font-size="12" fill="#5c6b7a">clocked on clk A</text>
+      <text x="115" y="40" text-anchor="middle" font-size="12" fill="#5c6b7a">Q</text>
+      <line x1="200" y1="90" x2="250" y2="90" stroke="#33414f" stroke-width="2"/>
+      <rect x="250" y="50" width="200" height="80" rx="4" fill="#f4efe4" stroke="#bb6f33" stroke-width="2"/>
+      <text x="350" y="82" text-anchor="middle" font-size="14" font-weight="700" fill="#7a4e18">lockup latch</text>
+      <text x="350" y="104" text-anchor="middle" font-size="12" fill="#7a4e18">open while clk A is low</text>
+      <line x1="450" y1="90" x2="500" y2="90" stroke="#33414f" stroke-width="2"/>
+      <text x="475" y="78" text-anchor="middle" font-size="11" fill="#5c6b7a">SCD</text>
+      <rect x="500" y="50" width="170" height="80" rx="4" fill="#fff" stroke="#33414f" stroke-width="2"/>
+      <text x="585" y="82" text-anchor="middle" font-size="14" font-weight="700" fill="#33414f">scan flop B</text>
+      <text x="585" y="104" text-anchor="middle" font-size="12" fill="#5c6b7a">clocked on clk B</text>
+      <text x="740" y="82" text-anchor="middle" font-size="13" fill="#33414f">scan out</text>
+      <line x1="670" y1="90" x2="700" y2="90" stroke="#33414f" stroke-width="2"/>
+      <path d="M115 130 V155 H350 V170" fill="none" stroke="#2468a0" stroke-width="1.6"/>
+      <text x="350" y="190" text-anchor="middle" font-size="12" fill="#2468a0">clk A also gates the lockup latch</text>
+      <path d="M585 130 V155 H585" fill="none" stroke="#45846b" stroke-width="1.6"/>
+      <text x="585" y="214" text-anchor="middle" font-size="12" fill="#45846b">clk B, a different domain or edge</text>
+    </svg>
+  </div>
+  <figcaption><strong>Figure 4 — A lockup latch on a scan stitch that crosses clocks.</strong> For positive-edge scan flops the latch is transparent while the launching clock is low, so the receiving flop does not see the new bit until after its rising edge. Use one when stitching unlike clocks, or when a same-clock scan path fails hold after skew is included. The HD library’s latch cells (for example <code>dlxtp</code>) are the usual building blocks; the figure is architectural, not a placed layout.</figcaption>
+</figure>
+<p>Scan can toggle more state than normal operation, causing supply droop and substrate noise. Constrain the shift frequency, simultaneous switching, and analog power states. Clock-domain partitioning of chains is the other standard remedy beside lockup cells: do not stitch unlike clocks onto one chain if you can give each domain its own chain.</p>
+<table>
+  <tbody>
+    <tr><th>Mode</th><th>What must be checked</th></tr>
+    <tr><td>Shift</td><td>Scan-enable timing, short-path hold (with actual scan-clock skew), chain integrity, lockup or domain partitioning, shift power</td></tr>
+    <tr><td>Capture</td><td>Functional or at-speed timing, clock gating, observation of fault effects</td></tr>
+    <tr><td>Analog test</td><td>Safe mux settings, references and supplies, test-bus loading and isolation</td></tr>
+  </tbody>
+</table>
+<details class="checkpoint"><summary>Checkpoint: is passing scan sufficient to approve an ADC?</summary><p>No. Scan checks selected digital fault models. Converter offset, noise, linearity, reference behavior and analog defects need their own analog and mixed-signal tests (<a href="converters.html">lesson 80</a>, <a href="mixed_signal_verification.html">lesson 84</a>).</p></details>
+<details class="checkpoint"><summary>Check your understanding — why is the falling-D setup time of <code>sdfxtp_1</code> about twice that of <code>dfxtp_1</code>?</summary><p>The scan flop selects between D and SCD before the master latch, and that extra stage adds delay to the data path, so data must arrive earlier: 0.202&nbsp;ns against 0.103&nbsp;ns at 0.01&nbsp;ns edges in the HD tables.</p></details>
+<p><a href="timed_path.html">Lesson 42</a> puts these scan flops into a timed path: it compares the dfxtp and sdfxtp arcs, checks the scan-enable constraints and works the hold check in shift mode.</p>
+<div class="takeaways">
+    <h2 id="section-9">Key takeaways</h2>
+    <ul>
+      <li>Scan adds a second data pin and a select, so test can shift a pattern through the flops.</li>
+      <li><code>sdfxtp_1</code> is 21 sites and 32 transistors. <code>dfxtp_1</code> is 16 sites and 24. Replacing one with the other grows that cell’s area by 31.25%.</li>
+      <li>With <code>SCE</code> low, the flop takes D. With <code>SCE</code> high, it takes <code>SCD</code>.</li>
+      <li>At 0.01&nbsp;ns edges, falling-D setup is 0.202&nbsp;ns on the scan flop and 0.103&nbsp;ns on <code>dfxtp_1</code>.</li>
+      <li>A stuck-at sequence is shift, capture, unload. Test time is set by the longest chain, the pattern count and the shift clock.</li>
+      <li>OpenROAD <code>dft</code> uses <code>scan_replace</code> (before placement), <code>execute_dft_plan</code> (after), and <code>scan_opt</code>. LibreLane Classic’s default flow does not run them.</li>
+      <li>Hold is negative in the HD tables. A longer period does not fix hold. Lockup latches or per-domain chains protect scan stitches that cross clocks.</li>
+      <li>Shift can be the noisiest, most power-hungry mode on the chip.</li>
+    </ul>
+  </div>
+
+<section class="sources"><h2 id="section-10">Sources &amp; scope</h2><p>Technical review: 11 November 2026. Exact cell data use HD revision <code>ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1</code>. Scan timing must be constrained separately from functional mode.</p><ol><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1__tt_025C_1v80.lib.json">SKY130 sdfxtp_1 timing and state function</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.spice">SKY130 sdfxtp_1 transistor netlist</a></li><li><a href="https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd/blob/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/sdfxtp/sky130_fd_sc_hd__sdfxtp_1.lef">SKY130 sdfxtp_1 layout abstract</a></li><li><a href="https://openroad.readthedocs.io/en/latest/main/src/dft/README.html">OpenROAD DFT documentation</a></li></ol></section><details class="course-topics"><summary>All 84 lessons</summary><ol class="topic-list"><li class="part-label">Part I · Foundations: the physical chip and its vocabulary</li><li><a href="chip_overview.html">1. What Is a Chip? Board, Package &amp; Die</a></li><li><a href="silicon_wafer.html">2. The Silicon Wafer: From Crystal to Dies</a></li><li><a href="fabrication_layers.html">3. How a Die Is Built: SKY130 Layers &amp; Lithography</a></li><li><a href="mosfet_basics.html">4. The MOSFET: SKY130’s Transistor</a></li><li><a href="die_anatomy.html">5. Anatomy of a Die: Core, Pad Ring &amp; Seal Ring</a></li><li><a href="packages.html">6. Packages: Wire Bonds, Flip-Chip, QFN &amp; WLCSP</a></li><li><a href="pcb_path.html">7. The PCB and the Path to the Transistor</a></li><li><a href="design_flow.html">8. The Design Flow and Its Files: RTL to GDS</a></li><li><a href="signals_primer.html">9. Signals Primer: DC, AC, RMS, Decibels &amp; the FFT</a></li><li class="part-label">Part II · Transistors to logic gates</li><li><a href="logic_gates.html">10. Logic Gates at the Transistor Level</a></li><li><a href="drive_strength.html">11. Drive Strength &amp; Transistor Sizing</a></li><li><a href="gate_topologies.html">12. More Gate Topologies</a></li><li class="part-label">Part III · Standard-cell layout</li><li><a href="site_rows.html">13. Site Rows &amp; Standard Cell Placement</a></li><li><a href="power_grid.html">14. The Power Grid &amp; Routing Grids</a></li><li><a href="metal_layers.html">15. Metal Layers, Vias &amp; the Stackup</a></li><li><a href="cell_layout.html">16. Inside a Standard Cell's Layout</a></li><li><a href="cell_template.html">17. The Cell Template: Tracks, Sites &amp; Edges</a></li><li><a href="bigger_cells.html">18. Anatomy of a Bigger Cell</a></li><li><a href="pin_access.html">19. Pin Access &amp; Porosity</a></li><li><a href="dff_inside.html">20. A Flip-Flop From the Inside</a></li><li class="part-label">Part IV · Loads, timing and interconnect</li><li><a href="loads.html">21. Loads</a></li><li><a href="liberty.html">22. Liberty Files: What a Cell Library Records</a></li><li><a href="liberty_tables.html">23. Reading Liberty Timing Tables</a></li><li><a href="liberty_characterization.html">24. Standard-Cell Characterization: How Liberty Is Made</a></li><li><a href="timing.html">25. Timing</a></li><li><a href="setup_hold.html">26. Setup and Hold</a></li><li><a href="latch_time_borrowing.html">27. Latch-Based Design &amp; Time Borrowing</a></li><li><a href="parasitics.html">28. Routing Resistance and Parasitics</a></li><li><a href="delay_physics.html">29. Delay from Physics: Transistor, Contact, Via, Wire &amp; Gate</a></li><li><a href="electromigration.html">30. Electromigration</a></li><li><a href="reliability_aging.html">31. Reliability &amp; Aging: HCI, BTI, TDDB &amp; Self-Heating</a></li><li><a href="dfm_yield.html">32. DFM, Variation &amp; Yield: A Digital View</a></li><li class="part-label">Part V · Digital implementation</li><li><a href="rtl_patterns.html">33. RTL Patterns: FSMs, Handshakes, Resets &amp; Lint</a></li><li><a href="rtl_synthesis_constraints.html">34. RTL, Synthesis &amp; Timing Constraints</a></li><li><a href="clock_tree.html">35. The Clock Tree</a></li><li><a href="clock_generation.html">36. Clock Generation: Oscillators, DCO, PLL &amp; Jitter</a></li><li><a href="clock_gating_power_states.html">37. Clock Gating &amp; Power States</a></li><li><a href="power_analysis.html">38. Power Analysis &amp; Low-Power Cells</a></li><li><a href="cdc_reset.html">39. Clock-Domain Crossings &amp; Reset</a></li><li><a href="scan.html" aria-current="page">40. Scan</a></li><li><a href="dft_test.html">41. DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></li><li><a href="timed_path.html">42. A Timed Logic Path: Registers, Clocks, Scan &amp; Speed/Power</a></li><li><a href="memories.html">43. Memories: SRAM, OpenRAM and DFFRAM</a></li><li><a href="datapath_arithmetic.html">44. Datapath &amp; Arithmetic</a></li><li><a href="multicorner_sta.html">45. Multi-Corner STA: OCV, CRPR &amp; Hold Cells</a></li><li><a href="functional_verification.html">46. Functional Verification: Testbenches, Assertions, Formal &amp; Gate-Level Sim</a></li><li class="part-label">Part VI · Physical cells and the floorplan</li><li><a href="fill_cells.html">47. Fill Cells</a></li><li><a href="well_taps.html">48. Well Taps and Latch-up</a></li><li><a href="endcaps.html">49. Endcaps</a></li><li><a href="tie_cells.html">50. Tie Cells</a></li><li><a href="antenna.html">51. Antenna Diodes</a></li><li><a href="decap.html">52. Decap Cells</a></li><li><a href="spare_eco.html">53. Spare Cells and ECO</a></li><li><a href="level_shifters.html">54. Level Shifters</a></li><li><a href="floorplan.html">55. Floorplan</a></li><li><a href="caravel_integration.html">56. Caravel Integration: The User Project Wrapper</a></li><li><a href="hierarchical_eco.html">57. Hierarchical Design, Abstracts &amp; ECO</a></li><li><a href="placement.html">58. Placement: Global, Legalization &amp; Detailed</a></li><li><a href="routing_timing_closure.html">59. Routing &amp; Timing Closure</a></li><li><a href="digital_signal_integrity.html">60. Digital Signal Integrity: Crosstalk Delay &amp; Glitch</a></li><li><a href="metal_fill.html">61. Metal Fill and Cell Fill</a></li><li><a href="physical_signoff.html">62. Physical Verification Signoff</a></li><li><a href="power_integrity_signoff.html">63. Power-Integrity Signoff: Static IR, Dynamic IR &amp; EM</a></li><li class="part-label">Part VII · The chip boundary: I/O, ESD and package</li><li><a href="io_ring.html">64. The I/O Ring</a></li><li><a href="esd_clamps.html">65. ESD and Clamps</a></li><li><a href="io_fill.html">66. I/O Fill</a></li><li><a href="rdl.html">67. RDL Routing</a></li><li><a href="io_power.html">68. I/O Power and IR Drop</a></li><li><a href="power_package_thermal.html">69. Power, Package &amp; Thermal Coupling</a></li><li><a href="tapeout.html">70. Tapeout, MPW &amp; Tiny Tapeout</a></li><li><a href="post_silicon_bringup.html">71. Post-Silicon Bring-Up, Test &amp; Characterization</a></li><li class="part-label">Part VIII · Analog circuits</li><li><a href="analog_bias.html">72. Analog Bias, gm &amp; Headroom</a></li><li><a href="feedback_stability.html">73. Feedback, Loading &amp; Stability</a></li><li><a href="differential_pairs.html">74. Differential Pairs, Common Mode &amp; CMFB</a></li><li><a href="noise_mismatch.html">75. Noise, Mismatch &amp; Variation</a></li><li><a href="references_startup.html">76. References, Temperature &amp; Startup</a></li><li><a href="comparators_ldo_por.html">77. Comparators &amp; Power Management: StrongARM, LDO &amp; POR</a></li><li><a href="matching_layout_extraction.html">78. Matching, Layout &amp; Extracted Netlists</a></li><li class="part-label">Part IX · Mixed-signal: sampling, conversion and verification</li><li><a href="sampling_aliasing.html">79. Sampling, Aliasing &amp; Settling</a></li><li><a href="converters.html">80. ADC &amp; DAC Interfaces</a></li><li><a href="spectral_measurements.html">81. FFT, Noise &amp; Distortion Measurements</a></li><li><a href="calibration_trim.html">82. Calibration, Trimming &amp; Testability</a></li><li><a href="crosstalk_return_paths.html">83. Crosstalk, Return Paths &amp; Isolation</a></li><li><a href="mixed_signal_verification.html">84. Mixed-Signal Verification &amp; Bring-Up</a></li></ol></details><div class="lesson-footer"><a href="cdc_reset.html"><small>← Previous</small>Clock-Domain Crossings &amp; Reset</a><a href="dft_test.html"><small>Next →</small>DFT Beyond Scan: Faults, ATPG, BIST and JTAG</a></div><p class="course-footnote">Updated 11 November 2026 · 84 lessons · Offline lessons, diagrams, source code and recorded results · External references require internet access.</p></main>
+
+<script>
+const DK = '#33414f', MET = '#4a72c4', LI = '#7a4ea3', CAP = '#1e9e50', PW = '#c0564a', GD = '#718096', WELL = '#e8f0ea';
+const txt = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.s || 12}" ${o.b ? 'font-weight="700"' : ''} fill="${o.c || DK}">${t}</text>`;
+
+
+(function () {
+  let s = `<svg viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" role="img">`;
+  function pin(x, y, name) {
+    s += txt(x, y, name, {a: 'end', s: 14, b: true});
+    s += `<line x1="${x + 8}" y1="${y - 4}" x2="250" y2="${y - 4}" stroke="${DK}" stroke-width="2"/>`;
+  }
+  pin(70, 50, 'D');
+  pin(70, 100, 'SCD');
+  s += `<rect x="250" y="28" width="90" height="90" rx="6" fill="#fff" stroke="${MET}" stroke-width="2"/>`;
+  s += txt(295, 70, 'select', {s: 13, b: true, c: MET});
+  s += txt(295, 90, 'SCE', {s: 12, c: '#5c6b7a'});
+  s += `<line x1="340" y1="73" x2="430" y2="73" stroke="${DK}" stroke-width="2"/>`;
+  s += `<rect x="430" y="48" width="120" height="50" rx="6" fill="#fff" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(490, 78, 'flop', {s: 16, b: true});
+  s += `<line x1="550" y1="73" x2="640" y2="73" stroke="${DK}" stroke-width="2"/>`;
+  s += txt(670, 78, 'Q', {s: 16, b: true});
+  s += txt(370, 160, 'SCE = 0 selects D.  SCE = 1 selects SCD.', {s: 14});
+  s += `</svg>`;
+  document.getElementById('fig1').innerHTML = s;
+})();
+</script>
+
+
+
+</body></html>

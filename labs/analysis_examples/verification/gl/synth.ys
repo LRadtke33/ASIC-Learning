@@ -1,0 +1,9 @@
+# Map gray4 onto sky130_fd_sc_hd (tt 25 C 1.80 V Liberty).
+read_verilog ../rtl/gray4.v
+hierarchy -check -top gray4
+synth -top gray4
+dfflibmap -liberty /workspace/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /workspace/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+opt_clean -purge
+stat -liberty /workspace/eda/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+write_verilog -noattr -noexpr -nohex gray4_gl.v
